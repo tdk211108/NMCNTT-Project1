@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" fill="none">
+  <rect width="320" height="240" rx="16" fill="#F1F5F9"/>
+  <rect x="88" y="56" width="144" height="108" rx="12" fill="#E2E8F0" stroke="#CBD5E1" stroke-width="2"/>
+  <rect x="116" y="84" width="88" height="52" rx="6" fill="#CBD5E1"/>
+  <path d="M104 72v-12M132 72v-12M160 72v-12M188 72v-12M216 72v-12M104 160v-12M132 160v-12M160 160v-12M188 160v-12M216 160v-12" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>
+  <text x="160" y="196" text-anchor="middle" fill="#64748B" font-family="system-ui, sans-serif" font-size="14" font-weight="600">TechCore Hardware</text>
+</svg>
