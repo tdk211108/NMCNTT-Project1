@@ -21,7 +21,7 @@
 ### Bước 0 — Chuẩn hóa Spec, Kiểm định Seed bán lẻ & Tạo Legacy Template (`DONE`)
 - [x] Chốt tên `techcore` / `TechCore`, địa chỉ 2 cấp, `D1`/`D2` và các `[Call]` (§16).
 - [x] Bỏ `passmark_recorded_on` / `recordedOn` trong `docs/idea.md`, `docs/technical_solution.md`, và `.agents/skills/seed-excel-to-ts/SKILL.md`.
-- [x] Kiểm định toàn bộ `hardware_seed_data.xlsx` (**35** `retail_cpus`, **13** `gpu_series`, **65** `gpu_variants`) và **100** ảnh `.webp` trong `seed-images/` (max `152.6 KB`): **0 lỗi, 0 cảnh báo**.
+- [x] Kiểm định `hardware_seed_data.xlsx` (**35** `retail_cpus`, **13** `gpu_series`, **65** `gpu_variants` ban đầu: **0 lỗi, 0 cảnh báo**), sau đó bổ sung 6 biến thể RTX 5080/5090 giới hạn lên **71** `gpu_variants` và **106** ảnh trong `seed-images/` (`100` `.webp`, `3` `.png`, `3` `.jpg`; max `342.8 KB`).
 - [x] Tạo `legacy_seed_data.xlsx` gồm 3 sheets (`SAMPLE_GUIDE`, `legacy_cpus` 24 dòng `C01`..`C24`, `legacy_gpus` 33 dòng `G01`..`G33`), để trống các ô `psu_power_w`, `tbp_w`, `source_url` để người dùng điền bổ sung trước Bước 2.
 
 ### Bước 1 — Khởi tạo Skeleton & Guardrails (`DONE`)
