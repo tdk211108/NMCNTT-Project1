@@ -2,7 +2,7 @@
 
 | Item | Value |
 | --- | --- |
-| Source specification | `idea.md` (Project "TDK") |
+| Source specification | `idea.md` (Project "TechCore") |
 | Document status | Draft for approval |
 | Date | 2026-11-17 |
 | Package versions verified against | npm registry, 2026-11-17 |

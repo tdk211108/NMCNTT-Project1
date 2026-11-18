@@ -11,6 +11,8 @@ next-env.d.ts
 
 # Local raw seed assets (kept locally, not pushed)
 *.xlsx
+!hardware_seed_data.xlsx
+!legacy_seed_data.xlsx
 seed-images/
 
 # Agent rules/skills & lockfile (local only, not pushed)
