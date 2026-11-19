@@ -1,7 +1,14 @@
+import type { Metadata } from 'next';
 import { Card } from '@/components/ui/Card';
 import { formatVnd } from '@/lib/format';
+import { buildPageMetadata } from '@/lib/metadata';
 import { FREE_SHIPPING_MIN_QTY, STANDARD_SHIPPING_FEE_VND } from '@/shared/constants';
 import { VI_MESSAGES } from '@/shared/messages/vi';
+
+export const metadata: Metadata = buildPageMetadata({
+  title: VI_MESSAGES.policies.paymentShippingTitle,
+  description: VI_MESSAGES.policies.paymentShippingBody,
+});
 
 export default function PaymentShippingPolicyPage() {
   return (

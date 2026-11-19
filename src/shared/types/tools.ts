@@ -12,7 +12,7 @@ export interface CompareRow {
 
 export interface CompareResponse {
   category: Category;
-  products: { id: string; name: string; priceVnd: number }[];
+  products: { id: string; name: string; priceVnd: number; imageUrl: string | null }[];
   rows: CompareRow[];
   notes: string[];
 }

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Badge, Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
+import { ProductImage } from '@/components/ui/ProductImage';
 import { SearchableSelect, type SearchableSelectGroup } from '@/components/ui/SearchableSelect';
 import { ResponsiveTableWrapper } from '@/components/ui/Table';
 import { formatVnd } from '@/lib/format';
@@ -69,6 +70,7 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
           >
             {visibleIndexes.map((slotIndex) => {
               const currentId = state.slots[slotIndex] ?? '';
+              const selectedProduct = state.selectedProducts[slotIndex];
               const otherSelected = new Set(
                 state.slots.filter((id, idx): id is string => Boolean(id) && idx !== slotIndex),
               );
@@ -128,6 +130,41 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                     onChange={(nextId) => actions.onSelectSlot(slotIndex, nextId)}
                   />
 
+                  {selectedProduct ? (
+                    <div
+                      data-testid={TEST_IDS.compare.slotPreview(slotIndex)}
+                      className="flex items-center gap-3 rounded-control border border-border bg-surface-subtle p-2.5"
+                    >
+                      <Link href={`/products/${selectedProduct.id}`} className="shrink-0">
+                        <ProductImage
+                          src={selectedProduct.imageUrl}
+                          alt={selectedProduct.name}
+                          className="h-20 w-20 object-contain p-1"
+                        />
+                      </Link>
+                      <div className="flex min-w-0 flex-1 flex-col gap-1">
+                        <div className="flex flex-wrap items-center gap-1">
+                          <Badge>{selectedProduct.vendor.toUpperCase()}</Badge>
+                          {selectedProduct.aibBrand ? (
+                            <Badge variant="accent">{selectedProduct.aibBrand}</Badge>
+                          ) : null}
+                          {selectedProduct.isLimitedEdition ? (
+                            <Badge variant="warning">{VI_MESSAGES.catalog.limitedEditionBadge}</Badge>
+                          ) : null}
+                        </div>
+                        <Link
+                          href={`/products/${selectedProduct.id}`}
+                          className="line-clamp-2 text-sm font-semibold text-ink hover:text-accent"
+                        >
+                          {selectedProduct.name}
+                        </Link>
+                        <p className="text-sm font-bold text-primary">
+                          {formatVnd(selectedProduct.priceVnd)}
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+
                   {currentId || slotIndex === 2 ? (
                     <div className="flex justify-end">
                       <Button
@@ -174,10 +211,20 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                     {VI_MESSAGES.tools.compare.criterionColumn}
                   </th>
                   {state.data.products.map((product) => (
-                    <th key={product.id} className="px-3 py-3 font-semibold text-ink">
-                      <Link href={`/products/${product.id}`} className="hover:text-accent">
-                        {product.name}
-                      </Link>
+                    <th key={product.id} className="px-3 py-3 align-top font-semibold text-ink">
+                      <div className="flex flex-col items-start gap-2">
+                        <Link href={`/products/${product.id}`} className="shrink-0">
+                          <ProductImage
+                            src={product.imageUrl}
+                            alt={product.name}
+                            testId={TEST_IDS.compare.headerImage(product.id)}
+                            className="h-20 w-20 object-contain p-1"
+                          />
+                        </Link>
+                        <Link href={`/products/${product.id}`} className="hover:text-accent">
+                          {product.name}
+                        </Link>
+                      </div>
                     </th>
                   ))}
                 </tr>

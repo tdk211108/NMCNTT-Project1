@@ -1,9 +1,13 @@
-'use client';
+import type { Metadata } from 'next';
+import { OrderLookupClient } from '@/features/orders/components/OrderLookupClient';
+import { buildPageMetadata } from '@/lib/metadata';
+import { VI_MESSAGES } from '@/shared/messages/vi';
 
-import { OrderLookupView } from '@/features/orders/components/OrderLookupView';
-import { useOrderLookupController } from '@/features/orders/useOrderLookupController';
+export const metadata: Metadata = buildPageMetadata({
+  title: VI_MESSAGES.orders.lookupTitle,
+  noIndex: true,
+});
 
 export default function OrderLookupPage() {
-  const vm = useOrderLookupController();
-  return <OrderLookupView {...vm} />;
+  return <OrderLookupClient />;
 }

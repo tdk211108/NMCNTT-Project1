@@ -1,9 +1,13 @@
-'use client';
+import type { Metadata } from 'next';
+import { CheckoutClient } from '@/features/checkout/components/CheckoutClient';
+import { buildPageMetadata } from '@/lib/metadata';
+import { VI_MESSAGES } from '@/shared/messages/vi';
 
-import { CheckoutView } from '@/features/checkout/components/CheckoutView';
-import { useCheckoutController } from '@/features/checkout/useCheckoutController';
+export const metadata: Metadata = buildPageMetadata({
+  title: VI_MESSAGES.checkout.title,
+  noIndex: true,
+});
 
 export default function CheckoutPage() {
-  const vm = useCheckoutController();
-  return <CheckoutView {...vm} />;
+  return <CheckoutClient />;
 }

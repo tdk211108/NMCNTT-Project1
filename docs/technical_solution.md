@@ -254,11 +254,13 @@ pc-hardware-store/
 │   └── e2e/                          # playwright: flows by data-testid
 └── src/
     ├── app/
-    │   ├── layout.tsx                # header (search, cart badge, Admin Mode), footer, ZaloButton, Providers
+    │   ├── layout.tsx                # root metadata template/OpenGraph, header, footer, ZaloButton, Providers
+    │   ├── not-found.tsx             # 404 Vietnamese page with store CTAs
+    │   ├── error.tsx                 # client error boundary with retry/home actions
     │   ├── page.tsx                  # home: hero, category tiles, tool shortcuts
-    │   ├── cpu/page.tsx              # listing (category=cpu)
-    │   ├── gpu/page.tsx              # listing (category=gpu)
-    │   ├── search/page.tsx           # full results for ?q=
+    │   ├── cpu/page.tsx              # listing wrapper + metadata (category=cpu)
+    │   ├── gpu/page.tsx              # listing wrapper + metadata (category=gpu)
+    │   ├── search/page.tsx           # full results for ?q= (noIndex metadata)
     │   ├── products/[id]/page.tsx    # detail
     │   ├── compare/page.tsx          # /compare?ids=a,b,c
     │   ├── tools/perf-per-price/page.tsx # /tools/perf-per-price?category=cpu&maxPriceVnd=...
@@ -272,8 +274,9 @@ pc-hardware-store/
     │   ├── policies/warranty/page.tsx
     │   ├── policies/payment-shipping/page.tsx
     │   ├── policies/contact/page.tsx
+    │   ├── policies/privacy/page.tsx # OAuth/order privacy & data-deletion policy
     │   ├── admin/
-    │   │   ├── layout.tsx            # client guard via unified /api/auth/session
+    │   │   ├── layout.tsx            # client guard via unified /api/auth/session + noIndex metadata
     │   │   ├── page.tsx              # dashboard + Reset Sample Data
     │   │   ├── products/page.tsx     # retail CPUs and AIB GPUs (with Limited Edition flag)
     │   │   ├── gpu-series/page.tsx   # retail and legacy base series
@@ -301,13 +304,13 @@ pc-hardware-store/
     │           └── reset/
     ├── features/                     # 3-layer UI: use*Controller.ts ({ state, actions }) + components/*View.tsx (*Client.tsx for searchParams)
     │   ├── home/                     # useHomeController.ts, components/HomeClient.tsx, HomeView.tsx
-    │   ├── catalog/                  # useCatalogController.ts, useProductCardActions.ts, components/CatalogView.tsx, ProductCard.tsx
+    │   ├── catalog/                  # useCatalogController.ts, useProductCardActions.ts, components/CatalogClient.tsx, CatalogView.tsx, ProductCard.tsx
     │   ├── search/                   # useSearchSuggest.ts, useSearchResultsController.ts, SearchBar.tsx, components/
     │   ├── product-detail/           # useProductDetailController.ts, components/ProductDetailClient.tsx, ProductDetailView.tsx
     │   ├── cart/                     # store.ts, useCartController.ts, components/CartClient.tsx, CartView.tsx
     │   ├── compare/                  # useComparePageController.ts, components/CompareClient.tsx, CompareTableView.tsx
-    │   ├── checkout/                 # attempt-storage.ts, useCheckoutController.ts, usePaymentController.ts, components/
-    │   ├── orders/                   # order-tokens.ts, useMyOrdersController.ts, useOrderLookupController.ts, useOrderBoardController.ts, components/
+    │   ├── checkout/                 # attempt-storage.ts, useCheckoutController.ts, usePaymentController.ts, components/*Client.tsx + *View.tsx
+    │   ├── orders/                   # order-tokens.ts, useMyOrdersController.ts, useOrderLookupController.ts, useOrderBoardController.ts, components/*Client.tsx + *View.tsx
     │   ├── auth/                     # useAuthSession.ts, components/AuthModal.tsx
     │   ├── perf-per-price/           # usePerfPerPriceController.ts, components/PerfPerPriceClient.tsx, PerfPerPriceView.tsx
     │   ├── psu/                      # usePsuController.ts, components/PsuClient.tsx, PsuEstimatorView.tsx
@@ -317,6 +320,7 @@ pc-hardware-store/
     ├── lib/
     │   ├── api-client.ts             # typed fetch wrapper (apiFetch, apiUpload, ApiClientError)
     │   ├── format.ts                 # VND, numbers, dates (vi-VN, Asia/Ho_Chi_Minh)
+    │   ├── metadata.ts               # buildPageMetadata helper for App Router pages
     │   ├── query-provider.tsx        # TanStack Query client provider
     │   ├── safe-storage.ts           # SyncStateStorage + Zod-validated persist storage with memory fallback
     │   └── search-filter.ts          # diacritic-tolerant multi-token client filter for SearchableSelect
@@ -825,7 +829,7 @@ export interface CompareRow {
 }
 export interface CompareResponse {
   category: Category;
-  products: { id: string; name: string; priceVnd: number }[];
+  products: { id: string; name: string; priceVnd: number; imageUrl: string | null }[];
   rows: CompareRow[];
   notes: string[];                      // PassMark disclaimer, estimation disclaimer
 }
@@ -1198,12 +1202,12 @@ Format: `<area>-<element>[-<qualifier>]`, kebab-case, with a dynamic product or 
 
 | Area | IDs |
 | --- | --- |
-| Header / layout | `header-search-input`, `header-search-submit`, `header-search-suggestion-{id}`, `header-cart-link`, `header-cart-count`, `header-admin-toggle`, `auth-header-login`, `auth-header-user`, `auth-header-my-orders`, `auth-header-logout`, `zalo-float-button`, `footer-github-button`, `footer-link-warranty`, `footer-link-payment-shipping`, `footer-link-contact` |
+| Header / layout | `header-search-input`, `header-search-submit`, `header-search-suggestion-{id}`, `header-cart-link`, `header-cart-count`, `header-admin-toggle`, `auth-header-login`, `auth-header-user`, `auth-header-my-orders`, `auth-header-logout`, `zalo-float-button`, `footer-github-button`, `footer-link-warranty`, `footer-link-payment-shipping`, `footer-link-contact`, `footer-link-privacy`, `error-not-found-page`, `error-runtime-page`, `error-retry-button`, `error-back-home-button` |
 | Auth Modal | `auth-modal`, `auth-tab-login`, `auth-tab-register`, `auth-google-button`, `auth-facebook-button`, `auth-login-username`, `auth-login-password`, `auth-login-submit`, `auth-register-username`, `auth-register-display-name`, `auth-register-password`, `auth-register-submit`, `auth-error-alert` |
 | Home | `home-hero-scroll-cta`, `home-featured-cpu-section`, `home-featured-gpu-section`, `home-featured-cpu-all`, `home-featured-gpu-all`, `home-browse-cpu`, `home-browse-gpu`, `home-tool-compare`, `home-tool-ppp`, `home-tool-psu` |
 | Listing | `filter-vendor-{vendor}`, `filter-price-min`, `filter-price-max`, `filter-vram-{gb}`, `filter-aib-{brand}`, `filter-socket-{socket}`, `filter-clear`, `gpu-tab-all`, `gpu-tab-limited`, `sort-select`, `product-card-{id}`, `product-card-buy-now-{id}`, `product-card-compare-{id}`, `product-card-add-to-cart-{id}` |
 | Detail | `detail-buy-now`, `detail-add-to-cart`, `detail-compare-this`, `detail-calc-psu` |
-| Compare | `compare-slot-select-{index}`, `compare-slot-search-{index}`, `compare-slot-option-{index}-{id}`, `compare-slot-clear-{index}`, `compare-add-column`, `compare-clear-all`, `compare-table`, `compare-cell-{rowKey}-{id}`, `compare-error-back` |
+| Compare | `compare-slot-select-{index}`, `compare-slot-search-{index}`, `compare-slot-option-{index}-{id}`, `compare-slot-clear-{index}`, `compare-slot-preview-{index}`, `compare-add-column`, `compare-clear-all`, `compare-table`, `compare-header-image-{id}`, `compare-cell-{rowKey}-{id}`, `compare-error-back` |
 | Perf-per-Price | `ppp-category-{cpu\|gpu}`, `ppp-vendor-{vendor}`, `ppp-max-price`, `ppp-submit`, `ppp-table`, `ppp-row-{id}`, `ppp-best-value-{id}`, `ppp-empty` |
 | PSU | `psu-cpu-select`, `psu-cpu-search`, `psu-cpu-option-{id}`, `psu-gpu-select`, `psu-gpu-search`, `psu-gpu-option-{id}`, `psu-calculate`, `psu-result-exact`, `psu-result-tier`, `psu-prefill-notice` |
 | Cart | `cart-empty-notice`, `cart-item-{id}`, `cart-qty-input-{id}`, `cart-qty-inc-{id}`, `cart-qty-dec-{id}`, `cart-remove-{id}`, `cart-remove-confirm`, `cart-remove-cancel`, `cart-subtotal`, `cart-shipping`, `cart-total`, `cart-checkout` |
@@ -1213,7 +1217,7 @@ Format: `<area>-<element>[-<qualifier>]`, kebab-case, with a dynamic product or 
 
 ### 12.4 Page notes
 
-1. The Zalo button (`fixed right-4 bottom-4`) stays anchored at the bottom-right corner across all pages (`ComparisonBar` was removed).
+1. The Zalo button (`fixed right-4 bottom-4`) stays anchored at the bottom-right corner across all pages (`ComparisonBar` was removed), while `Footer` keeps extra bottom padding (`pb-20`) so footer links and GitHub link never collide with the Zalo button at `360px` or desktop scroll-bottom.
 2. The GitHub icon sits at the bottom-left of the footer and opens `NEXT_PUBLIC_GITHUB_REPO_URL` in a new tab (`rel="noopener noreferrer"`).
 3. Search suggestions: 200 ms debounce, keyboard navigation, Enter goes to `/search?q=`.
 4. Review modal: focus trap, a visible 5 -> 0 countdown, auto-confirm at 0. Both buttons and the auto-confirm are disabled once a request starts.
@@ -1346,6 +1350,6 @@ Data rules: prices from reputable Vietnamese retailers on the seeding date. Pass
 
 1. The exact retail models, prices, PassMark scores, power values and images in the seed files, with sources (§13.1).
 2. Visual design for phase 2 (colors, typography, hero art).
-3. Wording of the three footer pages, within the rules of §12.1. The shipping sentences are generated from constants.
+3. Wording of the four footer pages, within the rules of §12.1. The shipping sentences are generated from constants, and Privacy Policy documents OAuth/order fields and data deletion contact steps.
 4. Choosing an ID slug helper and handling very long names in admin forms.
 5. Optional: a `pg_trgm` index if the catalog ever grows (not needed at under 200 rows).

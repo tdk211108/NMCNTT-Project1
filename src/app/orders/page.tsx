@@ -1,9 +1,13 @@
-'use client';
+import type { Metadata } from 'next';
+import { MyOrdersClient } from '@/features/orders/components/MyOrdersClient';
+import { buildPageMetadata } from '@/lib/metadata';
+import { VI_MESSAGES } from '@/shared/messages/vi';
 
-import { MyOrdersView } from '@/features/orders/components/MyOrdersView';
-import { useMyOrdersController } from '@/features/orders/useMyOrdersController';
+export const metadata: Metadata = buildPageMetadata({
+  title: VI_MESSAGES.orders.myOrdersTitle,
+  noIndex: true,
+});
 
 export default function MyOrdersPage() {
-  const vm = useMyOrdersController();
-  return <MyOrdersView {...vm} />;
+  return <MyOrdersClient />;
 }

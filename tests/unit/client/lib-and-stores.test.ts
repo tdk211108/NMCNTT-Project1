@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiClientError, apiFetch } from '@/lib/api-client';
 import { formatDateTimeVi, formatExactWatts, formatNumberVi, formatVnd } from '@/lib/format';
+import { buildPageMetadata } from '@/lib/metadata';
 import { matchesSearchTokens, normalizeSearchText } from '@/lib/search-filter';
 import {
   createValidatedLocalPersistStorage,
@@ -128,5 +129,28 @@ describe('client cart store', () => {
     expect(updatedItems.find((i) => i.productId === 'cpu-1')?.lastKnownUnitPriceVnd).toBe(
       2_000_000,
     );
+  });
+
+  it('builds consistent page metadata with OpenGraph defaults and optional noIndex', () => {
+    const publicMeta = buildPageMetadata({
+      title: 'Bộ vi xử lý (CPU)',
+      description: 'Danh mục CPU chính hãng.',
+    });
+    expect(publicMeta.title).toBe('Bộ vi xử lý (CPU)');
+    expect(publicMeta.openGraph).toMatchObject({
+      type: 'website',
+      locale: 'vi_VN',
+      siteName: VI_MESSAGES.brand.name,
+      title: 'Bộ vi xử lý (CPU) | TechCore',
+      description: 'Danh mục CPU chính hãng.',
+    });
+    expect(publicMeta.robots).toBeUndefined();
+
+    const privateMeta = buildPageMetadata({
+      title: 'Giỏ hàng',
+      noIndex: true,
+    });
+    expect(privateMeta.description).toBe(VI_MESSAGES.brand.tagline);
+    expect(privateMeta.robots).toEqual({ index: false, follow: false });
   });
 });

@@ -19,6 +19,7 @@ export interface CompareCpuInput {
   category: 'cpu';
   name: string;
   priceVnd: number;
+  imageUrl?: string | null;
   vendor: ChipVendor;
   passmarkRaw: number;
   normalizedScore: number | null;
@@ -42,6 +43,7 @@ export interface CompareGpuInput {
   category: 'gpu';
   name: string;
   priceVnd: number;
+  imageUrl?: string | null;
   vendor: ChipVendor;
   passmarkRaw: number;
   normalizedScore: number | null;

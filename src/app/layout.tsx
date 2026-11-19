@@ -6,8 +6,22 @@ import { VI_MESSAGES } from '@/shared/messages/vi';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: `${VI_MESSAGES.brand.name} | ${VI_MESSAGES.brand.tagline}`,
+  title: {
+    default: `${VI_MESSAGES.brand.name} | ${VI_MESSAGES.brand.tagline}`,
+    template: `%s | ${VI_MESSAGES.brand.name}`,
+  },
   description: VI_MESSAGES.brand.tagline,
+  openGraph: {
+    type: 'website',
+    locale: 'vi_VN',
+    siteName: VI_MESSAGES.brand.name,
+    title: `${VI_MESSAGES.brand.name} | ${VI_MESSAGES.brand.tagline}`,
+    description: VI_MESSAGES.brand.tagline,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

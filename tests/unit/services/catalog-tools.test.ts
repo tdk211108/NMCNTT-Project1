@@ -141,8 +141,17 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     );
     expect(valid.category).toBe('cpu');
     expect(valid.products).toHaveLength(2);
+    expect(valid.products.every((p) => typeof p.imageUrl === 'string' && p.imageUrl.length > 0)).toBe(true);
     expect(valid.rows).toHaveLength(11);
     expect(valid.notes).toHaveLength(2);
+
+    const validThreeGpus = await compareProducts(
+      'gpu-asus-rog-astral-rtx-5090-32gb-oc,gpu-msi-rtx-5090-32gb-lightning-z,gpu-asus-rog-matrix-30th-rtx-5090-32gb',
+      db,
+    );
+    expect(validThreeGpus.category).toBe('gpu');
+    expect(validThreeGpus.products).toHaveLength(3);
+    expect(validThreeGpus.products.every((p) => typeof p.imageUrl === 'string' && p.imageUrl.length > 0)).toBe(true);
 
     await expect(compareProducts('', db)).rejects.toMatchObject({
       code: 'COMPARE_INVALID',

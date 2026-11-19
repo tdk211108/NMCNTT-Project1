@@ -1,9 +1,13 @@
-'use client';
+import type { Metadata } from 'next';
+import { PaymentClient } from '@/features/checkout/components/PaymentClient';
+import { buildPageMetadata } from '@/lib/metadata';
+import { VI_MESSAGES } from '@/shared/messages/vi';
 
-import { PaymentView } from '@/features/checkout/components/PaymentView';
-import { usePaymentController } from '@/features/checkout/usePaymentController';
+export const metadata: Metadata = buildPageMetadata({
+  title: VI_MESSAGES.checkout.paymentTitle,
+  noIndex: true,
+});
 
 export default function PaymentPage() {
-  const vm = usePaymentController();
-  return <PaymentView {...vm} />;
+  return <PaymentClient />;
 }

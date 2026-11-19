@@ -7,7 +7,7 @@ export function Footer() {
     process.env.NEXT_PUBLIC_GITHUB_REPO_URL || 'https://github.com/tdk211108/NMCNTT-Project1';
 
   return (
-    <footer className="mt-auto border-t border-border bg-surface py-6">
+    <footer className="mt-auto border-t border-border bg-surface pt-6 pb-20">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <a
@@ -24,7 +24,10 @@ export function Footer() {
           <span className="text-xs text-ink-muted">{VI_MESSAGES.brand.tagline}</span>
         </div>
 
-        <nav aria-label="Chính sách" className="flex flex-wrap items-center gap-4 text-sm text-ink-muted">
+        <nav
+          aria-label="Chính sách"
+          className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-muted"
+        >
           <Link
             href="/policies/warranty"
             data-testid={TEST_IDS.layout.footerLinkWarranty}
@@ -45,6 +48,13 @@ export function Footer() {
             className="hover:text-ink"
           >
             {VI_MESSAGES.policies.contactTitle}
+          </Link>
+          <Link
+            href="/policies/privacy"
+            data-testid={TEST_IDS.layout.footerLinkPrivacy}
+            className="hover:text-ink"
+          >
+            {VI_MESSAGES.policies.privacyTitle}
           </Link>
         </nav>
       </div>

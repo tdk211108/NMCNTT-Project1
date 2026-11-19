@@ -257,7 +257,7 @@ The resulting wattage is rounded up to the nearest standard commercial PSU capac
 
 **GitHub Floating Button at Bottom Left of Footer:** Displays a GitHub icon positioned at the bottom left of the footer area. Clicking it opens the project's GitHub repository page in a new browser tab.
 
-**Static Footer Information Pages:** The footer provides links to 3 minimalist static information pages to complete the experience of a computer hardware retail website: **Warranty and Return Policy**, **Payment and Shipping Guide**, and **Contact Information** (presenting concise, essential informational text without introducing complex workflows that would bloat the live demo scope). The Payment and Shipping Guide must match the shipping rules in Section 2.4 (free shipping for orders with 2 or more items, and 50,000 VND flat fee for single-item orders).
+**Static Footer Information Pages:** The footer provides links to 4 minimalist static information pages to complete the experience of a computer hardware retail website: **Warranty and Return Policy**, **Payment and Shipping Guide**, **Contact Information**, and **Privacy Policy** (covering OAuth/account/order data collection and account/data deletion instructions without introducing complex workflows that would bloat the live demo scope). The Payment and Shipping Guide must match the shipping rules in Section 2.4 (free shipping for orders with 2 or more items, and 50,000 VND flat fee for single-item orders).
 
 ## 6. UI Presentation, Architecture, and Engineering Guidelines
 

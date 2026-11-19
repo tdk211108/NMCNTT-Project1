@@ -45,9 +45,12 @@ describe('Vietnamese copy and formatting guardrails', () => {
     }
   });
 
-  it('policy pages (if present) contain no em-dashes or bullet markers', () => {
+  it('policy pages and app error views contain no em-dashes or bullet markers', () => {
     const policyDir = path.resolve(process.cwd(), 'src', 'app', 'policies');
-    const files = listPolicyFiles(policyDir);
+    const errorFiles = ['not-found.tsx', 'error.tsx']
+      .map((name) => path.resolve(process.cwd(), 'src', 'app', name))
+      .filter((filePath) => existsSync(filePath));
+    const files = [...listPolicyFiles(policyDir), ...errorFiles];
     for (const file of files) {
       const content = readFileSync(file, 'utf8');
       expect(content, `${file} contains em-dash`).not.toMatch(EM_DASH_RE);

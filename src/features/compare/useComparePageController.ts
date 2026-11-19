@@ -93,6 +93,11 @@ export function useComparePageController(rawIds: string) {
 
   const rawTokens = parseRawTokens(rawIds);
   const selectedIds = slots.filter((id): id is string => Boolean(id));
+  const selectedProducts: [ProductCard | null, ProductCard | null, ProductCard | null] = [
+    slots[0] ? (productById.get(slots[0]) ?? null) : null,
+    slots[1] ? (productById.get(slots[1]) ?? null) : null,
+    slots[2] ? (productById.get(slots[2]) ?? null) : null,
+  ];
   const selectedCategories = new Set<Category>();
   for (const id of selectedIds) {
     const cat = productById.get(id)?.category;
@@ -135,6 +140,7 @@ export function useComparePageController(rawIds: string) {
   return {
     state: {
       slots,
+      selectedProducts,
       showThirdColumn,
       lockedCategory,
       cpus,

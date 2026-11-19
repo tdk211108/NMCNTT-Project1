@@ -34,6 +34,7 @@ export async function compareProducts(
         id: storefrontProductsV.id,
         name: storefrontProductsV.name,
         priceVnd: storefrontProductsV.priceVnd,
+        imageUrl: storefrontProductsV.imageUrl,
         vendor: storefrontProductsV.vendor,
         passmarkRaw: storefrontProductsV.passmarkRaw,
         normalizedScore: storefrontProductsV.normalizedScore,
@@ -64,6 +65,7 @@ export async function compareProducts(
         id: storefrontProductsV.id,
         name: storefrontProductsV.name,
         priceVnd: storefrontProductsV.priceVnd,
+        imageUrl: storefrontProductsV.imageUrl,
         vendor: storefrontProductsV.vendor,
         passmarkRaw: storefrontProductsV.passmarkRaw,
         normalizedScore: storefrontProductsV.normalizedScore,
@@ -121,6 +123,7 @@ export async function compareProducts(
       id: p.id,
       name: p.name,
       priceVnd: p.priceVnd,
+      imageUrl: p.imageUrl ?? null,
     })),
     rows: buildCompareRows(validated.category, validated.products),
     notes: [

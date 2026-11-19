@@ -1,5 +1,12 @@
+import type { Metadata } from 'next';
 import { Card } from '@/components/ui/Card';
+import { buildPageMetadata } from '@/lib/metadata';
 import { VI_MESSAGES } from '@/shared/messages/vi';
+
+export const metadata: Metadata = buildPageMetadata({
+  title: VI_MESSAGES.policies.contactTitle,
+  description: VI_MESSAGES.policies.contactBody,
+});
 
 export default function ContactPolicyPage() {
   return (

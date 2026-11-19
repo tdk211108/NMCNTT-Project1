@@ -43,11 +43,11 @@ export function ProductDetailView({ state, actions }: ProductDetailViewProps) {
       </div>
 
       <Card className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="flex items-center justify-center rounded-card bg-surface-subtle p-4">
+        <div className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-card bg-white p-2 md:aspect-auto md:h-full md:min-h-[420px]">
           <ProductImage
             src={detail.imageUrl}
             alt={detail.name}
-            className="max-h-80 w-full object-contain"
+            className="h-full max-h-[460px] w-full object-contain"
           />
         </div>
 

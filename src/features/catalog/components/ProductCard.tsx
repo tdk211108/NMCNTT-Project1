@@ -27,8 +27,15 @@ export function ProductCard({
       className="flex flex-col justify-between gap-3"
     >
       <div className="flex flex-col gap-3">
-        <Link href={`/products/${product.id}`} className="block">
-          <ProductImage src={product.imageUrl} alt={product.name} className="h-44 w-full object-contain p-2" />
+        <Link
+          href={`/products/${product.id}`}
+          className="block aspect-square w-full overflow-hidden rounded-control bg-white p-1.5"
+        >
+          <ProductImage
+            src={product.imageUrl}
+            alt={product.name}
+            className="h-full w-full object-contain"
+          />
         </Link>
 
         <div className="flex flex-wrap items-center gap-1.5">
