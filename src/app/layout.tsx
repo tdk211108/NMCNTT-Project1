@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { AppShell } from '@/features/layout/AppShell';
+import { QueryProvider } from '@/lib/query-provider';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import './globals.css';
 
@@ -11,7 +13,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="vi">
-      <body className="min-h-screen bg-slate-50 text-slate-900 antialiased">{children}</body>
+      <body className="min-h-screen bg-bg text-ink antialiased">
+        <QueryProvider>
+          <AppShell>{children}</AppShell>
+        </QueryProvider>
+      </body>
     </html>
   );
 }
