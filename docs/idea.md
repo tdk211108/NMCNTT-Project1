@@ -12,7 +12,7 @@
 
 **Product Catalog Scope:** The storefront exclusively sells and displays retail brand-new CPUs (Intel, AMD) and GPUs (NVIDIA, AMD) currently available on the market. Separately, the PSU Wattage Estimator is preloaded with a distinct, non-overlapping fixed reference group of legacy components, listed model by model in Appendix A (24 legacy CPU models and 33 base GPU series). Legacy components are strictly excluded from the storefront, never offered for sale, and exist solely as reference data so users can evaluate upgrade options against their existing hardware, while also allowing new or legacy reference entries to be added directly through the database at any time. The listed currency is Vietnamese Dong (VND), with static pricing and technical specifications manually entered to closely match actual data from reputable domestic hardware retailers.
 
-**User Account Scope:** The project does not implement a user account system, meaning there are no registration, login, or member profile management features. Guest visitors accessing the website can freely add products to the shopping cart, compare components, use analytical tools, and place orders directly.
+**User Account Scope:** The project provides a unified account system supporting **Google and Facebook OAuth2 login**, **customer username/password registration and login**, and **integrated Admin Mode login** (entering username `admin` with the administrator password). Guest visitors can freely browse the catalog, search, compare components, use analytical tools, manage their shopping cart, and look up an order by Order ID and phone number, while **logging in is required to place an order** and lets customers directly view all of their placed orders ("Đơn hàng của tôi").
 
 **Core Value:** Combine a streamlined online shopping experience with three specialized hardware analysis tools (**Product Specification Comparison**, **Performance-per-Price Ranking**, and **PSU Wattage Estimator**), enabling customers to compare specifications side by side, rank components by cost-efficiency within a target budget, and estimate required power supply wattage directly on the website.
 
@@ -20,15 +20,15 @@
 
 ### 2.1. Homepage (Storefront) and Quick Search
 
-**Homepage:** Features a prominent top banner area (Hero section), showcases featured product categories (CPU and GPU), and provides quick access shortcuts to the three specialized tools.
+**Homepage:** Opens with a full-viewport top banner area (Hero section occupying the first screen) with quick links and a scroll action leading down to separated Featured product sections (**8 Featured CPUs** arranged in 2 rows x 4 cards across Intel & AMD tiers and **8 Featured GPUs** arranged in 2 rows x 4 cards across NVIDIA & AMD series/tiers, each paired with a **"View All"** (`Xem tất cả CPU` / `Xem tất cả GPU`) button to `/cpu` and `/gpu`), followed by quick access shortcuts to the three specialized tools.
 
 **Search Bar and Instant Suggestions:** Positioned prominently, allowing users to enter keywords or component model names (such as CPU model names, GPU series, or manufacturers) and displaying live product suggestions while typing for immediate navigation to the product detail page.
 
 ### 2.2. Product Listing Page
 
-**Categorization and Grouping:** Separates the two main categories into CPU and GPU, displaying only brand-new items currently for sale. Supports visual grouping by chip manufacturer (Intel, AMD, NVIDIA). For the GPU category on the storefront, products are listed individually by each commercial model from Add-in Board (AIB) partners (such as ASUS, MSI, Gigabyte) because each variant has distinct pricing, cooling designs, and product images.
+**Categorization and Grouping:** Separates the two main categories into CPU and GPU, displaying only brand-new items currently for sale. Supports visual grouping by chip manufacturer (Intel, AMD, NVIDIA). For the GPU category on the storefront, products are listed individually by each commercial model from Add-in Board (AIB) partners (such as ASUS, MSI, Gigabyte) because each variant has distinct pricing, cooling designs, and product images. Inside the GPU listing page (`/gpu`), two view tabs are provided: **All GPUs** (`Tất cả GPU`, displaying all active GPUs including limited editions) and **Limited Edition** (filtering exclusively AIB variants flagged as limited/collaboration editions, such as ASUS T1 collabs and limited RTX 5080/5090 releases).
 
-**Information Displayed on Each Product Card:** Each card presents the product illustration image, full product name, listed selling price (in VND), key summary technical specifications, and a **"Compare"** (`So sánh`) button to add the product to the comparison bar.
+**Information Displayed on Each Product Card:** Each card presents the product illustration image, full product name, listed selling price (in VND), key summary technical specifications, a primary **"Buy Now"** (`Mua ngay`) action (which adds 1 unit to the existing cart and navigates directly to `/cart`), a compact **"Add to Cart"** (`Thêm vào giỏ`) icon button, and a **"Compare"** (`So sánh`) button that opens the comparison workspace directly with this model pre-selected.
 
 **Multi-condition Filtering (Multi-filter):** General filters allow filtering by chip manufacturer (Intel, AMD, NVIDIA) and price range (in VND). GPU-specific filters allow filtering by VRAM capacity and AIB partner brand (such as ASUS, MSI, Gigabyte). CPU-specific filters allow filtering by socket type. The options shown in the VRAM, AIB partner brand, and socket filters are not fixed in advance. They are generated automatically from the products currently displayed on the storefront, so a filter option never appears without at least one matching product, a new capacity such as 32 GB appears as soon as the administrator adds a product with that capacity, and the lists update whenever the administrator adds or removes products.
 
@@ -42,13 +42,13 @@
 
 **Detailed Technical Specification Table:** Provides complete standardized specifications synchronized with the Product Specification Comparison tool criteria. Specifically for **GPUs**, the detail page includes an additional group of physical and connectivity specifications covering **card dimensions** (length in mm and thickness in PCIe slots) as well as **display output port counts** (HDMI and DisplayPort).
 
-**Quick Action Buttons to Specialized Tools:** Contextual navigation buttons are placed directly on the product detail page (specifically **"Compare this model"** and **"Calculate PSU wattage"**). Clicking **"Compare this model"** adds the currently viewed storefront product to the comparison bar (or navigates to the comparison view). Clicking **"Calculate PSU wattage"** navigates to the PSU Wattage Estimator interface and **automatically pre-fills the currently viewed product** (automatically mapping to the base GPU series name if viewing a commercial AIB GPU variant).
+**Quick Action Buttons to Specialized Tools:** Direct purchase and contextual navigation buttons are placed on the product detail page: a primary **"Buy Now"** (`Mua ngay`) action + compact square **"Add to Cart"** icon button, alongside **"Compare this model"** and **"Calculate PSU wattage"**. Clicking **"Compare this model"** navigates directly to `/compare?ids=<id>` with the currently viewed product pre-filled in column 1 and remaining column(s) filtered to the same category. Clicking **"Calculate PSU wattage"** navigates to the PSU Wattage Estimator interface and **automatically pre-fills the currently viewed product** (automatically mapping to the base GPU series name if viewing a commercial AIB GPU variant).
 
-### 2.4. Guest Cart, Checkout, Validation, and Order Tracking
+### 2.4. Cart, Authenticated Checkout, Validation, and Order Tracking
 
-**Shopping Cart Management:** Guest visitors can add products to the cart without logging in. The cart supports increasing or decreasing item quantities, removing individual items, automatically recalculating the total order value, and persisting cart state across page reloads in the visitor's own browser.
+**Shopping Cart Management:** Guest visitors can add products to the cart without logging in. The cart supports increasing or decreasing item quantities, removing individual items, automatically recalculating the total order value, and persisting cart state across page reloads in the visitor's own browser. Proceeding to checkout (`/checkout`) and submitting an order requires logging in (either via Google/Facebook or a registered username/password account). Orders created while logged in are linked to the buyer's account (`user_id`) so they appear automatically in **"My Orders"** (`/orders`).
 
-**Cart Synchronization with Catalog Changes:** Because cart and comparison selections are stored in browser `localStorage`, opening the cart, comparison bar, or checkout page automatically synchronizes selected product IDs against the latest active server catalog. If an administrator updates a product's price, the cart updates to the current price and notifies the visitor. If an administrator soft-deletes a product already sitting in a visitor's cart or comparison bar, the frontend removes the unavailable entry with a clear notice naming the discontinued item; if a stale or soft-deleted product ID is submitted during checkout, the backend rejects the request with a clear conflict notice listing the unavailable item name(s) so no order can be placed for deleted products.
+**Cart Synchronization with Catalog Changes:** Because cart selections are stored in browser `localStorage`, opening the cart or checkout page automatically synchronizes selected product IDs against the latest active server catalog. If an administrator updates a product's price, the cart updates to the current price and notifies the visitor. If an administrator soft-deletes a product already sitting in a visitor's cart, the frontend removes the unavailable entry with a clear notice naming the discontinued item; if a stale or soft-deleted product ID is submitted during checkout, the backend rejects the request with a clear conflict notice listing the unavailable item name(s) so no order can be placed for deleted products.
 
 **Cart Quantity and Empty-Cart Rules:**
 
@@ -98,7 +98,9 @@
 
 **Order Lookup and Security Controls:**
 
-* Customers can reopen the order status tracking board at any time by submitting both their **Order ID** and the **Phone Number** (normalized using the checkout phone normalization rules) used during checkout.
+* Logged-in customers can view a list of all orders placed under their account on the **"My Orders"** (`/orders`) page and open any order's status tracking board directly without re-entering the Order ID or phone number.
+
+* Additionally, visitors can reopen any order status tracking board via `/orders/lookup` by submitting both its **Order ID** and the **Phone Number** (normalized using the checkout phone normalization rules) used during checkout.
 
 * When no record matches both fields, the system always displays a single generic error message (**"No order found with this information"** / *"Không tìm thấy đơn hàng với thông tin này"*) without indicating which input field was incorrect.
 
@@ -124,27 +126,21 @@
 
 **Selectable Data Source:** Exclusively includes **brand-new products currently sold on the storefront** (listing individual commercial AIB GPU models with their respective retail selling prices). Legacy reference components in Appendix A are excluded from this tool because they are not sold on the storefront and have no retail price.
 
-**Selection and Sticky Comparison Bar Flow:**
+**Direct Navigation and Interactive Multi-Slot Selection Flow:**
 
-1. Users add products to the comparison queue by clicking the **"Compare"** (`So sánh`) button on product cards in the storefront (or **"Compare this model"** on a product detail page).
+1. Clicking **"Compare"** (`So sánh`) on any product card or **"Compare this model"** (`So sánh mẫu này`) on a product detail page navigates directly to `/compare?ids=<id>`, pre-filling column 1 with that product and automatically filtering the remaining searchable column selector to only products of the same category (CPU with CPU, or GPU with GPU).
+2. Navigating directly to the **Compare** tab (`/compare`) displays two side-by-side searchable product selectors (filtering options live by model name or brand) without raising an empty error state. Selecting either column first automatically locks all remaining column selectors to the same category (`cpu` or `gpu`).
+3. **Optional 3rd Column and Edge States:**
 
-2. A **sticky comparison bar** fixed at the bottom of the viewport displays the currently selected products, allows removing individual items or clearing the selection, and provides a button to launch the comparison view once **at least 2 products** are selected.
+   * Buyers can optionally add a 3rd column (**up to 3 products of the same category** in total) or clear individual columns / reset the comparison at any time.
 
-3. **Validation and Edge States:**
-
-   * A user can select **up to 3 products of the same category** (CPU with CPU, or GPU with GPU).
-
-   * Attempting to add a product from a different category displays the notice: **"Only products of the same category can be compared"** (*"Chỉ so sánh được các sản phẩm cùng loại"*).
-
-   * Attempting to select more than 3 products displays a notification indicating that the maximum limit of 3 products has been reached.
-
-   * Opening the comparison view with fewer than 2 products prompts the user to select at least 2 products.
+   * Once at least 2 distinct active products of the same category are selected, the side-by-side comparison table loads automatically and updates the URL (`/compare?ids=a,b` or `a,b,c`).
 
 **Comparison Page (`/compare?ids=a,b,c`) and Direct URL Validation:**
 
-* Navigating to `/compare?ids=a,b,c` deduplicates repeated product IDs and validates all requested items against active storefront records before rendering the side-by-side specification table.
+* Navigating directly to `/compare?ids=a,b,c` deduplicates repeated product IDs and validates all requested items against active storefront records before rendering the side-by-side specification table (when 0 or 1 valid active ID is provided in the URL, the page renders the interactive column selectors rather than an error card).
 
-* If the URL contains nonexistent or soft-deleted product IDs, mixes CPU and GPU categories, or resolves to fewer than 2 or more than 3 unique valid products, the page displays a clear error state explaining the issue with a direct button to return to the storefront and re-select products, rather than rendering an incomplete or broken table.
+* If a URL contains nonexistent or soft-deleted product IDs, mixes CPU and GPU categories, specifies fewer than 2 unique products across multiple tokens (e.g., `?ids=a,a`), or requests more than 3 unique products, the page displays a clear error state explaining the issue with a direct button to return to the storefront alongside the selectors, rather than rendering an incomplete or broken table.
 
 * When valid (2 or 3 same-category active products), the table displays **product names** (hiding product images to maximize horizontal viewing space), all detailed technical criteria for the category, Selling Price (in VND), and normalized Benchmark Score (alongside raw PassMark score in parentheses).
 
@@ -152,11 +148,11 @@
 
 **Highlight Rules:** On rows marked for optimization, the cell(s) holding the best value across the compared products are visually **highlighted**:
 
-* **Higher is Better (Unconditionally Highlighted):** Benchmark Score, Cores and Threads, Base Clock, Boost Clock, and L3 Cache Capacity (for CPUs); VRAM Capacity, Processing Cores, Base Clock, Boost Clock, and Memory Bus Width (for GPUs). The highest numeric value is highlighted directly across all compared products regardless of chip manufacturer or microarchitecture.
+* **Higher is Better:** Benchmark Score and Cores and Threads (for CPUs); Benchmark Score, VRAM Capacity, Processing Cores, and Memory Bus Width (for GPUs). The highest numeric value is highlighted directly across all compared products regardless of chip manufacturer or microarchitecture.
 
-* **Lower is Better (Unconditionally Highlighted):** Selling Price and Power Consumption (TDP).
+* **Lower is Better:** Selling Price (VND).
 
-* **Informational Text Labels (Never Highlighted):** Architecture, Socket, Manufacturing Process, and Supported RAM Standard (for CPUs); Memory Type (for GPUs), because text attributes cannot be ranked numerically.
+* **Informational Criteria (Never Highlighted):** Architecture, Socket, Manufacturing Process, Base Clock, Boost Clock, Cache Memory, Power Consumption (TDP), and Supported RAM Standard (for CPUs); Power Consumption (TDP/TBP), Base Clock, Boost Clock, and Memory Type (for GPUs), because clock speeds, power draw, and raw cache capacity cannot reliably be judged in isolation across differing architectures.
 
 **Detailed GPU Comparison Criteria:**
 
@@ -166,9 +162,9 @@
 | 2 | Benchmark Score | Dynamically normalized PassMark score (base 100 scale, with raw score shown) | Higher is better | 
 | 3 | VRAM Capacity | Graphics memory capacity (unit: GB) | Higher is better | 
 | 4 | Processing Cores | CUDA Cores (for NVIDIA) or Stream Processors (for AMD) | Higher is better | 
-| 5 | Power Consumption (TDP) | Maximum thermal design / total board power rating (unit: W) | Lower is better | 
-| 6 | Base Clock | Standard operating clock speed (unit: MHz) | Higher is better | 
-| 7 | Boost Clock | Maximum clock speed under heavy load (unit: MHz) | Higher is better | 
+| 5 | Power Consumption (TDP) | Maximum thermal design / total board power rating (unit: W) | No | 
+| 6 | Base Clock | Standard operating clock speed (unit: MHz) | No | 
+| 7 | Boost Clock | Maximum clock speed under heavy load (unit: MHz) | No | 
 | 8 | Memory Type | Graphics memory chip generation (GDDR6, GDDR6X, GDDR7) | No | 
 | 9 | Memory Bus Width | Memory interface bus width (unit: bit) | Higher is better | 
 
@@ -182,10 +178,10 @@
 | 4 | Socket | Motherboard compatible socket standard (AM5, LGA1851, LGA1700) | No | 
 | 5 | Manufacturing Process | Semiconductor fabrication process node (TSMC 4nm, Intel 7) | No | 
 | 6 | Cores and Threads | Total core and thread counts, separating Performance Cores (P-Core) and Efficiency Cores (E-Core) if applicable | Higher is better (higher total core count, then higher total thread count) | 
-| 7 | Base Clock | Standard operating clock frequency (unit: GHz) | Higher is better | 
-| 8 | Boost Clock | Maximum single-core boost frequency (unit: GHz) | Higher is better | 
-| 9 | Cache Memory | Formatted text showing L1, L2, and L3 Cache, backed by a dedicated numeric L3 Cache field (in MB) | Higher is better (evaluated strictly on numeric L3 Cache capacity in MB) | 
-| 10 | Power Consumption (TDP) | Processor base thermal design power rating (unit: W) | Lower is better | 
+| 7 | Base Clock | Standard operating clock frequency (unit: GHz) | No | 
+| 8 | Boost Clock | Maximum single-core boost frequency (unit: GHz) | No | 
+| 9 | Cache Memory | Formatted text showing L1, L2, and L3 Cache | No | 
+| 10 | Power Consumption (TDP) | Processor base thermal design power rating (unit: W) | No | 
 | 11 | Supported RAM Standard | System memory generation and supported transfer speeds (DDR5-6400, DDR4-3200) | No | 
 
 ### 3.2. Tool 2: Performance-per-Price Ranking
@@ -228,7 +224,7 @@
 
 **Selectable Data Source:** Combines all brand-new retail products currently sold on the storefront with the completely distinct legacy reference component dataset in Appendix A (plus any additional legacy reference entries added via Admin Mode). Because legacy components and retail storefront products are maintained as separate, non-overlapping datasets, all retail models and legacy reference models are listed cleanly without overlap. Unlike the storefront and the Product Specification Comparison tool (which list individual commercial card models by AIB partner), GPU selection in the PSU Wattage Estimator normalizes storefront GPUs to their **base GPU series name** (such as RTX 5070 or RX 9070 XT, without splitting into ASUS, MSI, or Gigabyte variants) alongside the legacy base GPU series in Appendix A.
 
-**User Flow:** First, the user simultaneously selects **1 CPU model** and **1 base GPU series name** from the combined dataset. Second, the system calculates and returns the minimum recommended PSU wattage.
+**User Flow:** First, the user simultaneously selects **1 CPU model** and **1 base GPU series name** from searchable dropdown selectors (filtering models cleanly inside the `"Đang bán"` and `"Tham khảo (đời cũ)"` groups). Second, the system calculates and returns the minimum recommended PSU wattage.
 
 **Calculation Rules:** The recommended wattage is estimated using the following formula, where the CPU value is the **PSU calculation power** and the GPU value is the total board power (both defined in Section 3.0), $100\text{W}$ reserves power for baseline system components (motherboard, RAM, storage, fans), and $1.25$ applies a $25\%$ safety headroom against transient spikes and voltage drops under peak loads:
 
@@ -243,15 +239,15 @@ The resulting wattage is rounded up to the nearest standard commercial PSU capac
 
 ## 4. Admin Mode
 
-**Access Control, Credential Security, and Login Rate-Limiting:** Provides an Admin Mode toggle button directly on the website interface, protected by password authentication. The administrator password is configured via the `ADMIN_PASSWORD` environment variable (in `.env`), never hardcoded in source code and never committed to the source repository. Password verification is executed on the backend using cryptographic hash storage/comparison. To prevent brute-force password guessing, failed administrator login attempts are rate-limited to a maximum of **5 failed attempts within 15 minutes per IP address**.
+**Access Control, Credential Security, and Login Rate-Limiting:** Uses a unified login modal supporting Google/Facebook OAuth2, customer registration/login, and integrated Admin Mode authentication (entering username `admin` with the administrator password, while reserving `'admin'` against customer registration). The administrator password hash is configured via the `ADMIN_PASSWORD` environment variable (in `.env`), never hardcoded in source code and never committed to the source repository. Password verification is executed on the backend using `scrypt` cryptographic hash storage/comparison. To prevent brute-force guessing, failed login attempts are rate-limited to a maximum of **5 failed attempts within 15 minutes per IP address**.
 
 **Direct Web Database and Order Management:** Allows the administrator to manage two strictly separated hardware groups directly through the web interface without needing external database management tools: (1) **Storefront Retail Products** (new CPUs and AIB GPUs for sale, including model names, selling prices, product images, manufacturer categories, detailed specifications, raw PassMark benchmark scores with their source and date, TDP values, and CPU PSU calculation power), and (2) **Legacy Reference Components** (non-retail legacy CPUs and legacy base GPU series used exclusively in the PSU Wattage Estimator). Legacy reference entries cannot be converted into retail storefront products and retail products cannot be converted into legacy entries. Admin Mode also includes an **Order List View** displaying all placed orders (Order ID, customer full name, phone number, total payable amount, current status stage, and creation timestamp) with direct links to open each order's tracking board during demonstrations.
 
 **Product Image Input Options:** When adding or editing a product in Admin Mode, the administrator can either **paste an external image URL** or **upload an image file directly from their computer** (stored persistently in **Supabase Storage**, with the resulting public URL saved in the database, because Vercel serverless functions do not provide persistent local disk storage).
 
-**Sample Data Reset for Public Demo:** Admin Mode provides a **"Reset Sample Data"** (*"Khôi phục dữ liệu mẫu"*) action button that performs a complete environment reset for live demonstrations: restoring the product catalog and legacy reference seed records to their default baseline state, **deleting all placed orders**, and **purging any non-seed uploaded images from Supabase Storage**.
+**Sample Data Reset for Public Demo:** Admin Mode provides a **"Reset Sample Data"** (*"Khôi phục dữ liệu mẫu"*) action button that performs a complete environment reset for live demonstrations: restoring the product catalog and legacy reference seed records to their default baseline state, **deleting all placed orders**, and **purging any non-seed uploaded images from Supabase Storage** (while preserving user account records).
 
-**Strict Base GPU Inheritance for AIB Variants:** Minor factory-overclock differences across AIB cards are ignored; all commercial AIB GPU variants strictly follow the core specifications of their parent base GPU series. When adding or viewing an AIB GPU product, the record dynamically inherits all core technical specifications (VRAM capacity, processing cores, TDP/TBP rating, base clock, boost clock, memory type, memory bus width, and raw PassMark benchmark score) directly from the linked **base GPU series**, while the administrator only manages variant-specific attributes (full commercial model name, AIB partner brand, selling price, product image, card dimensions, and display output port counts). Updating a base GPU series automatically reflects across all of its attached AIB variants. Legacy reference GPUs in Appendix A remain exclusively at the base GPU series level and never have AIB variants.
+**Strict Base GPU Inheritance for AIB Variants:** Minor factory-overclock differences across AIB cards are ignored; all commercial AIB GPU variants strictly follow the core specifications of their parent base GPU series. When adding or viewing an AIB GPU product, the record dynamically inherits all core technical specifications (VRAM capacity, processing cores, TDP/TBP rating, base clock, boost clock, memory type, memory bus width, and raw PassMark benchmark score) directly from the linked **base GPU series**, while the administrator only manages variant-specific attributes (full commercial model name, AIB partner brand, `Limited Edition` flag, selling price, product image, card dimensions, and display output port counts). Updating a base GPU series automatically reflects across all of its attached AIB variants. Legacy reference GPUs in Appendix A remain exclusively at the base GPU series level and never have AIB variants.
 
 **Deletion Rules:** Deleting a product is a soft delete. The product disappears from the storefront, specialized tools, search, and filters, while its record remains preserved in the database so existing orders continue displaying the exact product name. A base GPU series that still has AIB variants attached cannot be deleted; the system blocks the action and displays the message **"Please delete the AIB variants first"**.
 
@@ -277,11 +273,13 @@ The resulting wattage is rounded up to the nearest standard commercial PSU capac
 
 ## 7. Data Persistence Requirements
 
-**Data That Must Be Stored Long Term:** Two primary groups of data must survive closing and reopening the website and remain consistent across any device:
+**Data That Must Be Stored Long Term:** Three primary groups of data must survive closing and reopening the website and remain consistent across any device:
 
 1. **Product Catalog and Reference Hardware:** All storefront products, technical specifications, raw PassMark benchmark scores, power ratings, and Appendix A legacy reference entries, ensuring administrator updates persist across sessions and devices.
 
-2. **Orders and Snapshots:** All placed orders and their historical item/pricing snapshots, enabling customers to look up orders using their Order ID and phone number from any device.
+2. **User Accounts and OAuth Links:** Registered customer accounts (`users`) and linked Google/Facebook OAuth identities (`oauth_accounts`).
+
+3. **Orders and Snapshots:** All placed orders (`user_id` linked when placed by a customer) and their historical item/pricing snapshots, enabling customers to view their placed orders after logging in or look up orders using their Order ID and phone number from any device.
 
 For these reasons, the project requires a persistent cloud-hosted relational database. Because the application is deployed on **Vercel** (serverless hosting with an ephemeral filesystem), local file-based databases such as SQLite or flat JSON files are unsuitable and would lose data across deployments or cold starts. Instead, the project uses **PostgreSQL hosted on Supabase** (free tier) for structured data and **Supabase Storage** for uploaded product images, ensuring administrator edits and customer orders persist reliably across sessions and devices.
 

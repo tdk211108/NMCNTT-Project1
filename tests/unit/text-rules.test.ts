@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { ERROR_MESSAGES } from '@/server/http/errors';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 
 const EM_DASH_RE = /—/;
@@ -31,8 +32,11 @@ function listPolicyFiles(dir: string): string[] {
 }
 
 describe('Vietnamese copy and formatting guardrails', () => {
-  it('VI_MESSAGES contains no em-dashes or bullet markers', () => {
-    const entries = collectStrings(VI_MESSAGES);
+  it('VI_MESSAGES and ERROR_MESSAGES contain no em-dashes or bullet markers', () => {
+    const entries = [
+      ...collectStrings(VI_MESSAGES, 'VI_MESSAGES'),
+      ...collectStrings(ERROR_MESSAGES, 'ERROR_MESSAGES'),
+    ];
     expect(entries.length).toBeGreaterThan(0);
 
     for (const entry of entries) {

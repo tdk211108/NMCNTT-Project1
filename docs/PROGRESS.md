@@ -40,45 +40,49 @@
 
 ## 3. Các bước còn lại
 
-### Bước 2 — Database Schema, Migration & Seed lên Supabase (`NEXT`)
+### Bước 2 — Database Schema, Migration & Seed lên Supabase (`DONE`)
 > **Điều kiện trước khi chạy `db:migrate` / `db:seed` / `storage:seed`:**
-> 1. Người dùng điền xong `psu_power_w` (`C01`..`C24`) và `tbp_w` (`G01`..`G33`) trong `legacy_seed_data.xlsx`.
-> 2. Người dùng tạo `.env` từ `.env.example` (điền 4 biến Supabase + `AUTH_SECRET` + `ADMIN_PASSWORD` hash từ `npm run admin:hash`).
-> 3. Đảm bảo bucket `product-images` (Public) đã tồn tại trên Supabase Storage.
+> 1. ~~Người dùng điền xong `psu_power_w` (`C01`..`C24`) và `tbp_w` (`G01`..`G33`) trong `legacy_seed_data.xlsx`.~~ (`DONE`: đủ `24/24` CPU và `33/33` GPU)
+> 2. ~~Người dùng tạo `.env` từ `.env.example` (4 biến Supabase đã đúng mẫu).~~ (`DONE`: toàn bộ 13 biến gồm `ADMIN_PASSWORD`, `AUTH_SECRET`, `CRON_SECRET` đã điền giá trị thực trong `.env`.)
+> 3. ~~Đảm bảo bucket `product-images` (Public) đã tồn tại trên Supabase Storage.~~ (`DONE`: verified `public: true`)
 
-- [ ] Viết `src/server/db/client.ts` (`import 'server-only'`, `prepare: false`, `max: 3`, `idle_timeout: 20`).
-- [ ] Viết `src/server/db/schema/` (`products.ts`, `cpu.ts`, `gpu.ts`, `legacy.ts`, `orders.ts`, `security.ts`, `index.ts`) và `views.ts` (`storefront_products_v` qua `pgView(...).existing()`).
-- [ ] Generate Drizzle migration + custom SQL migration cho `storefront_products_v`, trigger `forbid_series_kind_change`, và `ENABLE ROW LEVEL SECURITY` (zero policy) trên toàn bộ bảng.
-- [ ] Convert `hardware_seed_data.xlsx` -> `src/server/db/seed/data/retail-cpus.ts`, `gpu-series.ts`, `gpu-variants.ts`.
-- [ ] Convert `legacy_seed_data.xlsx` -> `src/server/db/seed/data/legacy-cpus.ts`, `legacy-gpus.ts`.
-- [ ] Viết `src/server/db/seed/seed-catalog.ts` (dùng chung cho CLI seed và `reset.service.ts`).
-- [ ] Viết các script: `scripts/hash-admin-password.ts`, `scripts/seed.ts`, `scripts/upload-seed-images.ts`.
-- [ ] Chạy `npm run db:migrate`, `npm run storage:seed`, và `npm run db:seed`.
+- [x] Viết `src/server/db/client.ts` (`import 'server-only'`, `prepare: false`, `max: 3`, `idle_timeout: 20`).
+- [x] Viết `src/server/db/schema/` (`products.ts`, `cpu.ts`, `gpu.ts`, `legacy.ts`, `orders.ts`, `security.ts`, `index.ts`) và `views.ts` (`storefront_products_v` qua `pgView(...).existing()`).
+- [x] Generate Drizzle migration (`drizzle/0000_white_blob.sql`) + custom SQL migration (`drizzle/0001_views_triggers_rls.sql`) cho `storefront_products_v`, trigger `forbid_series_kind_change`, và `ENABLE ROW LEVEL SECURITY` (zero policy) trên toàn bộ bảng.
+- [x] Convert `hardware_seed_data.xlsx` -> `src/server/db/seed/data/retail-cpus.ts` (35), `gpu-series.ts` (13), `gpu-variants.ts` (71).
+- [x] Convert `legacy_seed_data.xlsx` -> `src/server/db/seed/data/legacy-cpus.ts` (24), `legacy-gpus.ts` (33).
+- [x] Viết `src/server/db/seed/seed-catalog.ts` (dùng chung cho CLI seed và `reset.service.ts`).
+- [x] Viết `src/server/auth/password.ts` và các script: `scripts/hash-admin-password.ts`, `scripts/seed.ts`, `scripts/upload-seed-images.ts` (kèm unit test `tests/unit/seed-data.test.ts` và `tests/unit/password.test.ts`).
+- [x] Chạy `npm run db:migrate`, `npm run storage:seed`, và `npm run db:seed` (kiểm chứng lại 2 lần idempotent + kiểm tra trực tiếp Supavisor `:6543`, `storefront_products_v`, RLS 9/9 bảng, trigger `gpu_series_kind_immutable` và HTTP `200` trên ảnh public).
 
-### Bước 3 — Core Backend (`domain` -> `services` -> `/api/*`) + Unit/Integration Tests
-- [ ] `src/server/domain/*` (pure functions, không I/O, inject clock nếu cần): `phone.ts`, `name.ts`, `cart-rules.ts`, `shipping.ts`, `order-id.ts`, `scoring.ts`, `compare.ts`, `psu.ts`, `masking.ts`, `slug.ts`.
-- [ ] Viết Vitest unit test đạt 100% coverage cho toàn bộ `src/server/domain/*` + test quét rule không `—` / không bullet cho `vi.ts`, `errors.ts`, `/policies/**`.
-- [ ] `src/server/auth/*` (`password.ts`, `admin-session.ts`, `order-token.ts`), `src/server/security/*` (`rate-limit.ts`, `client-ip.ts`, `origin-check.ts`), `src/server/address/address.repo.ts`, `src/server/storage/supabase-storage.ts`, `src/server/payments/demo-bank.ts`, `src/server/http/*` (`errors.ts`, `handler.ts`).
-- [ ] `src/server/services/*`: `catalog`, `search`, `compare`, `perf-per-price`, `psu`, `cart`, `checkout`, `order`, `admin-catalog`, `admin-order`, `image`, `reset`.
-- [ ] Toàn bộ Route Handlers `src/app/api/**/route.ts` (`runtime = 'nodejs'`, `dynamic = 'force-dynamic'` trừ `/api/address/**`).
+### Bước 3 — Core Backend (`domain` -> `services` -> `/api/*`) + Unit/Integration Tests (`DONE`)
+- [x] Đồng bộ `src/shared/*`: chỉnh `ADMIN_SESSION_COOKIE = 'admin_session'`, `ADMIN_SESSION_TTL_HOURS = 8`, bổ sung `stockStatus: 'in_stock'` vào `ProductDetail`, thêm `productListQuerySchema` + `PATCH` schemas + admin DTOs.
+- [x] `src/server/domain/*` (pure functions, không I/O, inject clock/RNG): `phone.ts`, `name.ts`, `cart-rules.ts`, `shipping.ts`, `order-id.ts`, `scoring.ts`, `compare.ts`, `psu.ts`, `masking.ts`, `slug.ts`.
+- [x] Cài `@vitest/coverage-v8@5.1.0`, cấu hình `npm run test:coverage` đạt **100%** Stmts/Branch/Funcs/Lines cho toàn bộ `src/server/domain/*` + mở rộng `tests/unit/text-rules.test.ts` quét cả `ERROR_MESSAGES` trong `src/server/http/errors.ts`.
+- [x] `src/server/auth/*` (`password.ts`, `admin-session.ts`, `order-token.ts`), `src/server/security/*` (`rate-limit.ts`, `client-ip.ts`, `origin-check.ts`), `src/server/address/address.repo.ts`, `src/server/storage/supabase-storage.ts`, `src/server/payments/demo-bank.ts`, `src/server/http/*` (`errors.ts`, `handler.ts`, `route-helpers.ts`).
+- [x] `src/server/services/*`: `catalog`, `search`, `compare`, `perf-per-price`, `psu`, `cart`, `checkout`, `order`, `admin-catalog`, `admin-order`, `image`, `reset`.
+- [x] Toàn bộ 30 Route Handlers `src/app/api/**/route.ts` (`runtime = 'nodejs'`, `dynamic = 'force-dynamic'` trừ `/api/address/**`); trang `/search?q=` gọi song song `GET /api/products?category=cpu&q=...` và `category=gpu&q=...` (Phương án B) để giữ `category` bắt buộc trên `GET /api/products`.
+- [x] Viết & chạy pass 100% unit/infra/integration tests trên Docker `postgres:16-alpine` local (`techcore-test-db`, port `5433`, helper `tests/helpers/test-db.ts`), kiểm chứng `npm run typecheck`, `npm run lint`, `npm run test:coverage` (**13** files, **67/67** tests), và `npm run build` (**30** API routes).
 
-### Bước 4 — UI Skeleton (đủ `data-testid`, responsive từ `360px`)
-- [ ] `src/lib/*` (`api-client.ts`, `format.ts`, `safe-storage.ts`) và `src/components/ui/*`.
-- [ ] `src/features/*` (tách riêng hook và presentational component, chỉ import `shared` & `lib`, dùng `<img>` thường với fallback `/icons/placeholder-product.svg`).
-- [ ] Dựng các trang App Router:
-  - Layout chung (Header, Search suggest, Cart badge, Admin toggle, Footer, Zalo/GitHub floating button offset trên Compare bar).
-  - Storefront: `/`, `/cpu`, `/gpu`, `/search`, `/products/[id]`.
-  - 3 Công cụ: `/compare`, `/tools/perf-per-price`, `/tools/psu`.
-  - Cart, Checkout & Order Tracking: `/cart`, `/checkout`, `/checkout/payment`, `/orders/lookup`, `/orders/[orderId]` (5-stage board + `[Demo Control]`).
+### Bước 4 — UI Skeleton & Kiến trúc 3 tầng Theme-Ready (`DONE`)
+- [x] Tầng Theme & Primitives: cấu hình Dark Neutral semantic tokens (`@theme`) trong `src/app/globals.css`, mở rộng `src/shared/messages/vi.ts` + `src/shared/testids.ts`, dựng `src/lib/*` (`api-client.ts`, `format.ts`, `query-provider.tsx`, `safe-storage.ts`) và `src/components/ui/*` (`Button`, `Input`, `Select`, `Card`, `Feedback`, `Table`, `Modal` `<dialog>`, `Toast`, `toast-store`, `ProductImage` dùng `<img>` thường với fallback `/icons/placeholder-product.svg`).
+- [x] Tầng Headless Controller (`use*Controller.ts` xuất `{ state, actions }`) + Presentational Views (`*View.tsx`, props-only, responsive từ `360px`, giữ nguyên `data-testid`) trong `src/features/*` + tài liệu nối dây `docs/UI_WIRING.md` để tùy biến UI sâu ở Bước 6 (trước khi deploy).
+- [x] Dựng toàn bộ 22 trang App Router (kèm Server wrapper truyền props nguyên thủy cho `*Client.tsx` trên các route đọc `searchParams`), đồng bộ cấu hình Supavisor `max_pipeline: 1` trong `src/server/db/client.ts` + timeout 15s ở `src/lib/api-client.ts`:
+  - Layout chung (`AppShell`, `Header`, `SearchBar`, Cart badge, nút Tài khoản/Đăng nhập + `AuthModal`, `Footer`, `ZaloButton` cố định góc dưới phải; bỏ `ComparisonBar`).
+  - Storefront: `/` (Hero full-viewport `100dvh`, lướt xuống tới 8 CPU nổi bật 2x4 + 8 GPU nổi bật 2x4 đa hãng/phân khúc qua `/api/products/featured`, kèm nút `Xem tất cả CPU` / `Xem tất cả GPU`), `/cpu`, `/gpu` (có 2 tab `Tất cả GPU` và `Limited Edition` lọc 8 biến thể giới hạn qua cờ `is_limited_edition` + migration `drizzle/0003_certain_wasp.sql`), `/search`, `/products/[id]` (nút `Mua ngay` primary giữ món cũ & chuyển `/cart`, nút ô vuông `Thêm vào giỏ` icon, nút `So sánh` nhảy thẳng sang `/compare?ids=...`).
+  - 3 Công cụ: `/compare` (chọn 2–3 cột bằng dropdown có ô tìm kiếm `SearchableSelect` tự lọc khóa cùng loại `cpu`/`gpu`; chỉ highlight Giá, Điểm benchmark, Nhân/luồng ở CPU và Giá, Điểm benchmark, VRAM, CUDA Cores/Stream Processors, Độ rộng bus ở GPU — bỏ highlight xung nhịp, TDP/TBP và L3 Cache), `/tools/perf-per-price`, `/tools/psu` (dropdown `SearchableSelect` + prefill + nút Thử lại).
+  - Cart, Checkout & Order Tracking: `/cart`, `/checkout` (bắt buộc đăng nhập mới đặt hàng), `/checkout/payment`, `/orders` (Đơn hàng của tôi cho tài khoản đã đăng nhập), `/orders/lookup`, `/orders/[orderId]` (5-stage board + `[Demo Control]`).
+  - Tài khoản & Xác thực: `AuthModal` thống nhất (Google / Facebook OAuth2 + tab Đăng nhập / Đăng ký; nhập `username = admin` + mật khẩu quản trị để vào chế độ Admin), `auth_session` HTTP-only JWT (`SameSite=Lax`), bảng `users` & `oauth_accounts` + `orders.user_id` (`drizzle/0002_flippant_stellaris.sql`, đã migrate lên Supabase cùng `0003_certain_wasp.sql`).
   - Policies (`/policies/warranty`, `/policies/payment-shipping`, `/policies/contact` — văn xuôi/bảng, không bullet/em-dash).
   - Admin (`/admin`, `/admin/products`, `/admin/gpu-series`, `/admin/legacy-cpus`, `/admin/orders`).
+- [x] Bổ sung unit test cho `src/lib/*` (`format`, `safe-storage`, `apiFetch` timeout), Zustand cart store (`tests/unit/client/lib-and-stores.test.ts`), và `createDbConnection` Supavisor flags (`tests/unit/infra/infra.test.ts`).
 
-### Bước 5 — E2E Tests (Playwright) & Kiểm thử tổng thể
+### Bước 5 — E2E Tests (Playwright) & Kiểm thử tổng thể (`NEXT`)
 - [ ] Chạy `npm test` (Vitest domain + service integration + text rules).
 - [ ] Viết và chạy `tests/e2e/*` bằng `data-testid` phủ đủ các luồng trong `docs/technical_solution.md` §15.
 - [ ] Chạy `npm run lint` và `npm run build` sạch lỗi.
 
 ### Bước 6 — Polish UI & Deploy Vercel
-- [ ] Tinh chỉnh giao diện bằng Tailwind (áp dụng các skill `unslop`, `tailwind-design-system`, `web-design-guidelines`) không làm thay đổi logic hay `data-testid`.
+- [ ] Tinh chỉnh / tùy biến sâu giao diện ngay trước khi deploy bằng Tailwind (áp dụng các skill `unslop`, `tailwind-design-system`, `web-design-guidelines`) theo hướng dẫn tại `docs/UI_WIRING.md`: chỉ sửa `@theme` tokens trong `src/app/globals.css`, `src/components/ui/*` và layout `*View.tsx` (bao gồm đổi lưới 5 bước ở `OrderBoardView.tsx` thành thanh progress kiểu Shopee), nối vào `{ state, actions }` của `use*Controller.ts` và giữ nguyên toàn bộ `data-testid`.
 - [ ] Init Git, tạo repo dưới tài khoản GitHub cá nhân, push code (chỉ khi người dùng yêu cầu), cấu hình Env Vars trên Vercel Hobby.
 - [ ] Deploy production, kiểm tra `/api/health`, chạy `Reset Sample Data`, và chạy Playwright smoke suite trên URL production.

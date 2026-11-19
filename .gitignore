@@ -35,3 +35,6 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 .vercel/
+# Playwright CLI output & local config (may contain credentials/machine settings)
+.playwright/
+.playwright-cli/

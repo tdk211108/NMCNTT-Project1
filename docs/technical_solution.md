@@ -42,7 +42,7 @@ The project is a working, publicly reachable demo store for a university live pr
 
 ### 1.3 Non-goals
 
-There are no user accounts, no real payment gateway, no real shipping, no compatibility checking, no inventory counts (stock is always "In Stock"), no multi-language runtime switching (the strings are centralized so they can be swapped later), and no analytics.
+There are no real payment gateways, no real shipping, no compatibility checking, no inventory counts (stock is always "In Stock"), no multi-language runtime switching (the strings are centralized so they can be swapped later), and no analytics. User accounts focus strictly on Google/Facebook OAuth2, customer username/password sign-in, integrated Admin Mode sign-in, authenticated checkout, and viewing placed orders ("Đơn hàng của tôi") without profile editing or email-verification bloat.
 
 ### 1.4 Anti-goals (failure even if it "works")
 
@@ -115,7 +115,7 @@ Pin exact versions in `package.json` and commit `package-lock.json`.
 | QR image | `qrcode` | **1.5.4** | Server-side data URL |
 | Client IP | `@vercel/functions` | **3.11.3** | `ipAddress(request)` |
 | Server guard | `server-only` | **0.0.1** | Build fails if server code is imported by a client component |
-| Unit tests | `vitest` | **5.1.0** | Domain functions and services |
+| Unit tests | `vitest` + `@vitest/coverage-v8` | **5.1.0** | Domain functions (100% coverage via `test:coverage`), services, infra, and client stores |
 | E2E tests | `@playwright/test` | **1.65.1** | Uses `data-testid` |
 | Lint | `eslint` 10.15.0, `eslint-config-next` 16.4.6 | | |
 | Database | Supabase PostgreSQL (managed, Postgres 15+ as provisioned) | | Region **ap-southeast-1 (Singapore)** |
@@ -185,7 +185,7 @@ sequenceDiagram
   B->>B: replace stored prices, drop removed ids, show toasts
 ```
 
-The sync runs when the cart page, the checkout page or the compare bar mounts, and again after every cart mutation on those pages. The compare bar uses `POST /api/products/resolve`.
+The sync runs when the cart page or the checkout page mounts, and again after every cart mutation on those pages. Meanwhile `/compare` fetches active candidates directly from `GET /api/products?category=cpu` and `category=gpu` (retaining `POST /api/products/resolve` as a server utility endpoint).
 
 **Checkout and order creation.**
 
@@ -249,11 +249,12 @@ pc-hardware-store/
 ├── public/
 │   └── icons/ (zalo.svg, github.svg, placeholder-product.svg)
 ├── tests/
-│   ├── unit/                         # vitest: domain + services (services against a test DB)
+│   ├── helpers/                      # test-db.ts: local Postgres schema reset + pool helper
+│   ├── unit/                         # vitest (fileParallelism: false): domain/, infra/, services/, client/, root unit tests
 │   └── e2e/                          # playwright: flows by data-testid
 └── src/
     ├── app/
-    │   ├── layout.tsx                # header (search, cart badge, Admin Mode), footer, ZaloButton, ComparisonBar, Providers
+    │   ├── layout.tsx                # header (search, cart badge, Admin Mode), footer, ZaloButton, Providers
     │   ├── page.tsx                  # home: hero, category tiles, tool shortcuts
     │   ├── cpu/page.tsx              # listing (category=cpu)
     │   ├── gpu/page.tsx              # listing (category=gpu)
@@ -265,28 +266,30 @@ pc-hardware-store/
     │   ├── cart/page.tsx
     │   ├── checkout/page.tsx
     │   ├── checkout/payment/page.tsx # simulated bank QR / card screen
+    │   ├── orders/page.tsx           # authenticated "My Orders" list
     │   ├── orders/lookup/page.tsx
     │   ├── orders/[orderId]/page.tsx # status board
     │   ├── policies/warranty/page.tsx
     │   ├── policies/payment-shipping/page.tsx
     │   ├── policies/contact/page.tsx
     │   ├── admin/
-    │   │   ├── layout.tsx            # client guard via /api/admin/session
+    │   │   ├── layout.tsx            # client guard via unified /api/auth/session
     │   │   ├── page.tsx              # dashboard + Reset Sample Data
-    │   │   ├── products/page.tsx     # retail CPUs and AIB GPUs
+    │   │   ├── products/page.tsx     # retail CPUs and AIB GPUs (with Limited Edition flag)
     │   │   ├── gpu-series/page.tsx   # retail and legacy base series
     │   │   ├── legacy-cpus/page.tsx
     │   │   └── orders/page.tsx
     │   └── api/                      # one route.ts per endpoint in §9
     │       ├── health/
-    │       ├── products/  products/[id]/  products/resolve/
+    │       ├── auth/                 # session/ login/ register/ logout/ oauth/[provider]/ oauth/[provider]/callback/
+    │       ├── products/  products/featured/  products/[id]/  products/resolve/
     │       ├── search/suggest/
     │       ├── compare/
     │       ├── perf-per-price/
     │       ├── psu/options/  psu/estimate/
     │       ├── cart/quote/
     │       ├── checkout/prepare/
-    │       ├── orders/  orders/lookup/  orders/[orderId]/  orders/[orderId]/advance/
+    │       ├── orders/  orders/mine/  orders/lookup/  orders/[orderId]/  orders/[orderId]/advance/
     │       ├── address/provinces/  address/provinces/[code]/wards/
     │       └── admin/
     │           ├── session/  login/  logout/
@@ -296,47 +299,55 @@ pc-hardware-store/
     │           ├── images/
     │           ├── orders/  orders/[orderId]/
     │           └── reset/
-    ├── features/                     # UI by feature: hooks (data/logic) + components (props only)
-    │   ├── catalog/  search/  product-detail/
-    │   ├── cart/        (store.ts, useCartSync.ts, components/)
-    │   ├── compare/     (store.ts, ComparisonBar.tsx, CompareTable.tsx)
-    │   ├── checkout/    (CheckoutForm, ReviewModal, PaymentScreens, useCheckoutAttempt.ts)
-    │   ├── orders/      (StatusBoard, LookupForm, orderTokens.ts)
-    │   ├── perf-per-price/
-    │   ├── psu/
-    │   ├── layout/      (Header, Footer, ZaloButton, GitHubButton, AdminToggle)
-    │   └── admin/
-    ├── components/ui/                # Button, Input, Select, Combobox, Modal, Toast, Table, Card, Badge, Spinner
+    ├── features/                     # 3-layer UI: use*Controller.ts ({ state, actions }) + components/*View.tsx (*Client.tsx for searchParams)
+    │   ├── home/                     # useHomeController.ts, components/HomeClient.tsx, HomeView.tsx
+    │   ├── catalog/                  # useCatalogController.ts, useProductCardActions.ts, components/CatalogView.tsx, ProductCard.tsx
+    │   ├── search/                   # useSearchSuggest.ts, useSearchResultsController.ts, SearchBar.tsx, components/
+    │   ├── product-detail/           # useProductDetailController.ts, components/ProductDetailClient.tsx, ProductDetailView.tsx
+    │   ├── cart/                     # store.ts, useCartController.ts, components/CartClient.tsx, CartView.tsx
+    │   ├── compare/                  # useComparePageController.ts, components/CompareClient.tsx, CompareTableView.tsx
+    │   ├── checkout/                 # attempt-storage.ts, useCheckoutController.ts, usePaymentController.ts, components/
+    │   ├── orders/                   # order-tokens.ts, useMyOrdersController.ts, useOrderLookupController.ts, useOrderBoardController.ts, components/
+    │   ├── auth/                     # useAuthSession.ts, components/AuthModal.tsx
+    │   ├── perf-per-price/           # usePerfPerPriceController.ts, components/PerfPerPriceClient.tsx, PerfPerPriceView.tsx
+    │   ├── psu/                      # usePsuController.ts, components/PsuClient.tsx, PsuEstimatorView.tsx
+    │   ├── layout/                   # AppShell.tsx, Header.tsx, Footer.tsx, ZaloButton.tsx
+    │   └── admin/                    # admin-error.ts, useAdminSession.ts, useAdmin*Controller.ts, components/AdminShell.tsx + *View.tsx
+    ├── components/ui/                # Button, Input, Select, SearchableSelect, Card, Feedback, Icons, Table, Modal (<dialog>), Toast, toast-store, ProductImage
     ├── lib/
-    │   ├── api-client.ts             # typed fetch wrapper, AppError decoding
+    │   ├── api-client.ts             # typed fetch wrapper (apiFetch, apiUpload, ApiClientError)
     │   ├── format.ts                 # VND, numbers, dates (vi-VN, Asia/Ho_Chi_Minh)
-    │   └── safe-storage.ts           # localStorage/sessionStorage with memory fallback
+    │   ├── query-provider.tsx        # TanStack Query client provider
+    │   ├── safe-storage.ts           # SyncStateStorage + Zod-validated persist storage with memory fallback
+    │   └── search-filter.ts          # diacritic-tolerant multi-token client filter for SearchableSelect
     ├── shared/
     │   ├── constants.ts              # every numeric rule in §8 (single source)
     │   ├── schemas/                  # zod: checkout, cart, admin payloads, query params
     │   ├── types/                    # DTOs in §7
     │   ├── messages/vi.ts            # ALL customer-facing strings
-    │   └── testids.ts                # optional helpers for dynamic data-testid
+    │   └── testids.ts                # TEST_IDS catalog for interactive data-testid attributes
     ├── data/
     │   └── vn-admin-units.json       # vendored dataset (34 provinces, 3,321 wards)
     └── server/                       # every file starts with import 'server-only'
         ├── db/
         │   ├── client.ts             # postgres() singleton + drizzle()
-        │   ├── schema/               # products.ts, cpu.ts, gpu.ts, legacy.ts, orders.ts, security.ts
+        │   ├── schema/               # auth.ts, products.ts, cpu.ts, gpu.ts, legacy.ts, orders.ts, security.ts
         │   ├── views.ts              # storefront_products_v (pgView, existing)
         │   └── seed/
         │       ├── data/             # retail-cpus.ts, gpu-series.ts, gpu-variants.ts, legacy-cpus.ts, legacy-gpus.ts
         │       └── seed-catalog.ts   # used by scripts/seed.ts AND reset.service.ts
         ├── domain/
         │   ├── phone.ts  name.ts  shipping.ts  order-id.ts  cart-rules.ts
-        │   ├── scoring.ts  compare.ts  psu.ts  masking.ts  slug.ts
+        │   ├── scoring.ts  compare.ts  featured.ts  psu.ts  masking.ts  slug.ts
         ├── services/
-        │   ├── catalog.service.ts  search.service.ts  compare.service.ts  perf-per-price.service.ts  psu.service.ts
+        │   ├── auth.service.ts  catalog.service.ts  search.service.ts  compare.service.ts  perf-per-price.service.ts  psu.service.ts
         │   ├── cart.service.ts  checkout.service.ts  order.service.ts
         │   ├── admin-catalog.service.ts  admin-order.service.ts  image.service.ts  reset.service.ts
         ├── auth/
-        │   ├── password.ts           # scrypt verify, timingSafeEqual
-        │   ├── admin-session.ts      # issue/verify cookie JWT, requireAdmin()
+        │   ├── password.ts           # scrypt hash/verify, timingSafeEqual
+        │   ├── session.ts            # unified JWT auth_session cookie, requireSession(), requireAdmin()
+        │   ├── oauth.ts              # Google PKCE + Facebook appsecret_proof OAuth2 helpers
+        │   ├── admin-session.ts      # thin compatibility facade over session.ts
         │   └── order-token.ts        # issue/verify order access JWT
         ├── security/
         │   ├── rate-limit.ts  client-ip.ts  origin-check.ts
@@ -348,7 +359,8 @@ pc-hardware-store/
         │   └── demo-bank.ts          # payment reference, QR payload/image
         └── http/
             ├── errors.ts             # AppError, codes, HTTP status map
-            └── handler.ts            # withHandler(): zod parse, error -> JSON
+            ├── handler.ts            # withHandler(): zod parse, error -> JSON
+            └── route-helpers.ts      # shared query/param/origin/auth helpers for Route Handlers
 ```
 
 ---
@@ -359,6 +371,8 @@ pc-hardware-store/
 
 ```mermaid
 erDiagram
+  users ||--o{ oauth_accounts : links
+  users ||--o{ orders : places
   products ||--o| cpu_specs : "category=cpu"
   products ||--o| gpu_variants : "category=gpu"
   gpu_series ||--o{ gpu_variants : "retail series only"
@@ -372,10 +386,11 @@ erDiagram
 1. **`products`** holds the sellable storefront items: retail CPUs and AIB GPU variants. It provides one ID space for the cart, comparison, Performance-per-Price ranking and orders.
 2. **`cpu_specs`** (1:1) holds retail CPU specifications.
 3. **`gpu_series`** holds base GPU series with `kind = 'retail' | 'legacy'`. Retail series carry the full specifications that AIB variants inherit. Legacy series (Appendix A.2) carry only what the PSU tool needs. `kind` is immutable.
-4. **`gpu_variants`** (1:1 with `products`) holds AIB-specific attributes only. It can reference only a `retail` series, which is enforced by a composite foreign key.
+4. **`gpu_variants`** (1:1 with `products`) holds AIB-specific attributes only (including `is_limited_edition` boolean). It can reference only a `retail` series, which is enforced by a composite foreign key.
 5. **`legacy_cpus`** holds the Appendix A.1 reference CPUs. It is a separate table, so it can never become a product.
-6. **`orders`**, **`order_items`** and **`order_status_events`** hold orders with immutable snapshots.
-7. **`auth_failures`** holds the failed lookup and login attempts used for rate limiting.
+6. **`users`** & **`oauth_accounts`** store registered customer credentials (`scrypt` hash, username `'admin'` forbidden at DB CHECK level) and Google/Facebook OAuth links.
+7. **`orders`**, **`order_items`** and **`order_status_events`** hold orders with immutable snapshots and nullable `user_id` linking to `users`.
+8. **`auth_failures`** holds the failed lookup, login and registration attempts used for rate limiting.
 
 **Strict separation, structurally enforced:** retail and legacy CPUs live in different tables. GPU variants can point only at `retail` series (composite FK on `(series_id, series_kind)` with `series_kind` fixed to `'retail'`). A trigger forbids changing `gpu_series.kind`. Name uniqueness across retail and legacy (the "non-overlapping datasets" rule) is enforced by partial unique indexes inside each table and by a service-level cross-table check between `products` (CPU) and `legacy_cpus` (§10, C21).
 
@@ -388,7 +403,32 @@ CREATE TYPE cpu_vendor      AS ENUM ('intel', 'amd');
 CREATE TYPE gpu_vendor      AS ENUM ('nvidia', 'amd');
 CREATE TYPE gpu_series_kind AS ENUM ('retail', 'legacy');
 CREATE TYPE payment_method  AS ENUM ('cod', 'bank_transfer', 'card');
-CREATE TYPE auth_scope      AS ENUM ('order_lookup', 'admin_login');
+CREATE TYPE auth_scope      AS ENUM ('order_lookup', 'admin_login', 'user_login', 'user_register');
+CREATE TYPE oauth_provider  AS ENUM ('google', 'facebook');
+
+-- ===== Users & OAuth =====
+CREATE TABLE users (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  username       text UNIQUE CHECK (username IS NULL OR (username ~ '^[a-z0-9_.-]{3,30}$' AND username <> 'admin')),
+  password_hash  text,
+  email          text,
+  display_name   text NOT NULL CHECK (char_length(display_name) BETWEEN 1 AND 80),
+  avatar_url     text,
+  created_at     timestamptz NOT NULL DEFAULT now(),
+  updated_at     timestamptz NOT NULL DEFAULT now(),
+  CHECK ((username IS NULL AND password_hash IS NULL) OR (username IS NOT NULL AND password_hash IS NOT NULL))
+);
+CREATE INDEX users_email_idx ON users (email);
+
+CREATE TABLE oauth_accounts (
+  provider             oauth_provider NOT NULL,
+  provider_account_id  text NOT NULL,
+  user_id              uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  provider_email       text,
+  created_at           timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (provider, provider_account_id)
+);
+CREATE INDEX oauth_accounts_user_idx ON oauth_accounts (user_id);
 
 -- ===== Catalog =====
 CREATE TABLE products (
@@ -472,8 +512,9 @@ CREATE TABLE gpu_variants (
   category        category NOT NULL DEFAULT 'gpu' CHECK (category = 'gpu'),
   series_id       text NOT NULL,
   series_kind     gpu_series_kind NOT NULL DEFAULT 'retail' CHECK (series_kind = 'retail'),
-  aib_brand       text NOT NULL CHECK (char_length(aib_brand) BETWEEN 2 AND 40), -- "ASUS"
-  length_mm       smallint NOT NULL CHECK (length_mm BETWEEN 100 AND 450),
+  aib_brand           text NOT NULL CHECK (char_length(aib_brand) BETWEEN 2 AND 40), -- "ASUS"
+  is_limited_edition  boolean NOT NULL DEFAULT false,
+  length_mm           smallint NOT NULL CHECK (length_mm BETWEEN 100 AND 450),
   slot_thickness  numeric(3,1) NOT NULL CHECK (slot_thickness BETWEEN 1 AND 5),   -- PCIe slots
   hdmi_count      smallint NOT NULL CHECK (hdmi_count BETWEEN 0 AND 8),
   dp_count        smallint NOT NULL CHECK (dp_count BETWEEN 0 AND 8),
@@ -501,6 +542,7 @@ CREATE UNIQUE INDEX legacy_cpus_active_name_uq ON legacy_cpus (lower(name)) WHER
 -- ===== Orders =====
 CREATE TABLE orders (
   id                 text PRIMARY KEY CHECK (id ~ '^PC-[A-HJKMNP-TV-Z0-9]{10}$'),
+  user_id            uuid REFERENCES users (id) ON DELETE SET NULL,
   idempotency_key    uuid NOT NULL UNIQUE,
   request_hash       text NOT NULL,                 -- sha256 of canonical request, see §8.8
   customer_name      text NOT NULL,
@@ -522,6 +564,7 @@ CREATE TABLE orders (
   updated_at         timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX orders_created_at_idx ON orders (created_at DESC);
+CREATE INDEX orders_user_created_idx ON orders (user_id, created_at DESC);
 
 CREATE TABLE order_items (
   order_id        text NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
@@ -555,6 +598,8 @@ CREATE INDEX auth_failures_lookup_idx ON auth_failures (scope, ip_hash, occurred
 -- ===== Lock down the Supabase Data API =====
 -- The app connects as the postgres role through the pooler (bypasses RLS).
 -- Enabling RLS with NO policies makes every table unreachable through PostgREST with anon/publishable keys.
+ALTER TABLE users               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE oauth_accounts      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cpu_specs           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gpu_series          ENABLE ROW LEVEL SECURITY;
@@ -575,12 +620,14 @@ CREATE VIEW storefront_products_v AS
 WITH rows AS (
   SELECT p.id, p.category, p.name, p.price_vnd, p.image_url, p.updated_at,
          c.vendor::text AS vendor, NULL::text AS aib_brand, NULL::text AS series_id,
+         false AS is_limited_edition,
          c.socket, NULL::smallint AS vram_gb, c.passmark_raw
   FROM products p JOIN cpu_specs c ON c.product_id = p.id
   WHERE p.deleted_at IS NULL
   UNION ALL
   SELECT p.id, p.category, p.name, p.price_vnd, p.image_url, p.updated_at,
          s.vendor::text, v.aib_brand, s.id,
+         v.is_limited_edition,
          NULL::text, s.vram_gb, s.passmark_raw              -- inherited from base series
   FROM products p
   JOIN gpu_variants v ON v.product_id = p.id
@@ -639,6 +686,23 @@ export interface SpecGroup { key: string; title: string; items: SpecItem[] }
 
 export interface Score { raw: number; normalized: number | null; source: string }
 
+export type UserRole = 'customer' | 'admin';
+export type OAuthProvider = 'google' | 'facebook';
+export type AuthProvider = 'password' | OAuthProvider | 'admin';
+
+export interface SessionUser {
+  id: string;
+  role: UserRole;
+  username: string | null;
+  displayName: string;
+  avatarUrl: string | null;
+  provider: AuthProvider;
+}
+export interface AuthSessionResponse {
+  user: SessionUser | null;
+  providers: Record<OAuthProvider, boolean>;
+}
+
 export interface ProductCard {
   id: string;
   category: Category;
@@ -647,6 +711,7 @@ export interface ProductCard {
   imageUrl: string | null;
   vendor: ChipVendor;
   aibBrand: string | null;              // GPU only
+  isLimitedEdition: boolean;            // GPU limited/collab flag
   score: Pick<Score, 'raw' | 'normalized'>;
   summary: SpecItem[];                  // CPU: cores/threads, boost, socket, TDP. GPU: VRAM, memory type, boost, TBP
 }
@@ -658,6 +723,7 @@ export interface ProductListQuery {
   vramGb?: number[];                    // GPU only
   aibBrand?: string[];                  // GPU only
   socket?: string[];                    // CPU only
+  limitedEdition?: boolean;             // GPU only
   sort?: 'default' | 'price_asc' | 'price_desc' | 'score_desc';
   q?: string;
 }
@@ -681,6 +747,7 @@ export interface ProductDetail extends ProductCard {
 }
 
 export interface SearchSuggestion { id: string; name: string; category: Category; priceVnd: number; imageUrl: string | null }
+export interface FeaturedProductsResponse { cpus: ProductCard[]; gpus: ProductCard[] }
 
 export interface ResolveResponse { active: Pick<ProductCard, 'id' | 'name' | 'category' | 'priceVnd' | 'imageUrl'>[]; removed: RemovedItem[] }
 export interface RemovedItem { productId: string; name: string | null } // null when the id never existed
@@ -745,6 +812,10 @@ export interface OrderBoard {
   createdAt: string;
 }
 export interface OrderWithToken { order: OrderBoard; accessToken: string; replayed?: boolean }
+export interface CustomerOrderSummary {
+  orderId: string; customerName: string; totalQuantity: number; totalVnd: number;
+  stage: OrderStage; stageLabel: string; paymentMethod: PaymentMethod; createdAt: string;
+}
 
 // ---- Compare ----
 export type HighlightRule = 'higher' | 'lower' | 'none';
@@ -804,7 +875,7 @@ export type ErrorCode =
   | 'VALIDATION_ERROR' | 'EMPTY_CART' | 'CART_LIMIT_EXCEEDED' | 'PRODUCT_UNAVAILABLE'
   | 'COMPARE_INVALID' | 'NOT_FOUND' | 'ORDER_NOT_FOUND' | 'RATE_LIMITED'
   | 'UNAUTHORIZED' | 'FORBIDDEN_ORIGIN' | 'IDEMPOTENCY_KEY_REUSED'
-  | 'STALE_STAGE' | 'ORDER_COMPLETED' | 'HAS_VARIANTS' | 'DUPLICATE_NAME'
+  | 'STALE_STAGE' | 'ORDER_COMPLETED' | 'HAS_VARIANTS' | 'DUPLICATE_NAME' | 'USERNAME_TAKEN'
   | 'SERIES_NOT_RETAIL' | 'IMAGE_INVALID' | 'INTERNAL';
 ```
 
@@ -878,9 +949,9 @@ All failures return `422 COMPARE_INVALID` with `details.reason`. The page shows 
 | `score` | `normalized (raw)` e.g. `87,3 (45.210)` | higher |
 | `architecture`, `socket`, `processNode` | text | none |
 | `coresThreads` | `8 nhân / 16 luồng`, plus `(6 P-Core, 2 E-Core)` when hybrid | higher: compare `cores_total`, then `threads_total` |
-| `baseClock`, `boostClock` | GHz, 2 decimals | higher |
-| `cache` | `cache_text` | higher by `l3_cache_mb` |
-| `tdp` | W (base TDP) | lower |
+| `baseClock`, `boostClock` | GHz, 2 decimals | none |
+| `cache` | `cache_text` | none |
+| `tdp` | W (base TDP) | none |
 | `ramSupport` | text | none |
 
 | GPU row key | Value shown | Rule |
@@ -888,12 +959,12 @@ All failures return `422 COMPARE_INVALID` with `details.reason`. The page shows 
 | `price`, `score` | as above | lower / higher |
 | `vram` | GB | higher |
 | `cores` | count, label "CUDA Cores" (NVIDIA) or "Stream Processors" (AMD) | higher |
-| `tdp` | W (TBP) | lower |
-| `baseClock`, `boostClock` | MHz | higher |
+| `tdp` | W (TBP) | none |
+| `baseClock`, `boostClock` | MHz | none |
 | `memoryType` | text | none |
 | `busWidth` | bit | higher |
 
-**Highlight selection:** compare on the displayed (rounded) values. Every cell equal to the best value is highlighted. If **all** compared products tie on a row, no cell in that row is highlighted, because nothing stands out **[Call]**. This mostly affects two AIB variants of the same series, whose inherited specs are identical. Text rows are never highlighted. The response contains no commentary text, only values, highlights and the two fixed disclaimer notes.
+**Highlight selection:** compare on the displayed (rounded) values for highlightable criteria only (**CPU:** `price`, `score`, `coresThreads`; **GPU:** `price`, `score`, `vram`, `cores`, `busWidth`). Clock speeds, TDP/TBP, CPU L3 cache, and text rows always use `rule: 'none'` (`highlighted: false`). Every cell equal to the best value is highlighted. If **all** compared products tie on a row, no cell in that row is highlighted, because nothing stands out **[Call]**. The response contains no commentary text, only values, highlights and the two fixed disclaimer notes.
 
 ### 8.7 PSU estimator (`psu.ts`)
 
@@ -921,20 +992,22 @@ Client-sent prices are never read. The idempotency key is created when the revie
 | Scope | Limit | Counted event |
 | --- | --- | --- |
 | `order_lookup` | 5 failures / 15 min / IP | Any lookup that does not return an order, including malformed input |
-| `admin_login` | 5 failures / 15 min / IP | Wrong password |
+| `admin_login` | 5 failures / 15 min / IP | Wrong admin password (`username === 'admin'`) |
+| `user_login` | 5 failures / 15 min / IP | Invalid customer username or password |
+| `user_register` | 5 failures / 15 min / IP | Duplicate username registration attempts |
 
 1. `ip = ipAddress(request)` from `@vercel/functions`. Fallback: the first `x-forwarded-for` entry, then `'unknown'`. The stored value is `ip_hash = HMAC-SHA256(AUTH_SECRET, ip)`.
 2. **Pre-check before verifying anything:** if there are at least 5 failure rows for `(scope, ip_hash)` with `occurred_at > now() - 15 min`, return `429 RATE_LIMITED` with `Retry-After = ceil(oldestInWindow + 15 min - now)` seconds and the message "Bạn đã thử quá nhiều lần. Vui lòng thử lại sau {n} phút." This is a sliding window. A successful attempt does not erase earlier failures **[Call]**.
 3. On failure, insert one row. Opportunistically delete rows older than 24 h (in the same request, at most once per call).
 4. Parallel requests can overshoot the limit by a few attempts. That is acceptable at demo scale and is noted for the builder.
 
-### 8.10 Admin authentication (`auth/password.ts`, `auth/admin-session.ts`)
+### 8.10 Unified authentication, OAuth2 & Admin Mode (`auth/password.ts`, `auth/session.ts`, `auth/oauth.ts`)
 
-1. The `ADMIN_PASSWORD` value has the format `scrypt:<N>:<r>:<p>:<saltB64url>:<hashB64url>`, produced by `npm run admin:hash -- "<password>"` with `N = 2^15`, `r = 8`, `p = 1`, a 16-byte salt and a 32-byte key. The `:` separator is used **because `@next/env` expands `$` in `.env` files**.
-2. Login recomputes scrypt with the stored parameters (pass `maxmem: 64 * 1024 * 1024`, because `N = 2^15` with `r = 8` needs 32 MiB, which is exactly Node's default ceiling) and compares with `crypto.timingSafeEqual`. If `ADMIN_PASSWORD` is missing or not in that format, login returns `500 INTERNAL` and the server logs a clear configuration error. There is no plaintext fallback.
-3. On success, the server sets cookie `admin_session` = HS256 JWT `{sub:'admin', aud:'admin'}` signed with `AUTH_SECRET`, expiry 8 h. Cookie attributes: `HttpOnly; SameSite=Strict; Path=/; Secure` (Secure in production).
-4. `requireAdmin()` verifies the cookie on **every** admin handler. Mutating admin requests (POST/PATCH/DELETE) also require the `Origin` header to equal the deployment origin (`FORBIDDEN_ORIGIN` otherwise).
-5. Order access tokens: HS256 JWT `{sub: orderId, aud:'order'}`, 24 h, same secret, different audience.
+1. The `ADMIN_PASSWORD` value has the format `scrypt:<N>:<r>:<p>:<saltB64url>:<hashB64url>`, produced by `npm run admin:hash -- "<password>"` with `N = 2^15`, `r = 8`, `p = 1`, a 16-byte salt and a 32-byte key. Customer passwords use the same `hashPassword` / `verifyPassword` helper (`:` separator because `@next/env` expands `$` in `.env` files).
+2. Login recomputes scrypt with the stored parameters (pass `maxmem: 64 * 1024 * 1024`) and compares with `crypto.timingSafeEqual`. Entering `username === 'admin'` authenticates against `ADMIN_PASSWORD` and issues a `role: 'admin'` session (8 h TTL). Any other `username` authenticates against `users` (`role: 'customer'`, 7 d TTL). Customer registration reserves and blocks `'admin'`, `'root'`, `'system'`, `'techcore'` both in Zod and at DB `CHECK`.
+3. **OAuth2 (Google & Facebook):** Self-implemented without Supabase Auth or `next-auth`. `GET /api/auth/oauth/[provider]` signs a 10-minute HS256 `oauth_tx` cookie (`state`, Google `codeVerifier` PKCE S256, and open-redirect-sanitized `next` path). `GET /api/auth/oauth/[provider]/callback` exchanges the code server-side (`fetch` with 10 s timeout, Google `openid email profile`, Facebook `public_profile` + `appsecret_proof` HMAC-SHA256) and upserts `users` + `oauth_accounts` (only Google verified emails can link by email; Facebook accounts stay isolated per `(provider, provider_account_id)`).
+4. **Unified session cookie:** Cookie `auth_session` = HS256 JWT `{sub: userId | 'admin', role, username, displayName, avatarUrl, provider, aud:'techcore-session'}` signed with `AUTH_SECRET`. Cookie attributes: `HttpOnly; SameSite=Lax; Path=/; Secure` (Secure in production; `SameSite=Lax` allows OAuth redirect callbacks while all mutations enforce `assertSameOrigin`).
+5. `requireAdmin()` verifies `role === 'admin'`; `requireSession()` verifies any logged-in session (required for `/api/checkout/prepare`, `POST /api/orders`, and `GET /api/orders/mine`). `requireOrderViewer()` accepts `role === 'admin'`, a customer session owning `orders.user_id === session.id`, or a valid 24 h `Bearer <orderToken>`.
 
 ### 8.11 Simulated payments (`payments/demo-bank.ts`)
 
@@ -942,6 +1015,11 @@ Client-sent prices are never read. The idempotency key is created when the revie
 2. Bank transfer screen: bank name, account number and holder come from env (fake values). The amount is the server total, and the memo is `"<STORE_NAME> <paymentReference>"`. The QR is a PNG data URL generated server-side from a **plain-text payload that starts with `DEMO`**, deliberately **not** the EMVCo/VietQR format, so scanning it with a banking app can never start a real transfer **[Call]**.
 3. Card screen: inputs accept any string. Card data stays in component state and **is never sent to the server or stored**.
 4. COD: no payment screen. The order is created when the review modal confirms.
+
+### 8.12 Homepage featured selection (`featured.ts`)
+
+1. `pickFeaturedCandidates(candidates, limit = 8)` selects up to 8 CPUs and 8 GPUs deterministically from active storefront items without needing a curated database flag.
+2. Within each category, candidates are grouped by `vendor`, deduplicated by `seriesId ?? id` first (rotating variant index per GPU series to vary AIB partners), allocated equal round-robin vendor quotas up to `limit` (yielding 4 Intel + 4 AMD CPUs, and 4 AMD + 4 NVIDIA distinct GPU series on seeded data), sampled across evenly spaced performance/price quantiles per vendor, and filled from overflow AIB variants only when fewer than `limit` distinct series exist.
 
 ---
 
@@ -954,7 +1032,8 @@ Conventions: JSON over HTTPS. Success returns the documented body, errors return
 | Method and path | Input | Output | Errors |
 | --- | --- | --- | --- |
 | `GET /api/health` | none | `{ ok: true, db: 'up' }` (runs `select 1`) | 503 |
-| `GET /api/products` | Query: `ProductListQuery` (arrays as comma lists, e.g. `vramGb=8,16`) | `ProductListResponse` | 400 `VALIDATION_ERROR` (e.g. `priceMin > priceMax`, GPU-only filter on CPU) |
+| `GET /api/products` | Query: `ProductListQuery` (arrays as comma lists, e.g. `vramGb=8,16`; `limitedEdition=true` for GPU) | `ProductListResponse` | 400 `VALIDATION_ERROR` (e.g. `priceMin > priceMax`, GPU-only filter on CPU) |
+| `GET /api/products/featured` | none | `FeaturedProductsResponse` (`8` balanced CPUs + `8` balanced GPUs) | none |
 | `GET /api/products/{id}` | none | `ProductDetail` | 404 `NOT_FOUND` (missing or soft-deleted) |
 | `POST /api/products/resolve` | `{ ids: string[] }` (max 20) | `ResolveResponse` | 400 |
 | `GET /api/search/suggest?q=` | `q` 2 to 50 characters after trim (`%`, `_` escaped) | `SearchSuggestion[]` (max 8; name-prefix matches first, then by score) | 400 |
@@ -965,17 +1044,24 @@ Conventions: JSON over HTTPS. Success returns the documented body, errors return
 | `GET /api/address/provinces` | none | `{ code, name }[]` (sorted with Vietnamese collation) | none |
 | `GET /api/address/provinces/{code}/wards` | none | `{ code, name }[]` | 404 |
 
-Default sort (`sort=default`): vendor, then normalized score descending. The UI groups cards into vendor sections only in default sort, and shows a flat list for any explicit sort **[Call]**. There is no pagination: the catalog is under 200 rows, and the API caps results at 200.
+Default sort (`sort=default`): vendor, then normalized score descending. The UI groups cards into vendor sections only in default sort, and shows a flat list for any explicit sort **[Call]**. Full-text search (`/search?q=`) queries `GET /api/products?category=cpu&q=...` and `GET /api/products?category=gpu&q=...` in parallel, keeping `category` required on `GET /api/products` **[Call]**. There is no pagination: the catalog is under 200 rows, and the API caps results at 200.
 
-### 9.2 Cart, checkout, orders
+### 9.2 Auth, cart, checkout, orders
 
 | Method and path | Input | Output | Errors |
 | --- | --- | --- | --- |
+| `GET /api/auth/session` | none | `AuthSessionResponse` (`{ user, providers }`) | never 401 |
+| `POST /api/auth/login` | `{ username, password }` + same-origin | 200 `{ user }` + sets `auth_session` cookie (`admin` if `username === 'admin'`) | 401 `UNAUTHORIZED`, 429 `RATE_LIMITED` |
+| `POST /api/auth/register` | `{ username, displayName, password }` + same-origin | 201 `{ user }` + sets `auth_session` cookie | 400 `VALIDATION_ERROR`, 409 `USERNAME_TAKEN`, 429 |
+| `POST /api/auth/logout` | same-origin | 204 (clears `auth_session` & `admin_session`) | 403 `FORBIDDEN_ORIGIN` |
+| `GET /api/auth/oauth/{provider}` | `?next=` | 302 to Google/Facebook + `oauth_tx` cookie | redirects `?authError=` on missing config |
+| `GET /api/auth/oauth/{provider}/callback` | `code`, `state` | 302 to `next` + sets `auth_session` cookie | redirects `?authError=` on cancel/invalid state |
 | `POST /api/cart/quote` | `{ items: CartItemInput[] }` (0 to 20) | `CartQuote` (an empty list returns zero totals) | 400 `VALIDATION_ERROR`, 400 `CART_LIMIT_EXCEEDED` |
-| `POST /api/checkout/prepare` | `CheckoutRequest` | `PrepareResponse` | 400 `EMPTY_CART`, 400 `VALIDATION_ERROR` (+ `details.fieldErrors`), 409 `PRODUCT_UNAVAILABLE` |
-| `POST /api/orders` | `CheckoutRequest` + header `Idempotency-Key` (must equal body key) | 201 `OrderWithToken`, or 200 replay | 400, 409 `PRODUCT_UNAVAILABLE`, 409 `IDEMPOTENCY_KEY_REUSED` |
+| `POST /api/checkout/prepare` | `CheckoutRequest` (auth session + same-origin) | `PrepareResponse` | 401 `UNAUTHORIZED`, 400 `EMPTY_CART`, 400 `VALIDATION_ERROR` (+ `details.fieldErrors`), 409 `PRODUCT_UNAVAILABLE` |
+| `POST /api/orders` | `CheckoutRequest` + header `Idempotency-Key` (auth session + same-origin) | 201 `OrderWithToken` (linked to `user_id`), or 200 replay | 401 `UNAUTHORIZED`, 400, 409 `PRODUCT_UNAVAILABLE`, 409 `IDEMPOTENCY_KEY_REUSED` |
+| `GET /api/orders/mine` | auth session | `CustomerOrderSummary[]` (newest first, max 100) | 401 `UNAUTHORIZED` |
 | `POST /api/orders/lookup` | `{ orderId, phone }` (`orderId` trimmed and upper-cased, phone normalized) | `OrderWithToken` (phone masked) | 404 `ORDER_NOT_FOUND` ("Không tìm thấy đơn hàng với thông tin này", identical for every mismatch), 429 `RATE_LIMITED` |
-| `GET /api/orders/{orderId}` | `Authorization: Bearer <orderToken>` **or** admin cookie | `OrderBoard` | 401 `UNAUTHORIZED` (missing/expired/wrong order), 404 |
+| `GET /api/orders/{orderId}` | auth session (`admin` or owning `user_id`) **or** `Authorization: Bearer <orderToken>` | `OrderBoard` | 401 `UNAUTHORIZED` (missing/expired/wrong order), 404 |
 | `POST /api/orders/{orderId}/advance` | `{ expectedStage }`, same auth as above | `OrderBoard` | 409 `STALE_STAGE` (+ current board), 409 `ORDER_COMPLETED`, 401 |
 
 ### 9.3 Admin (all require the admin cookie; mutations also require a same-origin `Origin`)
@@ -1022,11 +1108,14 @@ const adminCpuInput = z.object({
 
 const adminGpuVariantInput = z.object({
   category: z.literal('gpu'), seriesId: z.string(), name: z.string().min(2).max(150), aibBrand: z.string().min(2).max(40),
-  priceVnd, image: imageRef, lengthMm: z.number().int().min(100).max(450), slotThickness: z.number().min(1).max(5),
+  priceVnd, image: imageRef, isLimitedEdition: z.boolean().optional(),
+  lengthMm: z.number().int().min(100).max(450), slotThickness: z.number().min(1).max(5),
   hdmiCount: z.number().int().min(0).max(8), dpCount: z.number().int().min(0).max(8),
 });
 // adminGpuSeriesInput: kind + name + vendor + vramGb + tbpW, and when kind='retail' the full spec set
 // adminLegacyCpuInput: name + vendor + psuPowerW, optional socket/coresTotal/threadsTotal
+// PATCH routes use partial Zod schemas that reject immutable fields (id, category, kind).
+// Admin GET endpoints return dedicated admin DTOs exposing full editable fields and inherited read-only series specs.
 ```
 
 Facet canonicalization **[Call]**: when `aibBrand` or `socket` matches an existing value case-insensitively, the server stores the existing spelling (so "Asus" becomes "ASUS"). The admin form offers a datalist of existing values.
@@ -1038,7 +1127,7 @@ Facet canonicalization **[Call]**: when `aibBrand` or `socket` matches an existi
 | # | Situation | Handling |
 | --- | --- | --- |
 | C1 | Admin changes a price while the item sits in a cart | Next quote returns `priceChange`. The UI updates the stored price and toasts "Giá của {name} đã được cập nhật từ {old} thành {new}." |
-| C2 | Admin soft-deletes a product that is in a cart or compare bar | The quote or resolve lists it in `removed`. The UI removes it and toasts "{name} đã ngừng kinh doanh và được xóa khỏi giỏ hàng." For an ID that never existed: "Một sản phẩm không còn tồn tại đã được xóa khỏi giỏ hàng." |
+| C2 | Admin soft-deletes a product that is in a cart | `POST /api/cart/quote` lists it in `removed`. The UI removes it and toasts "{name} đã ngừng kinh doanh và được xóa khỏi giỏ hàng." For an ID that never existed: "Một sản phẩm không còn tồn tại đã được xóa khỏi giỏ hàng." |
 | C3 | A stale or deleted ID reaches prepare or create order | 409 `PRODUCT_UNAVAILABLE` listing the names. The UI removes them and returns to the cart with the notice. No order is created. |
 | C4 | `/checkout` opened with an empty cart | Client redirects to `/cart?notice=empty-cart` ("Giỏ hàng đang trống."). The API returns 400 `EMPTY_CART`. |
 | C5 | A quantity is set to 0 | Confirmation dialog asks whether to remove the item. "No" restores the previous quantity. |
@@ -1052,8 +1141,8 @@ Facet canonicalization **[Call]**: when `aibBrand` or `socket` matches an existi
 | C13 | Double click on "[Demo Control] Skip to next stage" | `expectedStage` mismatch returns 409 `STALE_STAGE`. The UI re-renders the returned board and skips only one stage. |
 | C14 | Advance at stage 4 | Button hidden. The API returns 409 `ORDER_COMPLETED`. |
 | C15 | Board refresh with an expired or missing token | Board shows the lookup form prefilled with the Order ID. |
-| C16 | `/compare` with duplicates, deleted IDs, mixed categories, or 1 or more than 3 products | §8.6 validation; an error card with a back button. No partial table. |
-| C17 | Adding a different category, or a 4th product, to the compare bar | Toast "Chỉ so sánh được các sản phẩm cùng loại" or "Bạn chỉ có thể so sánh tối đa 3 sản phẩm.". The "Compare" button is disabled until 2 items. |
+| C16 | `/compare` with multi-token duplicates (`?ids=a,a`), deleted/missing IDs, mixed categories, or more than 3 products | §8.6 validation returns 422 `COMPARE_INVALID` (`NOT_FOUND` on 1 missing ID via catalog lookup); shows error card with `compare-error-back` alongside column selectors. No partial table. |
+| C17 | Interactive comparison slot picking on `/compare` (`0` or `1` valid ID, switching categories, adding a 3rd column) | Selecting any slot first locks the remaining selectors to only products of that same category (`cpu` vs `cpu`, `gpu` vs `gpu`); excludes already-picked IDs; max 3 columns via optional `+ Thêm cột` button (`compare-add-column`). `ComparisonBar` is removed. |
 | C18 | Deleting a base series with active variants | 409 `HAS_VARIANTS` "Vui lòng xóa các biến thể AIB trước". |
 | C19 | Creating an AIB variant on a legacy or deleted series | 409 `SERIES_NOT_RETAIL`. The composite FK makes legacy impossible even if the check is bypassed. |
 | C20 | Changing a series `kind`, or converting legacy to retail | Not exposed by the API. The DB trigger rejects it. |
@@ -1076,7 +1165,7 @@ Facet canonicalization **[Call]**: when `aibBrand` or `socket` matches an existi
 
 1. **Secrets** (`ADMIN_PASSWORD` hash, `AUTH_SECRET`, `SUPABASE_SECRET_KEY`, `DATABASE_URL*`) exist only as server env vars, never with the `NEXT_PUBLIC_` prefix. `.env*` files are git-ignored. `server-only` and the ESLint import rule stop leaks into client bundles.
 2. **Data API lockdown:** RLS is enabled with no policies on all tables (§6.2). The browser never receives any Supabase key. The storage bucket is public-read only, and writes use the secret key on the server.
-3. **CSRF:** the admin cookie is `SameSite=Strict`, and mutations also check `Origin`. Public mutations (`/api/orders`, `/lookup`, `/advance`) need no cookie. `advance` requires a bearer token, which cross-site forms cannot send.
+3. **CSRF:** the unified `auth_session` cookie uses `SameSite=Lax` (required for top-level OAuth2 redirect callbacks), and **every** state-changing handler for Auth, Checkout, Orders (`POST /api/orders`), and Admin checks `Origin` against the deployment origin (`assertSameOrigin`). `advance` requires session ownership, admin role, or a bearer token, which cross-site forms cannot send.
 4. **Enumeration resistance:** 50-bit random order IDs, a generic lookup error, and rate limiting.
 5. **PII:** the phone is masked in every public response. The phone never goes into URLs or browser storage. Card inputs never leave the browser. IPs are stored only as HMAC hashes and kept for 24 h.
 6. **Input limits:** Zod on every handler, request body size limits (JSON at most 32 KB, images at most 4 MB), and parameterized SQL through Drizzle (`ILIKE` patterns escaped).
@@ -1093,30 +1182,38 @@ Facet canonicalization **[Call]**: when `aibBrand` or `socket` matches an existi
 3. Formatting (`lib/format.ts`): `Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })` gives `12.990.000 ₫`. Dates are shown in `Asia/Ho_Chi_Minh`. Hardware terms (VRAM, TDP, socket, benchmark, P-Core) stay in English.
 4. Fixed disclaimers on Compare, Performance-per-Price and PSU: data source PassMark, scores show overall multi-core / general compute (not gaming FPS), estimates are simplified, and no compatibility checking is done.
 
-### 12.2 Decoupled skeleton
+### 12.2 Decoupled skeleton (3-layer theme-ready architecture)
 
-Each feature splits into **hooks** (data fetching, store access, mutations, toasts) and **presentational components** (props in, JSX out, no fetch, no store access). Pages only compose them. Restyling or moving a button touches only presentational components and `components/ui`. Phase 1 builds every flow as a plain skeleton (Tailwind defaults), **responsive from the start** (usable at 360 px width) so evaluators can open the demo on phones **[Call]**. Phase 2 is visual design only.
+Each feature splits into three replaceable layers so Phase 2 visual customization requires no backend or state rewiring (see `docs/UI_WIRING.md`):
+
+1. **Theme tokens & primitives:** Tailwind v4 `@theme` semantic CSS variables in `src/app/globals.css` (Dark Neutral default palette + `--radius-*`) and `src/components/ui/*`.
+2. **Headless controllers (`use*Controller.ts`):** Data fetching (TanStack Query), Zustand persisted stores, React Hook Form + Zod, toasts, and routing live in hooks returning `{ state, actions }`.
+3. **Presentational views (`*View.tsx`):** Props in, JSX out, no fetch, no store access, keeping `data-testid` from `src/shared/testids.ts`. On dynamic or query routes, Server Component `page.tsx` awaits `params`/`searchParams` and passes primitives into `*Client.tsx` wrappers so Next.js 16 builds without Suspense bailouts.
+
+Pages compose only these layers and remain **responsive from the start** (usable at 360 px width) so evaluators can open the demo on phones **[Call]**. Phase 2 is visual design only, scheduled at Step 6 after Step 5 E2E passes.
 
 ### 12.3 `data-testid` convention
 
-Format: `<area>-<element>[-<qualifier>]`, kebab-case, with a dynamic product or order ID as the qualifier. Every button, input, select, link-as-action and modal gets one. Required set (minimum):
+Format: `<area>-<element>[-<qualifier>]`, kebab-case, with a dynamic product or order ID as the qualifier. Every button, input, select, link-as-action and modal gets one (`src/shared/testids.ts`):
 
 | Area | IDs |
 | --- | --- |
-| Header / layout | `header-search-input`, `header-search-suggestion-{id}`, `header-cart-link`, `header-cart-count`, `header-admin-toggle`, `zalo-float-button`, `footer-github-button`, `footer-link-warranty`, `footer-link-payment-shipping`, `footer-link-contact` |
-| Listing | `filter-vendor-{vendor}`, `filter-price-min`, `filter-price-max`, `filter-vram-{gb}`, `filter-aib-{brand}`, `filter-socket-{socket}`, `sort-select`, `product-card-{id}`, `product-card-compare-{id}`, `product-card-add-to-cart-{id}` |
-| Detail | `detail-add-to-cart`, `detail-compare-this`, `detail-calc-psu` |
-| Compare | `compare-bar`, `compare-bar-item-{id}`, `compare-bar-remove-{id}`, `compare-bar-clear`, `compare-bar-open`, `compare-table`, `compare-cell-{rowKey}-{id}`, `compare-error-back` |
+| Header / layout | `header-search-input`, `header-search-submit`, `header-search-suggestion-{id}`, `header-cart-link`, `header-cart-count`, `header-admin-toggle`, `auth-header-login`, `auth-header-user`, `auth-header-my-orders`, `auth-header-logout`, `zalo-float-button`, `footer-github-button`, `footer-link-warranty`, `footer-link-payment-shipping`, `footer-link-contact` |
+| Auth Modal | `auth-modal`, `auth-tab-login`, `auth-tab-register`, `auth-google-button`, `auth-facebook-button`, `auth-login-username`, `auth-login-password`, `auth-login-submit`, `auth-register-username`, `auth-register-display-name`, `auth-register-password`, `auth-register-submit`, `auth-error-alert` |
+| Home | `home-hero-scroll-cta`, `home-featured-cpu-section`, `home-featured-gpu-section`, `home-featured-cpu-all`, `home-featured-gpu-all`, `home-browse-cpu`, `home-browse-gpu`, `home-tool-compare`, `home-tool-ppp`, `home-tool-psu` |
+| Listing | `filter-vendor-{vendor}`, `filter-price-min`, `filter-price-max`, `filter-vram-{gb}`, `filter-aib-{brand}`, `filter-socket-{socket}`, `filter-clear`, `gpu-tab-all`, `gpu-tab-limited`, `sort-select`, `product-card-{id}`, `product-card-buy-now-{id}`, `product-card-compare-{id}`, `product-card-add-to-cart-{id}` |
+| Detail | `detail-buy-now`, `detail-add-to-cart`, `detail-compare-this`, `detail-calc-psu` |
+| Compare | `compare-slot-select-{index}`, `compare-slot-search-{index}`, `compare-slot-option-{index}-{id}`, `compare-slot-clear-{index}`, `compare-add-column`, `compare-clear-all`, `compare-table`, `compare-cell-{rowKey}-{id}`, `compare-error-back` |
 | Perf-per-Price | `ppp-category-{cpu\|gpu}`, `ppp-vendor-{vendor}`, `ppp-max-price`, `ppp-submit`, `ppp-table`, `ppp-row-{id}`, `ppp-best-value-{id}`, `ppp-empty` |
-| PSU | `psu-cpu-select`, `psu-gpu-select`, `psu-calculate`, `psu-result-exact`, `psu-result-tier` |
-| Cart | `cart-item-{id}`, `cart-qty-input-{id}`, `cart-qty-inc-{id}`, `cart-qty-dec-{id}`, `cart-remove-{id}`, `cart-remove-confirm`, `cart-remove-cancel`, `cart-subtotal`, `cart-shipping`, `cart-total`, `cart-checkout` |
+| PSU | `psu-cpu-select`, `psu-cpu-search`, `psu-cpu-option-{id}`, `psu-gpu-select`, `psu-gpu-search`, `psu-gpu-option-{id}`, `psu-calculate`, `psu-result-exact`, `psu-result-tier`, `psu-prefill-notice` |
+| Cart | `cart-empty-notice`, `cart-item-{id}`, `cart-qty-input-{id}`, `cart-qty-inc-{id}`, `cart-qty-dec-{id}`, `cart-remove-{id}`, `cart-remove-confirm`, `cart-remove-cancel`, `cart-subtotal`, `cart-shipping`, `cart-total`, `cart-checkout` |
 | Checkout | `checkout-fullname`, `checkout-phone`, `checkout-province`, `checkout-ward`, `checkout-street`, `checkout-note`, `checkout-payment-{cod\|bank_transfer\|card}`, `checkout-submit`, `review-modal`, `review-countdown`, `review-cancel`, `review-confirm-now`, `payment-qr-image`, `payment-card-number`, `payment-confirm` |
-| Orders | `order-id-display`, `order-id-copy`, `order-stage-{0..4}`, `order-demo-advance`, `order-completed-message`, `lookup-order-id`, `lookup-phone`, `lookup-submit`, `lookup-error` |
-| Admin | `admin-login-password`, `admin-login-submit`, `admin-logout`, `admin-reset-button`, `admin-reset-confirm`, `admin-product-row-{id}`, `admin-product-edit-{id}`, `admin-product-delete-{id}`, `admin-product-save`, `admin-image-url`, `admin-image-upload`, `admin-order-row-{orderId}`, `admin-order-open-{orderId}` |
+| Orders & Auth Gate | `order-id-display`, `order-id-copy`, `order-stage-{0..4}`, `order-demo-advance`, `order-completed-message`, `lookup-order-id`, `lookup-phone`, `lookup-submit`, `lookup-error`, `orders-my-list`, `orders-my-row-{orderId}`, `orders-my-empty`, `checkout-auth-gate`, `checkout-auth-login` |
+| Admin | `admin-login-password`, `admin-login-submit`, `admin-logout`, `admin-nav-products`, `admin-nav-gpu-series`, `admin-nav-legacy-cpus`, `admin-nav-orders`, `admin-reset-button`, `admin-reset-confirm`, `admin-product-tab-{cpu\|gpu}`, `admin-product-add`, `admin-product-row-{id}`, `admin-product-edit-{id}`, `admin-product-delete-{id}`, `admin-product-save`, `admin-product-cancel`, `admin-image-url`, `admin-image-upload`, `admin-series-tab-{retail\|legacy}`, `admin-series-add`, `admin-series-row-{id}`, `admin-series-edit-{id}`, `admin-series-delete-{id}`, `admin-series-save`, `admin-legacy-cpu-add`, `admin-legacy-cpu-row-{id}`, `admin-legacy-cpu-edit-{id}`, `admin-legacy-cpu-delete-{id}`, `admin-legacy-cpu-save`, `admin-order-row-{orderId}`, `admin-order-open-{orderId}` |
 
 ### 12.4 Page notes
 
-1. The Zalo button (`fixed`, bottom-right) moves up by the compare bar's height while the bar is visible, so they never overlap.
+1. The Zalo button (`fixed right-4 bottom-4`) stays anchored at the bottom-right corner across all pages (`ComparisonBar` was removed).
 2. The GitHub icon sits at the bottom-left of the footer and opens `NEXT_PUBLIC_GITHUB_REPO_URL` in a new tab (`rel="noopener noreferrer"`).
 3. Search suggestions: 200 ms debounce, keyboard navigation, Enter goes to `/search?q=`.
 4. Review modal: focus trap, a visible 5 -> 0 countdown, auto-confirm at 0. Both buttons and the auto-confirm are disabled once a request starts.
@@ -1142,7 +1239,7 @@ Data rules: prices from reputable Vietnamese retailers on the seeding date. Pass
 ### 13.2 Reset Sample Data (`reset.service.ts`)
 
 1. The admin clicks "Khôi phục dữ liệu mẫu", then a confirmation modal, then `POST /api/admin/reset`.
-2. One DB transaction: `TRUNCATE order_status_events, order_items, orders, gpu_variants, cpu_specs, products, gpu_series, legacy_cpus, auth_failures CASCADE`, then `seedCatalog(tx)` inserts the baseline with the same IDs and `is_seed = true`. `auth_failures` is cleared too **[Call]**. A live demonstration of the 429 lockout would otherwise block order lookup, and admin login on a shared room IP, for up to 15 minutes with no one-click way to recover.
+2. One DB transaction: `TRUNCATE order_status_events, order_items, orders, gpu_variants, cpu_specs, products, gpu_series, legacy_cpus, auth_failures CASCADE`, then `seedCatalog(tx)` inserts the baseline with the same IDs and `is_seed = true`. `users` and `oauth_accounts` are preserved so active demo accounts are not disrupted, while `auth_failures` is cleared too **[Call]** (so a 429 lockout demo does not block lookup or login for 15 minutes).
 3. After commit: list `uploads/` in pages of 1,000 and delete in batches of 100. `seed/` is never touched.
 4. Return the counts and any storage warnings. The operation is idempotent and safe to repeat.
 
@@ -1168,6 +1265,8 @@ Data rules: prices from reputable Vietnamese retailers on the seeding date. Pass
 | `SUPABASE_STORAGE_BUCKET` | server | `product-images` |
 | `ADMIN_PASSWORD` | server | `scrypt:32768:8:1:<salt>:<hash>` from `npm run admin:hash` |
 | `AUTH_SECRET` | server | At least 32 random bytes, base64 (`openssl rand -base64 48`) |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | server | Optional for local dev; Google OAuth2 Web Client credentials (`<origin>/api/auth/oauth/google/callback`) |
+| `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` | server | Optional for local dev; Meta App ID & Secret (`<origin>/api/auth/oauth/facebook/callback`) |
 | `STORE_NAME` | server | Used in the transfer memo |
 | `DEMO_BANK_NAME`, `DEMO_BANK_ACCOUNT_NO`, `DEMO_BANK_ACCOUNT_HOLDER` | server | Fake values |
 | `NEXT_PUBLIC_ZALO_URL` | client | `https://zalo.me/<number>` |
@@ -1185,7 +1284,7 @@ Data rules: prices from reputable Vietnamese retailers on the seeding date. Pass
 | Upload seed images | `npm run storage:seed` |
 | Hash admin password | `npm run admin:hash -- "<password>"` |
 | Refresh address data | `npm run address:vendor` |
-| Tests | `npm test` (Vitest), `npm run e2e` (Playwright) |
+| Tests | `npm test` (Vitest), `npm run test:coverage` (Vitest + `@vitest/coverage-v8`, `fileParallelism: false`), `npm run e2e` (Playwright) |
 
 ### 14.4 Vercel
 
@@ -1200,8 +1299,9 @@ Data rules: prices from reputable Vietnamese retailers on the seeding date. Pass
 
 | Level | Tool | Scope |
 | --- | --- | --- |
-| Domain unit | Vitest | Every function in `server/domain`: phone normalization table (spaces, dots, `+84`, `84`, invalid prefixes), name/street/note limits incl. NFC, shipping (qty 1 / 2 / 100), order-ID format, alphabet and bias-free mapping, normalization, PPP rounding and ranking (budget filter, tie-breaking, shared `bestValue`, empty list), highlight ties and all-equal rule, compare validation order, PSU tiers (450 boundary, exactly 1200, above 1200), masking |
-| Service integration | Vitest + local Postgres (`supabase start` or Docker `postgres:16`) | Order creation transaction, idempotent replay and mismatch, deleted product rejection, rate-limit window, series delete block, kind immutability, reset |
+| Domain unit | Vitest (`test:coverage`) | 100% coverage across `src/server/domain/*`: phone normalization table (spaces, dots, `+84`, `84`, invalid prefixes), name/street/note limits incl. NFC, shipping (qty 1 / 2 / 100), order-ID format, alphabet and bias-free mapping, normalization, PPP rounding and ranking (budget filter, tie-breaking, shared `bestValue`, empty list), restricted compare highlight rules (CPU: `price`/`score`/`coresThreads`, GPU: `price`/`score`/`vram`/`cores`/`busWidth`, all-equal suppression, non-highlighted clocks/TDP/cache), compare validation order, balanced featured selection, PSU tiers (450 boundary, exactly 1200, above 1200), masking |
+| Infra & Client unit | Vitest | Password hashing, rate-limit / security / handler helpers (`route-helpers.ts`), Vietnamese text rules (`VI_MESSAGES`, `ERROR_MESSAGES`, `/policies/**`), and client formatters / safe storage / Zustand persisted stores |
+| Service integration | Vitest (`fileParallelism: false`) + Docker `postgres:16-alpine` (`port 5433`, `techcore_test`) | Order creation transaction, idempotent replay and mismatch, deleted product rejection, rate-limit window, series delete block, kind immutability, reset |
 | Text rule | Vitest | No em-dash or bullet in message catalogs and policy pages |
 | E2E | Playwright (`data-testid` only) | Browse, filter and sort; search suggestion; compare (happy path and every error state); perf-per-price ranking (category switch, budget filter, best-value badge, empty budget state); PSU with prefill; cart limits and sync after an admin price change and delete; checkout x 3 payment methods incl. cancel in the modal; double-click guard; lookup success, generic failure and 429; demo advance to completion; admin login, CRUD, upload, reset |
 
@@ -1229,6 +1329,18 @@ Data rules: prices from reputable Vietnamese retailers on the seeding date. Pass
 18. Brand and socket values are canonicalized case-insensitively to the existing spelling.
 19. The UI skeleton is responsive from phase 1.
 20. A price change between review and order creation is applied silently (C30).
+21. `/search?q=` fans out across `GET /api/products?category=cpu&q=...` and `GET /api/products?category=gpu&q=...` in parallel so `category` remains required on `GET /api/products` (Phương án B).
+22. Vitest runs sequentially (`fileParallelism: false`) against local Docker `postgres:16-alpine` (`techcore-test-db` on port `5433`, `techcore_test`), with `npm run test:coverage` enforcing 100% coverage on `src/server/domain/*`.
+23. The Step 4 UI skeleton adopts a 3-layer theme-ready split: Dark Neutral Tailwind v4 `@theme` tokens (`src/app/globals.css`) + `src/components/ui/*`, headless `use*Controller.ts` `{ state, actions }` hooks, and props-only `*View.tsx` components (plus Server-to-Client `*Client.tsx` wrappers for `searchParams` routes and `docs/UI_WIRING.md`), deferring final visual styling to Step 6 after Step 5 E2E passes.
+24. `postgres@4.1.1` runtime pool configures `prepare: false`, `max_pipeline: 1`, `max: 5`, `connect_timeout: 10`, `query_timeout: 15`, `queue_timeout: 10` in `src/server/db/client.ts` to prevent Supavisor `:6543` transaction-pool extended-query pipelining deadlocks, paired with a 15 s default `AbortSignal.timeout` in `src/lib/api-client.ts`.
+25. Storefront cards (`ProductCard`) and detail (`ProductDetailView`) promote a primary `"Mua ngay"` CTA (appends 1 unit preserving existing cart items and opens `/cart`) next to a compact square icon `"Thêm vào giỏ"` button (`min-h-11 min-w-11` / `h-12 w-12`, per-product `aria-label`).
+26. The sticky `ComparisonBar` was removed: `"So sánh"` on products navigates straight to `/compare?ids=<id>`, and `/compare` provides 2–3 interactive comparison slots (optional 3rd column via `compare-add-column`) that automatically lock remaining columns to the category of whichever slot is picked first.
+27. Comparison highlights exclude clock speeds, TDP/TBP, and CPU L3 cache (`rule: 'none'`), highlighting only CPU (`price`, `score`, `coresThreads`) and GPU (`price`, `score`, `vram`, `cores`, `busWidth`); both `/compare` and `/tools/psu` selectors use a shared searchable grouped dropdown (`SearchableSelect`).
+28. The homepage opens with a full-viewport (`100dvh`) Hero above the fold and scrolls to two separated 2x4 Featured grids (`8` CPUs across Intel/AMD tiers and `8` GPUs across NVIDIA/AMD series/tiers served by `GET /api/products/featured`, each paired with `"Xem tất cả"` links).
+29. Authentication uses a self-implemented OAuth2 flow (Google PKCE + Facebook `public_profile` with `appsecret_proof`) plus `users`/`oauth_accounts` in PostgreSQL and a unified `auth_session` HTTP-only JWT cookie (`SameSite=Lax` + `assertSameOrigin` on all mutations). Entering `username = admin` + `ADMIN_PASSWORD` in the unified login modal activates Admin Mode.
+30. All browsing, tools, cart management, and `/orders/lookup` remain open to guests, while `/checkout`, `/checkout/payment`, `POST /api/checkout/prepare`, `POST /api/orders`, and `/orders` ("Đơn hàng của tôi") require an authenticated session.
+31. `Reset Sample Data` truncates `orders` and restores the baseline catalog while preserving `users` and `oauth_accounts`.
+32. `/gpu` includes two client-side tabs (`Tất cả GPU` and `Limited Edition`) backed by `gpu_variants.is_limited_edition` (`8` seeded variants: 2 ASUS T1 collabs + 6 limited RTX 5080/5090 editions) while `Tất cả GPU` still displays all active GPUs.
 
 ## 17. Left to the Builder
 
