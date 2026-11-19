@@ -25,6 +25,62 @@ export const searchSuggestQuerySchema = z.object({
   q: z.string().trim().min(SEARCH_SUGGEST_MIN_LEN).max(SEARCH_SUGGEST_MAX_LEN),
 });
 
+function addInvalidVendorIssues(
+  category: 'cpu' | 'gpu',
+  vendors: readonly string[] | undefined,
+  ctx: z.RefinementCtx,
+): void {
+  if (!vendors?.length) return;
+  const allowed = category === 'cpu' ? new Set(['intel', 'amd']) : new Set(['nvidia', 'amd']);
+  for (const v of vendors) {
+    if (!allowed.has(v)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['vendor'],
+        message: `Vendor ${v} is not valid for category ${category}`,
+      });
+    }
+  }
+}
+
+export const productListQuerySchema = z
+  .object({
+    category: categorySchema,
+    vendor: z.array(chipVendorSchema).optional(),
+    priceMin: z.number().int().nonnegative().optional(),
+    priceMax: z.number().int().positive().optional(),
+    vramGb: z.array(z.number().int().positive()).optional(),
+    aibBrand: z.array(z.string().trim().min(1).max(40)).optional(),
+    socket: z.array(z.string().trim().min(1).max(20)).optional(),
+    limitedEdition: z.boolean().optional(),
+    sort: productSortSchema.optional(),
+    q: z.string().trim().max(SEARCH_SUGGEST_MAX_LEN).optional(),
+  })
+  .superRefine((val, ctx) => {
+    addInvalidVendorIssues(val.category, val.vendor, ctx);
+    if (val.priceMin !== undefined && val.priceMax !== undefined && val.priceMin > val.priceMax) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['priceMin'],
+        message: 'priceMin must be less than or equal to priceMax',
+      });
+    }
+    if (val.category === 'cpu' && (val.vramGb?.length || val.aibBrand?.length || val.limitedEdition)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: val.vramGb?.length ? ['vramGb'] : val.aibBrand?.length ? ['aibBrand'] : ['limitedEdition'],
+        message: 'GPU filters are not allowed for CPU category',
+      });
+    }
+    if (val.category === 'gpu' && val.socket?.length) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['socket'],
+        message: 'Socket filter is not allowed for GPU category',
+      });
+    }
+  });
+
 export const perfPerPriceQuerySchema = z
   .object({
     category: categorySchema,
@@ -32,17 +88,7 @@ export const perfPerPriceQuerySchema = z
     maxPriceVnd: z.number().int().positive().optional(),
   })
   .superRefine((val, ctx) => {
-    if (!val.vendor?.length) return;
-    const allowed = val.category === 'cpu' ? new Set(['intel', 'amd']) : new Set(['nvidia', 'amd']);
-    for (const v of val.vendor) {
-      if (!allowed.has(v)) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['vendor'],
-          message: `Vendor ${v} is not valid for category ${val.category}`,
-        });
-      }
-    }
+    addInvalidVendorIssues(val.category, val.vendor, ctx);
   });
 
 export const psuEstimateQuerySchema = z.object({

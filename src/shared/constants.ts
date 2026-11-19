@@ -16,6 +16,7 @@ export const COMPARE_MIN_ITEMS = 2;
 export const COMPARE_MAX_ITEMS = 3;
 
 export const CATALOG_MAX_RESULTS = 200;
+export const FEATURED_PER_CATEGORY = 8;
 export const SEARCH_SUGGEST_MAX_RESULTS = 8;
 export const SEARCH_SUGGEST_MIN_LEN = 2;
 export const SEARCH_SUGGEST_MAX_LEN = 50;
@@ -47,9 +48,23 @@ export const RATE_LIMIT_MAX_FAILURES = 5;
 export const RATE_LIMIT_WINDOW_MINUTES = 15;
 export const RATE_LIMIT_RETENTION_HOURS = 24;
 
-export const ADMIN_SESSION_COOKIE = 'techcore_admin_session';
-export const ADMIN_SESSION_TTL_HOURS = 12;
+export const ADMIN_SESSION_COOKIE = 'admin_session';
+export const AUTH_SESSION_COOKIE = 'auth_session';
+export const OAUTH_TX_COOKIE = 'oauth_tx';
+export const ADMIN_SESSION_TTL_HOURS = 8;
+export const CUSTOMER_SESSION_TTL_DAYS = 7;
+export const OAUTH_TX_TTL_MINUTES = 10;
 export const ORDER_TOKEN_TTL_HOURS = 24;
+
+export const USERNAME_MIN_LEN = 3;
+export const USERNAME_MAX_LEN = 30;
+export const USERNAME_REGEX = /^[a-z0-9_.-]{3,30}$/;
+export const PASSWORD_MIN_LEN = 6;
+export const PASSWORD_MAX_LEN = 128;
+export const DISPLAY_NAME_MIN_LEN = 2;
+export const DISPLAY_NAME_MAX_LEN = 50;
+export const RESERVED_USERNAMES = ['admin', 'root', 'system', 'techcore'] as const;
+export const MY_ORDERS_MAX_ROWS = 100;
 
 export const WARRANTY_MONTHS = 36;
 export const PACKAGING_DEFAULT = 'full_box' as const;

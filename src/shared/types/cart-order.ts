@@ -112,3 +112,14 @@ export interface OrderWithToken {
   accessToken: string;
   replayed?: boolean;
 }
+
+export interface CustomerOrderSummary {
+  orderId: string;
+  customerName: string;
+  totalQuantity: number;
+  totalVnd: number;
+  stage: OrderStage;
+  stageLabel: string;
+  paymentMethod: PaymentMethod;
+  createdAt: string;
+}

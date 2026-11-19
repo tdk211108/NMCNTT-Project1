@@ -5,6 +5,9 @@ export type ChipVendor = 'intel' | 'amd' | 'nvidia';
 export type GpuSeriesKind = 'retail' | 'legacy';
 export type PaymentMethod = 'cod' | 'bank_transfer' | 'card';
 export type OrderStage = 0 | 1 | 2 | 3 | 4;
+export type UserRole = 'customer' | 'admin';
+export type OAuthProvider = 'google' | 'facebook';
+export type AuthProvider = 'password' | OAuthProvider | 'admin';
 
 export interface SpecItem {
   key: string;
@@ -40,6 +43,7 @@ export type ErrorCode =
   | 'ORDER_COMPLETED'
   | 'HAS_VARIANTS'
   | 'DUPLICATE_NAME'
+  | 'USERNAME_TAKEN'
   | 'SERIES_NOT_RETAIL'
   | 'IMAGE_INVALID'
   | 'INTERNAL';

@@ -8,6 +8,7 @@ export interface ProductCard {
   imageUrl: string | null;
   vendor: ChipVendor;
   aibBrand: string | null;
+  isLimitedEdition: boolean;
   score: Pick<Score, 'raw' | 'normalized'>;
   summary: SpecItem[];
 }
@@ -22,6 +23,7 @@ export interface ProductListQuery {
   vramGb?: number[];
   aibBrand?: string[];
   socket?: string[];
+  limitedEdition?: boolean;
   sort?: ProductSort;
   q?: string;
 }
@@ -40,7 +42,13 @@ export interface ProductListResponse {
   total: number;
 }
 
+export interface FeaturedProductsResponse {
+  cpus: ProductCard[];
+  gpus: ProductCard[];
+}
+
 export interface ProductDetail extends ProductCard {
+  stockStatus: 'in_stock';
   warrantyMonths: 36;
   packaging: 'full_box';
   score: Score;
