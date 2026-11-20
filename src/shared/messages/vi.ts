@@ -26,6 +26,9 @@ export const VI_MESSAGES = {
     searchSubmit: 'Tìm kiếm',
     zaloSupportLabel: 'Hỗ trợ qua Zalo',
     githubLabel: 'Mã nguồn dự án trên GitHub',
+    themeToggleDefault: 'Chuyển chế độ giao diện',
+    themeToggleToDark: 'Chuyển sang giao diện tối',
+    themeToggleToLight: 'Chuyển sang giao diện sáng',
   },
   common: {
     loading: 'Đang tải dữ liệu...',
@@ -65,6 +68,11 @@ export const VI_MESSAGES = {
     compareShortcutDesc: 'Đặt tối đa 3 CPU hoặc 3 GPU cạnh nhau để đối chiếu thông số và hiệu năng.',
     pppShortcutDesc: 'Tìm mẫu linh kiện đạt điểm benchmark cao nhất trong mức ngân sách dự kiến.',
     psuShortcutDesc: 'Ước tính công suất nguồn an toàn cho cấu hình mới hoặc linh kiện đang sử dụng.',
+    showcaseHeading: 'Tâm điểm hiệu năng nổi bật',
+    showcaseSubheading: 'Theo dõi nhanh CPU và GPU dẫn đầu cùng điểm PassMark chuẩn hóa.',
+    showcaseCpuLabel: 'CPU tiêu biểu',
+    showcaseGpuLabel: 'GPU tiêu biểu',
+    showcaseCompareLink: 'Mở công cụ so sánh',
   },
   catalog: {
     cpuPageTitle: 'Bộ vi xử lý (CPU)',
@@ -106,6 +114,7 @@ export const VI_MESSAGES = {
     detailBackToCategory: 'Xem thêm sản phẩm cùng danh mục',
     productDetailMetaTitle: 'Chi tiết sản phẩm',
     productNotFound: 'Sản phẩm không tồn tại hoặc đã ngừng kinh doanh.',
+    imageZoomHint: 'Di chuột lên ảnh để phóng to chi tiết',
   },
   tools: {
     disclaimers: {

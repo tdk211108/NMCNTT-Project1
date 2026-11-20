@@ -13,12 +13,12 @@ Toàn bộ màu sắc và bán kính bo góc nằm tại `@theme` trong `src/app
 
 ## 2. Mức 2 — Đổi Component Hệ thống (`src/components/ui/*`)
 
-- `Button.tsx` (`primary`, `secondary`, `outline`, `ghost`, `danger`, `demo`)
-- `Input.tsx`, `Select.tsx`, `SearchableSelect.tsx` (dropdown có ô tìm kiếm nhóm theo danh mục cho `/compare` và `/tools/psu`), `Card.tsx` (`Card`, `Badge`), `Feedback.tsx` (`Spinner`, `EmptyState`), `Icons.tsx` (`CartPlusIcon`)
+- `Button.tsx` (`primary`, `secondary`, `outline`, `ghost`, `danger`, `demo`), `ThemeToggle.tsx` (`InnerMoon` + View Transitions API circular reveal, `TEST_IDS.header.themeToggle`)
+- `Input.tsx`, `Select.tsx`, `SearchableSelect.tsx` (dropdown có ô tìm kiếm nhóm theo danh mục cho `/compare` và `/tools/psu`), `Card.tsx` (`Card`, `Badge`), `Feedback.tsx` (`Spinner`, `EmptyState`), `Icons.tsx` (`SolarIcon`, `AeroIconBadge`, `CartPlusIcon` dùng `@iconify/react/dist/offline` + `solar-icons.data.ts`)
 - `Modal.tsx` (dùng `<dialog>` native `showModal()`, giữ `data-testid`)
 - `Table.tsx` (`ResponsiveTableWrapper` cuộn ngang an toàn từ `360px`)
 - `Toast.tsx` & `toast-store.ts` (`showToast(message, tone)`)
-- `ProductImage.tsx` (dùng `<img>` thường nền trắng `bg-white` với fallback `/icons/placeholder-product.svg`; `ProductCard` dùng `aspect-square`, `ProductDetailView` dùng khung `md:min-h-[420px]`)
+- `ProductImage.tsx` (dùng `<img>` thường nền trắng `bg-white` với fallback `/icons/placeholder-product.svg`, hỗ trợ `zoomOnHover` theo con trỏ cho ảnh lớn ở `/products/[id]` và hàng tiêu chí `/compare`)
 
 ## 3. Mức 3 — Thiết kế lại JSX từng trang mà giữ nguyên dây nối Backend
 

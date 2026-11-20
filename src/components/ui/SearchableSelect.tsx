@@ -3,6 +3,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { matchesSearchTokens } from '@/lib/search-filter';
 import { VI_MESSAGES } from '@/shared/messages/vi';
+import { SolarIcon } from './Icons';
 
 export interface SearchableSelectOption {
   value: string;
@@ -182,28 +183,23 @@ export function SearchableSelect({
             openPanel();
           }
         }}
-        className="flex min-h-11 w-full items-center justify-between gap-2 rounded-control border border-border bg-surface px-3 py-2 text-left text-base text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-control border border-border-strong bg-surface-elevated/90 px-3.5 py-2 text-left text-base text-ink shadow-[inset_0_1px_0_var(--aero-specular)] transition-[border-color,box-shadow] duration-150 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className={selectedOption ? 'truncate font-medium text-ink' : 'truncate text-ink-muted'}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 20 20"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          className={`h-4 w-4 shrink-0 text-ink-muted transition-transform ${
+        <SolarIcon
+          name="alt-arrow-down-bold-duotone"
+          withShadow={false}
+          className={`h-4 w-4 text-ink-muted transition-transform duration-200 ease-out ${
             isOpen ? 'rotate-180' : ''
           }`}
-        >
-          <path d="m6 8 4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        />
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 left-0 top-full z-30 mt-1 flex flex-col overflow-hidden rounded-card border border-border-strong bg-surface-elevated shadow-xl">
-          <div className="border-b border-border bg-surface p-2">
+        <div className="aero-glass-elevated absolute right-0 left-0 top-full z-30 mt-1.5 flex origin-top flex-col overflow-hidden rounded-card">
+          <div className="border-b border-border/60 bg-surface-subtle/80 p-2">
             <input
               ref={searchInputRef}
               type="search"
@@ -220,7 +216,7 @@ export function SearchableSelect({
               autoCapitalize="none"
               spellCheck={false}
               data-testid={searchTestId}
-              className="min-h-10 w-full rounded-control border border-border bg-surface-subtle px-3 py-1.5 text-sm text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-accent"
+              className="min-h-10 w-full rounded-control border border-border-strong bg-surface-elevated px-3 py-1.5 text-sm text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-accent"
             />
           </div>
 
@@ -229,7 +225,7 @@ export function SearchableSelect({
             id={listboxId}
             role="listbox"
             aria-label={label}
-            className="max-h-72 overflow-y-auto p-1"
+            className="max-h-72 overflow-y-auto p-1.5"
           >
             {filteredGroups.length === 0 ? (
               <p className="px-3 py-4 text-center text-sm text-ink-muted">{emptyMessage}</p>
@@ -237,10 +233,10 @@ export function SearchableSelect({
               filteredGroups.map((group) => {
                 const groupHeadingId = `${listboxId}-group-${group.id}`;
                 return (
-                  <div key={group.id} role="group" aria-labelledby={groupHeadingId} className="mb-1 last:mb-0">
+                  <div key={group.id} role="group" aria-labelledby={groupHeadingId} className="mb-1.5 last:mb-0">
                     <div
                       id={groupHeadingId}
-                      className="px-2.5 py-1 text-xs font-semibold tracking-wide text-ink-muted uppercase"
+                      className="px-2.5 py-1 text-xs font-semibold text-ink-muted"
                     >
                       {group.label}
                     </div>
@@ -260,7 +256,7 @@ export function SearchableSelect({
                           onMouseDown={(e) => e.preventDefault()}
                           onMouseEnter={() => setActiveIndex(currentIdx)}
                           onClick={() => selectValue(opt.value)}
-                          className={`flex min-h-10 w-full items-center justify-between gap-2 rounded-control px-2.5 py-1.5 text-left text-sm ${
+                          className={`flex min-h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-control px-2.5 py-1.5 text-left text-sm transition-colors duration-100 ${
                             isSelected
                               ? 'bg-highlight font-semibold text-highlight-fg'
                               : isActive
@@ -270,7 +266,9 @@ export function SearchableSelect({
                         >
                           <span className="truncate">{opt.label}</span>
                           {opt.meta ? (
-                            <span className="shrink-0 text-xs text-ink-muted">{opt.meta}</span>
+                            <span className="shrink-0 font-mono text-xs tabular-nums text-ink-muted">
+                              {opt.meta}
+                            </span>
                           ) : null}
                         </button>
                       );

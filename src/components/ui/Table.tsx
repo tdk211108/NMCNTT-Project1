@@ -14,7 +14,7 @@ export function ResponsiveTableWrapper({
       tabIndex={0}
       role="region"
       aria-label={label}
-      className={`w-full overflow-x-auto rounded-card border border-border bg-surface focus-visible:outline-2 focus-visible:outline-accent ${className}`}
+      className={`aero-glass w-full overflow-x-auto rounded-card focus-visible:outline-2 focus-visible:outline-accent ${className}`}
     >
       {children}
     </div>

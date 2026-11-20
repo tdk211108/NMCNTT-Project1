@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
+import { AeroIconBadge, SolarIcon } from '@/components/ui/Icons';
 import { Input } from '@/components/ui/Input';
 import { ProductImage } from '@/components/ui/ProductImage';
 import { Select } from '@/components/ui/Select';
@@ -17,8 +18,11 @@ export function AdminProductsView({ state, actions }: AdminProductsViewProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.admin.navProducts}</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <AeroIconBadge name="cpu-bold-duotone" size="lg" />
+          <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.admin.navProducts}</h1>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
             variant={state.category === 'cpu' ? 'primary' : 'outline'}
@@ -47,7 +51,7 @@ export function AdminProductsView({ state, actions }: AdminProductsViewProps) {
       </div>
 
       {state.form ? (
-        <Card>
+        <Card className="aero-glass-elevated">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -55,7 +59,7 @@ export function AdminProductsView({ state, actions }: AdminProductsViewProps) {
             }}
             className="flex flex-col gap-4"
           >
-            <h2 className="text-lg font-semibold text-ink">
+            <h2 className="text-lg font-bold text-ink">
               {state.form.mode === 'create' ? VI_MESSAGES.admin.addNewButton : VI_MESSAGES.common.edit}{' '}
               ({state.form.category.toUpperCase()})
             </h2>
@@ -73,14 +77,15 @@ export function AdminProductsView({ state, actions }: AdminProductsViewProps) {
                 required
                 value={state.form.priceVnd}
                 onChange={(e) => actions.onUpdateFormField('priceVnd', e.target.value)}
+                className="font-mono tabular-nums"
               />
             </div>
 
-            <div className="flex flex-col gap-3 rounded-control border border-border bg-surface-subtle p-3">
+            <div className="flex flex-col gap-3 rounded-control border border-border bg-surface-subtle/85 p-3.5 shadow-[inset_0_1px_0_var(--aero-specular)]">
               <div className="flex flex-wrap items-center gap-3 text-sm">
-                <span className="font-medium text-ink">Hình ảnh:</span>
+                <span className="font-semibold text-ink">Hình ảnh:</span>
                 {(['none', 'url', 'upload'] as const).map((mode) => (
-                  <label key={mode} className="flex items-center gap-1.5 text-ink">
+                  <label key={mode} className="flex cursor-pointer items-center gap-1.5 text-ink">
                     <input
                       type="radio"
                       name="imageMode"
@@ -109,23 +114,28 @@ export function AdminProductsView({ state, actions }: AdminProductsViewProps) {
 
               {state.form.imageMode === 'upload' ? (
                 <div className="flex flex-col gap-2">
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    data-testid={TEST_IDS.admin.imageUpload}
-                    disabled={state.isUploading}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) actions.onUploadFile(file);
-                    }}
-                    className="text-sm text-ink"
-                  />
-                  {state.form.uploadedPreviewUrl ? (
-                    <ProductImage
-                      src={state.form.uploadedPreviewUrl}
-                      alt="Preview"
-                      className="h-24 w-24 object-contain"
+                  <label className="inline-flex items-center gap-2 text-sm font-medium text-ink">
+                    <SolarIcon name="upload-bold-duotone" className="h-4 w-4 text-primary" />
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      data-testid={TEST_IDS.admin.imageUpload}
+                      disabled={state.isUploading}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) actions.onUploadFile(file);
+                      }}
+                      className="text-sm text-ink"
                     />
+                  </label>
+                  {state.form.uploadedPreviewUrl ? (
+                    <div className="h-24 w-24 overflow-hidden rounded-[12px] bg-white p-1 ring-1 ring-white/80">
+                      <ProductImage
+                        src={state.form.uploadedPreviewUrl}
+                        alt="Preview"
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
                   ) : null}
                 </div>
               ) : null}
@@ -319,7 +329,7 @@ export function AdminProductsView({ state, actions }: AdminProductsViewProps) {
                   />
                 </div>
 
-                <label className="flex items-center gap-2 text-sm text-ink">
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-ink">
                   <input
                     type="checkbox"
                     checked={state.form.isLimitedEdition}
@@ -331,7 +341,7 @@ export function AdminProductsView({ state, actions }: AdminProductsViewProps) {
                 </label>
 
                 {state.selectedSeries ? (
-                  <p className="rounded-control border border-border bg-surface-subtle px-3 py-2 text-xs text-ink-muted">
+                  <p className="rounded-control border border-border bg-surface-subtle/85 px-3.5 py-2 text-xs text-ink-muted">
                     Thông số kế thừa từ {state.selectedSeries.name}: VRAM{' '}
                     {state.selectedSeries.vramGb} GB, TBP {state.selectedSeries.tbpW} W, Cores{' '}
                     {state.selectedSeries.cores}, Boost {state.selectedSeries.boostClockMhz} MHz,
@@ -370,12 +380,12 @@ export function AdminProductsView({ state, actions }: AdminProductsViewProps) {
         <ResponsiveTableWrapper label={VI_MESSAGES.admin.navProducts}>
           <table className="w-full min-w-[640px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-border bg-surface-subtle">
-                <th className="px-3 py-2.5 font-semibold text-ink-muted">ID</th>
-                <th className="px-3 py-2.5 font-semibold text-ink-muted">Tên</th>
-                <th className="px-3 py-2.5 font-semibold text-ink-muted">Giá</th>
-                <th className="px-3 py-2.5 font-semibold text-ink-muted">Thông số chính</th>
-                <th className="px-3 py-2.5 font-semibold text-ink-muted">Thao tác</th>
+              <tr className="border-b border-border/70 bg-surface-subtle/85">
+                <th className="px-4 py-3 font-semibold text-ink-muted">ID</th>
+                <th className="px-4 py-3 font-semibold text-ink-muted">Tên</th>
+                <th className="px-4 py-3 font-semibold text-ink-muted">Giá</th>
+                <th className="px-4 py-3 font-semibold text-ink-muted">Thông số chính</th>
+                <th className="px-4 py-3 font-semibold text-ink-muted">Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -383,19 +393,21 @@ export function AdminProductsView({ state, actions }: AdminProductsViewProps) {
                 <tr
                   key={item.id}
                   data-testid={TEST_IDS.admin.productRow(item.id)}
-                  className="border-b border-border last:border-b-0"
+                  className="border-b border-border/60 transition-colors last:border-b-0 hover:bg-surface-subtle/60"
                 >
-                  <td className="px-3 py-2.5 font-mono text-xs text-ink-muted">{item.id}</td>
-                  <td className="px-3 py-2.5 font-medium text-ink">{item.name}</td>
-                  <td className="px-3 py-2.5 text-primary">{formatVnd(item.priceVnd)}</td>
-                  <td className="px-3 py-2.5 text-xs text-ink-muted">
+                  <td className="px-4 py-3 font-mono text-xs text-ink-muted">{item.id}</td>
+                  <td className="px-4 py-3 font-semibold text-ink">{item.name}</td>
+                  <td className="px-4 py-3 font-mono font-semibold tabular-nums text-primary">
+                    {formatVnd(item.priceVnd)}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-ink-muted">
                     {item.category === 'cpu'
                       ? `${item.vendor.toUpperCase()} | ${item.socket} | ${item.coresTotal}C/${item.threadsTotal}T`
                       : `${item.series.name} | ${item.aibBrand} | ${item.series.vramGb} GB${
                           item.isLimitedEdition ? ' | Limited Edition' : ''
                         }`}
                   </td>
-                  <td className="px-3 py-2.5">
+                  <td className="px-4 py-3">
                     <div className="flex gap-2">
                       <Button
                         size="sm"
@@ -403,7 +415,8 @@ export function AdminProductsView({ state, actions }: AdminProductsViewProps) {
                         data-testid={TEST_IDS.admin.productEdit(item.id)}
                         onClick={() => actions.onStartEdit(item)}
                       >
-                        {VI_MESSAGES.common.edit}
+                        <SolarIcon name="pen-bold-duotone" className="h-3.5 w-3.5" withShadow={false} />
+                        <span>{VI_MESSAGES.common.edit}</span>
                       </Button>
                       <Button
                         size="sm"
@@ -412,7 +425,8 @@ export function AdminProductsView({ state, actions }: AdminProductsViewProps) {
                         data-testid={TEST_IDS.admin.productDelete(item.id)}
                         onClick={() => actions.onDelete(item.id)}
                       >
-                        {VI_MESSAGES.common.delete}
+                        <SolarIcon name="trash-bin-trash-bold-duotone" className="h-3.5 w-3.5" withShadow={false} />
+                        <span>{VI_MESSAGES.common.delete}</span>
                       </Button>
                     </div>
                   </td>

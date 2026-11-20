@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Badge, Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
+import { AeroIconBadge } from '@/components/ui/Icons';
 import { Input } from '@/components/ui/Input';
 import { ResponsiveTableWrapper } from '@/components/ui/Table';
 import { formatNumberVi, formatVnd } from '@/lib/format';
@@ -14,7 +15,10 @@ export type PerfPerPriceViewProps = ReturnType<typeof usePerfPerPriceController>
 export function PerfPerPriceView({ state, actions }: PerfPerPriceViewProps) {
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.tools.perfPerPrice.title}</h1>
+      <div className="flex items-center gap-3">
+        <AeroIconBadge name="graph-up-bold-duotone" size="lg" />
+        <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.tools.perfPerPrice.title}</h1>
+      </div>
 
       <Card>
         <form
@@ -24,8 +28,8 @@ export function PerfPerPriceView({ state, actions }: PerfPerPriceViewProps) {
           }}
           className="flex flex-col gap-4"
         >
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm font-medium text-ink">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-sm font-semibold text-ink">
               {VI_MESSAGES.tools.perfPerPrice.categoryLabel}:
             </span>
             <Button
@@ -47,7 +51,7 @@ export function PerfPerPriceView({ state, actions }: PerfPerPriceViewProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium text-ink">
+            <span className="text-sm font-semibold text-ink">
               {VI_MESSAGES.catalog.filterVendorLabel}:
             </span>
             {state.availableVendors.map((vendor) => {
@@ -76,6 +80,7 @@ export function PerfPerPriceView({ state, actions }: PerfPerPriceViewProps) {
                 error={state.budgetInputError ?? undefined}
                 data-testid={TEST_IDS.ppp.maxPrice}
                 onChange={(e) => actions.onChangeMaxPrice(e.target.value)}
+                className="font-mono tabular-nums"
               />
             </div>
             <Button type="submit" variant="primary" data-testid={TEST_IDS.ppp.submit}>
@@ -98,26 +103,26 @@ export function PerfPerPriceView({ state, actions }: PerfPerPriceViewProps) {
         <ResponsiveTableWrapper label={VI_MESSAGES.tools.perfPerPrice.title}>
           <table
             data-testid={TEST_IDS.ppp.table}
-            className="w-full min-w-[600px] border-collapse text-left text-sm"
+            className="w-full min-w-[620px] border-collapse text-left text-sm"
           >
             <thead>
-              <tr className="border-b border-border bg-surface-subtle">
-                <th className="px-3 py-3 font-semibold text-ink-muted">
+              <tr className="border-b border-border/70 bg-surface-subtle/85">
+                <th className="px-4 py-3 font-semibold text-ink-muted">
                   {VI_MESSAGES.tools.perfPerPrice.columns.rank}
                 </th>
-                <th className="px-3 py-3 font-semibold text-ink-muted">
+                <th className="px-4 py-3 font-semibold text-ink-muted">
                   {VI_MESSAGES.tools.perfPerPrice.columns.product}
                 </th>
-                <th className="px-3 py-3 font-semibold text-ink-muted">
+                <th className="px-4 py-3 font-semibold text-ink-muted">
                   {VI_MESSAGES.tools.perfPerPrice.columns.vendor}
                 </th>
-                <th className="px-3 py-3 font-semibold text-ink-muted">
+                <th className="px-4 py-3 font-semibold text-ink-muted">
                   {VI_MESSAGES.tools.perfPerPrice.columns.price}
                 </th>
-                <th className="px-3 py-3 font-semibold text-ink-muted">
+                <th className="px-4 py-3 font-semibold text-ink-muted">
                   {VI_MESSAGES.tools.perfPerPrice.columns.score}
                 </th>
-                <th className="px-3 py-3 font-semibold text-ink-muted">
+                <th className="px-4 py-3 font-semibold text-ink-muted">
                   {VI_MESSAGES.tools.perfPerPrice.columns.perfPerPrice}
                 </th>
               </tr>
@@ -127,12 +132,14 @@ export function PerfPerPriceView({ state, actions }: PerfPerPriceViewProps) {
                 <tr
                   key={item.id}
                   data-testid={TEST_IDS.ppp.row(item.id)}
-                  className="border-b border-border last:border-b-0"
+                  className="border-b border-border/60 transition-colors last:border-b-0 hover:bg-surface-subtle/60"
                 >
-                  <td className="px-3 py-2.5 font-semibold text-ink">#{item.rank}</td>
-                  <td className="px-3 py-2.5">
+                  <td className="px-4 py-3 font-mono font-bold tabular-nums text-ink">
+                    #{item.rank}
+                  </td>
+                  <td className="px-4 py-3">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Link href={`/products/${item.id}`} className="font-medium text-ink hover:text-accent">
+                      <Link href={`/products/${item.id}`} className="font-semibold text-ink hover:text-primary">
                         {item.name}
                       </Link>
                       {item.bestValue ? (
@@ -145,14 +152,16 @@ export function PerfPerPriceView({ state, actions }: PerfPerPriceViewProps) {
                       ) : null}
                     </div>
                   </td>
-                  <td className="px-3 py-2.5 text-ink-muted">{item.vendor.toUpperCase()}</td>
-                  <td className="px-3 py-2.5 font-medium text-ink">{formatVnd(item.priceVnd)}</td>
-                  <td className="px-3 py-2.5 text-ink">
+                  <td className="px-4 py-3 text-ink-muted">{item.vendor.toUpperCase()}</td>
+                  <td className="px-4 py-3 font-mono font-semibold tabular-nums text-ink">
+                    {formatVnd(item.priceVnd)}
+                  </td>
+                  <td className="px-4 py-3 font-mono tabular-nums text-ink">
                     {item.score.normalized !== null
                       ? `${formatNumberVi(item.score.normalized, 1)} (${formatNumberVi(item.score.raw)})`
                       : VI_MESSAGES.common.noData}
                   </td>
-                  <td className="px-3 py-2.5 font-bold text-accent">
+                  <td className="px-4 py-3 font-mono font-bold tabular-nums text-primary">
                     {formatNumberVi(item.perfPerPrice, 2)}
                   </td>
                 </tr>
@@ -163,7 +172,7 @@ export function PerfPerPriceView({ state, actions }: PerfPerPriceViewProps) {
       )}
 
       {state.data?.notes.length ? (
-        <Card className="flex flex-col gap-2 bg-surface-subtle text-xs text-ink-muted">
+        <Card className="flex flex-col gap-2 bg-surface-subtle/85 text-xs leading-relaxed text-ink-muted">
           {state.data.notes.map((note, idx) => (
             <p key={idx}>{note}</p>
           ))}

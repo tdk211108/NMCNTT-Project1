@@ -36,15 +36,15 @@ export function Select({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        className={`min-h-11 w-full rounded-control border bg-surface px-3 py-2 text-base text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${
-          error ? 'border-danger' : 'border-border'
+        className={`min-h-11 w-full rounded-control border bg-surface-elevated/90 px-3.5 py-2 text-base text-ink shadow-[inset_0_1px_2px_rgba(15,23,42,0.06),inset_0_-1px_0_var(--aero-specular)] transition-[border-color,box-shadow] duration-150 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${
+          error ? 'border-danger' : 'border-border-strong'
         } ${className}`}
         {...rest}
       >
         {children}
       </select>
       {error ? (
-        <p id={errorId} role="alert" className="text-xs text-danger">
+        <p id={errorId} role="alert" className="text-xs font-medium text-danger">
           {error}
         </p>
       ) : null}

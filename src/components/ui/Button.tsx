@@ -12,23 +12,23 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
-    'bg-primary text-primary-fg border-transparent hover:opacity-90',
+    'aero-pill-cta rounded-full border hover:brightness-105',
   secondary:
-    'bg-surface-elevated text-ink border-border hover:border-border-strong',
+    'aero-glass rounded-control text-ink hover:border-border-strong hover:bg-surface-elevated',
   outline:
-    'bg-transparent text-ink border-border-strong hover:bg-surface-subtle',
+    'rounded-control bg-surface-subtle/85 text-ink border-border-strong shadow-[inset_0_1px_0_var(--aero-specular)] hover:bg-surface-elevated',
   ghost:
-    'bg-transparent text-ink-muted border-transparent hover:text-ink hover:bg-surface-subtle',
+    'rounded-control bg-transparent text-ink-muted border-transparent hover:text-ink hover:bg-surface-subtle',
   danger:
-    'bg-danger text-danger-fg border-transparent hover:opacity-90',
+    'rounded-full bg-danger text-danger-fg border-white/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.45),0_4px_12px_rgba(220,38,38,0.28)] hover:brightness-105',
   demo:
-    'bg-demo-bg text-demo-fg border-2 border-dashed border-demo-border hover:opacity-90',
+    'rounded-control bg-demo-bg text-demo-fg border-2 border-dashed border-demo-border hover:brightness-105',
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
-  sm: 'min-h-9 px-3 py-1.5 text-sm',
-  md: 'min-h-11 px-4 py-2 text-sm',
-  lg: 'min-h-12 px-5 py-2.5 text-base',
+  sm: 'min-h-9 px-3 py-1.5 text-[13px]',
+  md: 'min-h-11 px-4.5 py-2 text-sm',
+  lg: 'min-h-12 px-6 py-2.5 text-base',
 };
 
 export function Button({
@@ -45,7 +45,7 @@ export function Button({
     <button
       type={type}
       disabled={disabled || isLoading}
-      className={`inline-flex items-center justify-center gap-2 rounded-control border font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className}`}
+      className={`inline-flex cursor-pointer items-center justify-center gap-2 border font-semibold transition-[transform,opacity,box-shadow,border-color,background-color,filter] duration-150 ease-out active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className}`}
       {...rest}
     >
       {isLoading ? (
@@ -54,7 +54,7 @@ export function Button({
           className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
         />
       ) : null}
-      <span>{children}</span>
+      <span className="relative z-1 inline-flex items-center gap-2">{children}</span>
     </button>
   );
 }

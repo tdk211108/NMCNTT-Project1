@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
+import { AeroIconBadge, SolarIcon } from '@/components/ui/Icons';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { VI_MESSAGES } from '@/shared/messages/vi';
@@ -17,10 +18,18 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-ink">{title}</h1>
-          <p className="text-sm text-ink-muted">{VI_MESSAGES.catalog.productCountLabel(state.total)}</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex items-center gap-3">
+          <AeroIconBadge
+            name={state.category === 'cpu' ? 'cpu-bold-duotone' : 'monitor-bold-duotone'}
+            size="lg"
+          />
+          <div>
+            <h1 className="text-2xl font-bold text-ink">{title}</h1>
+            <p className="font-mono text-sm tabular-nums text-ink-muted">
+              {VI_MESSAGES.catalog.productCountLabel(state.total)}
+            </p>
+          </div>
         </div>
 
         <div className="w-full sm:w-64">
@@ -39,7 +48,11 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
       </div>
 
       {state.category === 'gpu' ? (
-        <div role="tablist" aria-label={VI_MESSAGES.catalog.gpuPageTitle} className="flex flex-wrap gap-2 border-b border-border pb-3">
+        <div
+          role="tablist"
+          aria-label={VI_MESSAGES.catalog.gpuPageTitle}
+          className="flex flex-wrap gap-2 border-b border-border/70 pb-3"
+        >
           <Button
             role="tab"
             aria-selected={!state.limitedOnly}
@@ -66,6 +79,11 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         <aside aria-label="Bộ lọc sản phẩm" className="lg:col-span-1">
           <Card className="flex flex-col gap-5">
+            <div className="flex items-center gap-2 border-b border-border/60 pb-2.5 text-sm font-bold text-ink">
+              <SolarIcon name="tuning-2-bold-duotone" className="h-4 w-4 text-primary" />
+              <span>Bộ lọc</span>
+            </div>
+
             <div>
               <p className="mb-2 text-sm font-semibold text-ink">{VI_MESSAGES.catalog.filterVendorLabel}</p>
               <div className="flex flex-wrap gap-2">
@@ -94,6 +112,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
                 value={state.priceMinInput}
                 data-testid={TEST_IDS.listing.filterPriceMin}
                 onChange={(e) => actions.onChangePriceMin(e.target.value)}
+                className="font-mono tabular-nums"
               />
               <Input
                 type="text"
@@ -102,6 +121,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
                 value={state.priceMaxInput}
                 data-testid={TEST_IDS.listing.filterPriceMax}
                 onChange={(e) => actions.onChangePriceMax(e.target.value)}
+                className="font-mono tabular-nums"
               />
             </div>
 
@@ -177,7 +197,8 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
               data-testid={TEST_IDS.listing.filterClear}
               onClick={actions.onClearFilters}
             >
-              {VI_MESSAGES.catalog.clearFilters}
+              <SolarIcon name="restart-bold-duotone" className="h-4 w-4" withShadow={false} />
+              <span>{VI_MESSAGES.catalog.clearFilters}</span>
             </Button>
           </Card>
         </aside>
@@ -200,7 +221,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
             <div className="flex flex-col gap-8">
               {state.groupedByVendor.map((group) => (
                 <section key={group.vendor} className="flex flex-col gap-3">
-                  <h2 className="border-b border-border pb-2 text-lg font-semibold text-ink">
+                  <h2 className="border-b border-border/70 pb-2 text-lg font-bold text-ink">
                     {group.vendor.toUpperCase()} ({group.items.length})
                   </h2>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

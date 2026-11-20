@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
+import { AeroIconBadge, SolarIcon } from '@/components/ui/Icons';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { ResponsiveTableWrapper } from '@/components/ui/Table';
@@ -15,8 +16,11 @@ export function AdminGpuSeriesView({ state, actions }: AdminGpuSeriesViewProps) 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.admin.navGpuSeries}</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <AeroIconBadge name="monitor-bold-duotone" size="lg" />
+          <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.admin.navGpuSeries}</h1>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
             variant={state.kind === 'retail' ? 'primary' : 'outline'}
@@ -45,7 +49,7 @@ export function AdminGpuSeriesView({ state, actions }: AdminGpuSeriesViewProps) 
       </div>
 
       {state.form ? (
-        <Card>
+        <Card className="aero-glass-elevated">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -161,12 +165,12 @@ export function AdminGpuSeriesView({ state, actions }: AdminGpuSeriesViewProps) 
         <ResponsiveTableWrapper label={VI_MESSAGES.admin.navGpuSeries}>
           <table className="w-full min-w-[600px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-border bg-surface-subtle">
-                <th className="px-3 py-2.5 font-semibold text-ink-muted">ID</th>
-                <th className="px-3 py-2.5 font-semibold text-ink-muted">Tên dòng GPU</th>
-                <th className="px-3 py-2.5 font-semibold text-ink-muted">VRAM / TBP</th>
-                <th className="px-3 py-2.5 font-semibold text-ink-muted">Biến thể active</th>
-                <th className="px-3 py-2.5 font-semibold text-ink-muted">Thao tác</th>
+              <tr className="border-b border-border/70 bg-surface-subtle/85">
+                <th className="px-4 py-3 font-semibold text-ink-muted">ID</th>
+                <th className="px-4 py-3 font-semibold text-ink-muted">Tên dòng GPU</th>
+                <th className="px-4 py-3 font-semibold text-ink-muted">VRAM / TBP</th>
+                <th className="px-4 py-3 font-semibold text-ink-muted">Biến thể active</th>
+                <th className="px-4 py-3 font-semibold text-ink-muted">Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -174,15 +178,15 @@ export function AdminGpuSeriesView({ state, actions }: AdminGpuSeriesViewProps) 
                 <tr
                   key={item.id}
                   data-testid={TEST_IDS.admin.seriesRow(item.id)}
-                  className="border-b border-border last:border-b-0"
+                  className="border-b border-border/60 transition-colors last:border-b-0 hover:bg-surface-subtle/60"
                 >
-                  <td className="px-3 py-2.5 font-mono text-xs text-ink-muted">{item.id}</td>
-                  <td className="px-3 py-2.5 font-medium text-ink">{item.name}</td>
-                  <td className="px-3 py-2.5 text-ink-muted">
+                  <td className="px-4 py-3 font-mono text-xs text-ink-muted">{item.id}</td>
+                  <td className="px-4 py-3 font-semibold text-ink">{item.name}</td>
+                  <td className="px-4 py-3 font-mono tabular-nums text-ink-muted">
                     {item.vramGb} GB | {item.tbpW} W
                   </td>
-                  <td className="px-3 py-2.5 text-ink">{item.activeVariantCount}</td>
-                  <td className="px-3 py-2.5">
+                  <td className="px-4 py-3 font-mono tabular-nums text-ink">{item.activeVariantCount}</td>
+                  <td className="px-4 py-3">
                     <div className="flex gap-2">
                       <Button
                         size="sm"
@@ -190,7 +194,8 @@ export function AdminGpuSeriesView({ state, actions }: AdminGpuSeriesViewProps) 
                         data-testid={TEST_IDS.admin.seriesEdit(item.id)}
                         onClick={() => actions.onStartEdit(item)}
                       >
-                        {VI_MESSAGES.common.edit}
+                        <SolarIcon name="pen-bold-duotone" className="h-3.5 w-3.5" withShadow={false} />
+                        <span>{VI_MESSAGES.common.edit}</span>
                       </Button>
                       <Button
                         size="sm"
@@ -199,7 +204,8 @@ export function AdminGpuSeriesView({ state, actions }: AdminGpuSeriesViewProps) 
                         data-testid={TEST_IDS.admin.seriesDelete(item.id)}
                         onClick={() => actions.onDelete(item.id)}
                       >
-                        {VI_MESSAGES.common.delete}
+                        <SolarIcon name="trash-bin-trash-bold-duotone" className="h-3.5 w-3.5" withShadow={false} />
+                        <span>{VI_MESSAGES.common.delete}</span>
                       </Button>
                     </div>
                   </td>

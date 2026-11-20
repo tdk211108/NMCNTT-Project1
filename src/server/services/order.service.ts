@@ -15,7 +15,7 @@ import type {
 } from '@/shared/types';
 import { signOrderAccessToken } from '../auth/order-token';
 import { getDb, type DbClient, type DbExecutor } from '../db/client';
-import { orderItems, orders, orderStatusEvents } from '../db/schema';
+import { orderItems, orders, orderStatusEvents, products } from '../db/schema';
 import { formatAddressLine } from '../domain/name';
 import { maskPhone } from '../domain/masking';
 import { generateOrderId } from '../domain/order-id';
@@ -48,9 +48,13 @@ export function computeCanonicalRequestHash(
   return createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
 }
 
+export type OrderItemBoardRow = typeof orderItems.$inferSelect & {
+  imageUrl?: string | null;
+};
+
 export function buildOrderBoardFromRows(
   orderRow: typeof orders.$inferSelect,
-  itemRows: (typeof orderItems.$inferSelect)[],
+  itemRows: OrderItemBoardRow[],
   eventRows: (typeof orderStatusEvents.$inferSelect)[],
   options: { maskCustomerPhone: boolean },
 ): OrderBoard {
@@ -85,8 +89,10 @@ export function buildOrderBoardFromRows(
       .slice()
       .sort((a, b) => a.lineNo - b.lineNo)
       .map((item) => ({
+        productId: item.productId,
         productName: item.productName,
         category: item.category,
+        imageUrl: item.imageUrl ?? null,
         unitPriceVnd: item.unitPriceVnd,
         quantity: item.quantity,
         lineTotalVnd: item.lineTotalVnd,
@@ -116,8 +122,19 @@ export async function loadOrderBoard(
 
   const [itemRows, eventRows] = await Promise.all([
     db
-      .select()
+      .select({
+        orderId: orderItems.orderId,
+        lineNo: orderItems.lineNo,
+        productId: orderItems.productId,
+        productName: orderItems.productName,
+        category: orderItems.category,
+        unitPriceVnd: orderItems.unitPriceVnd,
+        quantity: orderItems.quantity,
+        lineTotalVnd: orderItems.lineTotalVnd,
+        imageUrl: products.imageUrl,
+      })
       .from(orderItems)
+      .leftJoin(products, eq(products.id, orderItems.productId))
       .where(eq(orderItems.orderId, orderId))
       .orderBy(asc(orderItems.lineNo)),
     db

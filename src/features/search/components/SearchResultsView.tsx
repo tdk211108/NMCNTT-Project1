@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
+import { AeroIconBadge } from '@/components/ui/Icons';
 import { ProductCard } from '@/features/catalog/components/ProductCard';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type { useSearchResultsController } from '../useSearchResultsController';
@@ -10,13 +11,16 @@ export type SearchResultsViewProps = ReturnType<typeof useSearchResultsControlle
 export function SearchResultsView({ state, actions }: SearchResultsViewProps) {
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.catalog.searchResultsTitle}</h1>
-        {state.query ? (
-          <p className="mt-1 text-sm text-ink-muted">
-            {VI_MESSAGES.catalog.searchQueryLabel}: {state.query} ({state.total})
-          </p>
-        ) : null}
+      <div className="flex items-center gap-3">
+        <AeroIconBadge name="magnifer-bold-duotone" size="lg" />
+        <div>
+          <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.catalog.searchResultsTitle}</h1>
+          {state.query ? (
+            <p className="mt-0.5 text-sm text-ink-muted">
+              {VI_MESSAGES.catalog.searchQueryLabel}: {state.query} ({state.total})
+            </p>
+          ) : null}
+        </div>
       </div>
 
       {!state.validQuery ? (
@@ -38,7 +42,7 @@ export function SearchResultsView({ state, actions }: SearchResultsViewProps) {
         <div className="flex flex-col gap-8">
           {state.cpus.length > 0 ? (
             <section className="flex flex-col gap-3">
-              <h2 className="border-b border-border pb-2 text-lg font-semibold text-ink">
+              <h2 className="border-b border-border/70 pb-2 text-lg font-bold text-ink">
                 {VI_MESSAGES.catalog.cpuPageTitle} ({state.cpus.length})
               </h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -57,7 +61,7 @@ export function SearchResultsView({ state, actions }: SearchResultsViewProps) {
 
           {state.gpus.length > 0 ? (
             <section className="flex flex-col gap-3">
-              <h2 className="border-b border-border pb-2 text-lg font-semibold text-ink">
+              <h2 className="border-b border-border/70 pb-2 text-lg font-bold text-ink">
                 {VI_MESSAGES.catalog.gpuPageTitle} ({state.gpus.length})
               </h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
+import { AeroIconBadge } from '@/components/ui/Icons';
 import { Input } from '@/components/ui/Input';
 import { formatVnd } from '@/lib/format';
 import { VI_MESSAGES } from '@/shared/messages/vi';
@@ -51,28 +52,33 @@ export function PaymentView({ state, actions }: PaymentViewProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
-      <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.checkout.paymentTitle}</h1>
+      <div className="flex items-center gap-3">
+        <AeroIconBadge name="shield-check-bold-duotone" size="lg" />
+        <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.checkout.paymentTitle}</h1>
+      </div>
 
-      <Card className="border-warning/60 bg-surface-subtle text-sm text-warning">
+      <Card className="border-warning/60 bg-surface-subtle text-sm font-medium text-warning">
         {VI_MESSAGES.checkout.demoPaymentBanner}
       </Card>
 
       {prepared.paymentMethod === 'bank_transfer' && prepared.bankInstructions ? (
         <Card className="flex flex-col items-center gap-4">
-          <img
-            src={prepared.bankInstructions.qrImageDataUrl}
-            alt="QR chuyển khoản mô phỏng"
-            data-testid={TEST_IDS.checkout.paymentQrImage}
-            className="h-56 w-56 rounded-control bg-white p-2"
-          />
-          <dl className="grid w-full grid-cols-1 gap-2 border-t border-border pt-3 text-sm sm:grid-cols-2">
+          <div className="overflow-hidden rounded-[16px] bg-white p-2.5 shadow-sm ring-1 ring-white/80 dark:ring-emerald-300/20">
+            <img
+              src={prepared.bankInstructions.qrImageDataUrl}
+              alt="QR chuyển khoản mô phỏng"
+              data-testid={TEST_IDS.checkout.paymentQrImage}
+              className="h-56 w-56 object-contain"
+            />
+          </div>
+          <dl className="grid w-full grid-cols-1 gap-3 border-t border-border/70 pt-3.5 text-sm sm:grid-cols-2">
             <div>
               <dt className="text-ink-muted">{VI_MESSAGES.checkout.bankNameLabel}</dt>
               <dd className="font-semibold text-ink">{prepared.bankInstructions.bankName}</dd>
             </div>
             <div>
               <dt className="text-ink-muted">{VI_MESSAGES.checkout.bankAccountLabel}</dt>
-              <dd className="font-semibold text-ink">{prepared.bankInstructions.accountNumber}</dd>
+              <dd className="font-mono font-semibold text-ink">{prepared.bankInstructions.accountNumber}</dd>
             </div>
             <div>
               <dt className="text-ink-muted">{VI_MESSAGES.checkout.bankHolderLabel}</dt>
@@ -80,13 +86,13 @@ export function PaymentView({ state, actions }: PaymentViewProps) {
             </div>
             <div>
               <dt className="text-ink-muted">{VI_MESSAGES.checkout.bankAmountLabel}</dt>
-              <dd className="font-bold text-primary">
+              <dd className="font-mono font-bold tabular-nums text-primary">
                 {formatVnd(prepared.bankInstructions.amountVnd)}
               </dd>
             </div>
             <div className="sm:col-span-2">
               <dt className="text-ink-muted">{VI_MESSAGES.checkout.bankMemoLabel}</dt>
-              <dd className="font-mono font-semibold text-accent">
+              <dd className="font-mono font-semibold text-primary">
                 {prepared.bankInstructions.transferMemo}
               </dd>
             </div>
@@ -94,7 +100,7 @@ export function PaymentView({ state, actions }: PaymentViewProps) {
         </Card>
       ) : (
         <Card className="flex flex-col gap-4">
-          <p className="text-base font-bold text-primary">
+          <p className="font-mono text-base font-bold tabular-nums text-primary">
             {VI_MESSAGES.checkout.bankAmountLabel}: {formatVnd(prepared.quote.totalVnd)}
           </p>
           <Input
@@ -103,6 +109,7 @@ export function PaymentView({ state, actions }: PaymentViewProps) {
             value={state.cardNumber}
             data-testid={TEST_IDS.checkout.paymentCardNumber}
             onChange={(e) => actions.onChangeCardNumber(e.target.value)}
+            className="font-mono tabular-nums"
           />
           <Input
             label={VI_MESSAGES.checkout.cardHolderLabel}
@@ -116,12 +123,14 @@ export function PaymentView({ state, actions }: PaymentViewProps) {
               autoComplete="cc-exp"
               value={state.cardExpiry}
               onChange={(e) => actions.onChangeCardExpiry(e.target.value)}
+              className="font-mono tabular-nums"
             />
             <Input
               label={VI_MESSAGES.checkout.cardCvvLabel}
               autoComplete="cc-csc"
               value={state.cardCvv}
               onChange={(e) => actions.onChangeCardCvv(e.target.value)}
+              className="font-mono tabular-nums"
             />
           </div>
         </Card>

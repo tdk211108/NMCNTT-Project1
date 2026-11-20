@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
+import { AeroIconBadge } from '@/components/ui/Icons';
 import { SearchableSelect, type SearchableSelectGroup } from '@/components/ui/SearchableSelect';
 import { formatExactWatts } from '@/lib/format';
 import { VI_MESSAGES } from '@/shared/messages/vi';
@@ -49,12 +50,15 @@ export type PsuEstimatorViewProps = ReturnType<typeof usePsuController>;
 export function PsuEstimatorView({ state, actions }: PsuEstimatorViewProps) {
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.tools.psu.title}</h1>
+      <div className="flex items-center gap-3">
+        <AeroIconBadge name="bolt-bold-duotone" size="lg" />
+        <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.tools.psu.title}</h1>
+      </div>
 
       {state.prefillMissing ? (
         <Card
           data-testid={TEST_IDS.psu.prefillNotice}
-          className="border-warning/60 bg-surface-subtle text-sm text-warning"
+          className="border-warning/60 bg-surface-subtle text-sm font-medium text-warning"
         >
           {VI_MESSAGES.tools.psu.prefillMissingNotice}
         </Card>
@@ -72,7 +76,7 @@ export function PsuEstimatorView({ state, actions }: PsuEstimatorViewProps) {
           }
         />
       ) : (
-        <Card>
+        <Card className="relative z-10">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -124,23 +128,23 @@ export function PsuEstimatorView({ state, actions }: PsuEstimatorViewProps) {
       ) : null}
 
       {state.estimate ? (
-        <Card className="flex flex-col gap-4 border-border-strong bg-surface-elevated">
+        <Card className="aero-glass-elevated flex flex-col gap-4 border-border-strong">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <p className="text-sm text-ink-muted">{VI_MESSAGES.tools.psu.exactResultLabel}</p>
+            <div className="rounded-[16px] border border-border bg-surface-subtle/80 p-4 shadow-[inset_0_1px_0_var(--aero-specular)]">
+              <p className="text-sm font-medium text-ink-muted">{VI_MESSAGES.tools.psu.exactResultLabel}</p>
               <p
                 data-testid={TEST_IDS.psu.resultExact}
-                className="mt-1 text-2xl font-bold text-ink"
+                className="mt-1 font-mono text-3xl font-bold tabular-nums text-ink"
               >
                 {formatExactWatts(state.estimate.exactW)}
               </p>
             </div>
 
-            <div>
-              <p className="text-sm text-ink-muted">{VI_MESSAGES.tools.psu.recommendedTierLabel}</p>
+            <div className="rounded-[16px] border border-border-strong bg-accent/12 p-4 shadow-[inset_0_1px_0_var(--aero-specular)]">
+              <p className="text-sm font-medium text-ink-muted">{VI_MESSAGES.tools.psu.recommendedTierLabel}</p>
               <p
                 data-testid={TEST_IDS.psu.resultTier}
-                className="mt-1 text-2xl font-bold text-accent"
+                className="mt-1 font-mono text-3xl font-bold tabular-nums text-primary"
               >
                 {state.estimate.exceedsMaxTier || state.estimate.recommendedTierW === null
                   ? VI_MESSAGES.tools.psu.aboveMaxTierLabel
@@ -149,7 +153,7 @@ export function PsuEstimatorView({ state, actions }: PsuEstimatorViewProps) {
             </div>
           </div>
 
-          <p className="text-sm text-ink-muted">
+          <p className="font-mono text-sm text-ink-muted">
             {VI_MESSAGES.tools.psu.formulaSummary(
               state.estimate.cpu.psuPowerW,
               state.estimate.gpu.tbpW,
@@ -158,7 +162,7 @@ export function PsuEstimatorView({ state, actions }: PsuEstimatorViewProps) {
             )}
           </p>
 
-          <div className="flex flex-col gap-1 border-t border-border pt-3 text-xs text-ink-muted">
+          <div className="flex flex-col gap-1 border-t border-border/70 pt-3 text-xs leading-relaxed text-ink-muted">
             {state.estimate.notes.map((note, idx) => (
               <p key={idx}>{note}</p>
             ))}

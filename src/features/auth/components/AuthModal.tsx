@@ -53,7 +53,7 @@ export function AuthModal() {
     >
       <div data-testid={TEST_IDS.auth.modal} className="flex flex-col gap-4">
         {state.authNotice ? (
-          <p className="rounded-control border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-ink">
+          <p className="rounded-control border border-border-strong bg-accent/12 px-3.5 py-2.5 text-sm font-medium text-ink">
             {state.authNotice}
           </p>
         ) : null}
@@ -62,7 +62,7 @@ export function AuthModal() {
           <a
             href={buildOAuthStartUrl('google', state.oauthNextPath)}
             data-testid={TEST_IDS.auth.googleButton}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-strong bg-surface-subtle px-3 py-2 text-sm font-medium text-ink hover:bg-surface-elevated"
+            className="aero-glass inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold text-ink transition-[transform,border-color,background-color] duration-150 hover:border-border-strong hover:bg-surface-elevated active:scale-95"
           >
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -76,7 +76,7 @@ export function AuthModal() {
           <a
             href={buildOAuthStartUrl('facebook', state.oauthNextPath)}
             data-testid={TEST_IDS.auth.facebookButton}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-strong bg-surface-subtle px-3 py-2 text-sm font-medium text-ink hover:bg-surface-elevated"
+            className="aero-glass inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold text-ink transition-[transform,border-color,background-color] duration-150 hover:border-border-strong hover:bg-surface-elevated active:scale-95"
           >
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -89,35 +89,35 @@ export function AuthModal() {
         </div>
 
         <div className="flex items-center gap-3 text-xs text-ink-muted">
-          <div className="h-px flex-1 bg-border" />
+          <div className="h-px flex-1 bg-border/80" />
           <span>{VI_MESSAGES.auth.orDivider}</span>
-          <div className="h-px flex-1 bg-border" />
+          <div className="h-px flex-1 bg-border/80" />
         </div>
 
-        <div className="grid grid-cols-2 gap-2 rounded-control bg-surface-subtle p-1">
+        <div className="grid grid-cols-2 gap-1.5 rounded-full border border-border bg-surface-subtle/85 p-1 shadow-[inset_0_1px_0_var(--aero-specular)]">
           <button
             type="button"
             data-testid={TEST_IDS.auth.tabLogin}
             onClick={() => actions.setActiveTab('login')}
-            className={`min-h-9 rounded-control px-3 text-sm font-medium transition ${
+            className={`min-h-9 cursor-pointer rounded-full px-3 text-sm font-semibold transition-colors duration-150 ${
               state.activeTab === 'login'
-                ? 'bg-primary text-primary-fg'
+                ? 'aero-pill-cta border'
                 : 'text-ink-muted hover:text-ink'
             }`}
           >
-            {VI_MESSAGES.auth.tabLogin}
+            <span className="relative z-1">{VI_MESSAGES.auth.tabLogin}</span>
           </button>
           <button
             type="button"
             data-testid={TEST_IDS.auth.tabRegister}
             onClick={() => actions.setActiveTab('register')}
-            className={`min-h-9 rounded-control px-3 text-sm font-medium transition ${
+            className={`min-h-9 cursor-pointer rounded-full px-3 text-sm font-semibold transition-colors duration-150 ${
               state.activeTab === 'register'
-                ? 'bg-primary text-primary-fg'
+                ? 'aero-pill-cta border'
                 : 'text-ink-muted hover:text-ink'
             }`}
           >
-            {VI_MESSAGES.auth.tabRegister}
+            <span className="relative z-1">{VI_MESSAGES.auth.tabRegister}</span>
           </button>
         </div>
 
@@ -125,7 +125,7 @@ export function AuthModal() {
           <p
             role="alert"
             data-testid={TEST_IDS.auth.errorAlert}
-            className="rounded-control border border-danger/50 bg-danger/10 px-3 py-2 text-sm text-danger"
+            className="rounded-control border border-danger/50 bg-danger/10 px-3 py-2 text-sm font-medium text-danger"
           >
             {state.errorMessage}
           </p>

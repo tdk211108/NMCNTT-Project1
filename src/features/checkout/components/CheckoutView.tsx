@@ -1,6 +1,7 @@
 import { Badge, Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
+import { AeroIconBadge } from '@/components/ui/Icons';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { formatVnd } from '@/lib/format';
@@ -41,7 +42,10 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.checkout.title}</h1>
+      <div className="flex items-center gap-3">
+        <AeroIconBadge name="shield-check-bold-duotone" size="lg" />
+        <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.checkout.title}</h1>
+      </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <form onSubmit={actions.onSubmitForm} className="flex flex-col gap-4 lg:col-span-2" noValidate>
@@ -121,20 +125,20 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
 
           <Card>
             <fieldset className="flex flex-col gap-3">
-              <legend className="mb-2 text-sm font-semibold text-ink">
+              <legend className="mb-2 text-sm font-bold text-ink">
                 {VI_MESSAGES.checkout.paymentMethod}
               </legend>
               {paymentMethodSchema.options.map((method) => (
                 <label
                   key={method}
-                  className="flex cursor-pointer items-center gap-3 rounded-control border border-border bg-surface-subtle px-3 py-2.5 text-sm text-ink"
+                  className="flex cursor-pointer items-center gap-3 rounded-control border border-border-strong bg-surface-subtle/85 px-3.5 py-3 text-sm font-medium text-ink shadow-[inset_0_1px_0_var(--aero-specular)] transition-colors hover:bg-surface-elevated"
                 >
                   <input
                     type="radio"
                     value={method}
                     data-testid={TEST_IDS.checkout.payment(method)}
                     {...form.register('paymentMethod')}
-                    className="h-4 w-4 accent-accent"
+                    className="h-4 w-4 accent-primary"
                   />
                   <span>{VI_MESSAGES.checkout.paymentMethods[method]}</span>
                 </label>
@@ -154,17 +158,17 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
         </form>
 
         <aside className="lg:col-span-1">
-          <Card className="flex flex-col gap-3">
-            <h2 className="text-base font-semibold text-ink">{VI_MESSAGES.orders.summaryHeading}</h2>
+          <Card className="aero-glass-elevated flex flex-col gap-3.5">
+            <h2 className="text-base font-bold text-ink">{VI_MESSAGES.orders.summaryHeading}</h2>
             {state.quote ? (
               <>
-                <div className="flex flex-col gap-2 border-b border-border pb-3 text-sm">
+                <div className="flex flex-col gap-2 border-b border-border/70 pb-3 text-sm">
                   {state.quote.lines.map((line) => (
                     <div key={line.productId} className="flex justify-between gap-2">
                       <span className="text-ink-muted">
                         {line.name} x {line.quantity}
                       </span>
-                      <span className="shrink-0 font-medium text-ink">
+                      <span className="shrink-0 font-mono font-semibold tabular-nums text-ink">
                         {formatVnd(line.lineTotalVnd)}
                       </span>
                     </div>
@@ -172,13 +176,13 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-ink-muted">{VI_MESSAGES.cart.subtotal}</span>
-                  <span className="font-medium text-ink">
+                  <span className="font-mono font-semibold tabular-nums text-ink">
                     {formatVnd(state.quote.subtotalVnd)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-ink-muted">{VI_MESSAGES.cart.shippingFee}</span>
-                  <span className="font-medium text-ink">
+                  <span className="font-mono font-semibold tabular-nums text-ink">
                     {state.quote.freeShipping ? (
                       <Badge variant="success">{VI_MESSAGES.common.freeShippingLabel}</Badge>
                     ) : (
@@ -186,9 +190,9 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
                     )}
                   </span>
                 </div>
-                <div className="flex justify-between border-t border-border pt-3 text-base font-bold">
+                <div className="flex justify-between border-t border-border/70 pt-3 text-base font-bold">
                   <span className="text-ink">{VI_MESSAGES.cart.total}</span>
-                  <span className="text-primary">{formatVnd(state.quote.totalVnd)}</span>
+                  <span className="font-mono tabular-nums text-primary">{formatVnd(state.quote.totalVnd)}</span>
                 </div>
               </>
             ) : (

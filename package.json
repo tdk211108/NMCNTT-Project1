@@ -20,13 +20,16 @@
     "address:vendor": "tsx scripts/vendor-address-data.ts"
   },
   "dependencies": {
+    "@base-ui/react": "^1.9.0",
     "@hookform/resolvers": "7.0.6",
+    "@iconify/react": "^6.0.4",
     "@supabase/supabase-js": "2.119.0",
     "@tanstack/react-query": "5.107.1",
+    "@theme-toggles/react": "^5.0.5",
     "@vercel/functions": "3.11.3",
     "drizzle-orm": "0.45.4",
     "jose": "6.2.17",
-    "lucide-react": "^1.77.0",
+    "motion": "^14.14.0",
     "next": "16.4.6",
     "postgres": "4.1.1",
     "qrcode": "1.5.4",
@@ -38,6 +41,8 @@
     "zustand": "5.1.0"
   },
   "devDependencies": {
+    "@iconify-json/solar": "^1.2.16",
+    "@iconify/utils": "^3.1.7",
     "@playwright/cli": "^0.1.25",
     "@playwright/test": "1.65.1",
     "@tailwindcss/postcss": "4.3.5",

@@ -1,63 +1,333 @@
 @import "tailwindcss";
+@import "@theme-toggles/react/styles/inner-moon.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Semantic Design Tokens (Default: Dark Neutral).
- * To deeply customize the site theme later (e.g., light mode, cyberpunk, brand recolor),
- * edit these @theme variables (or add [data-theme="..."] overrides below) without touching
- * feature hooks or business logic.
+ * Light Neo-Aero & Dark Aero Material Tokens.
+ * Semantic CSS variables adapt via :root (daylight sky glass) and .dark (smoked obsidian aurora),
+ * synced with <meta name="color-scheme"> to avoid FOUC and keep native controls coherent.
  */
-@theme {
-  --color-bg: oklch(14% 0.008 260);
-  --color-surface: oklch(18% 0.01 260);
-  --color-surface-subtle: oklch(22% 0.012 260);
-  --color-surface-elevated: oklch(25% 0.014 260);
+:root {
+  color-scheme: light dark;
 
-  --color-ink: oklch(95% 0.006 260);
-  --color-ink-muted: oklch(72% 0.012 260);
+  --aero-bg: #f0fdf4;
+  --aero-surface: rgba(255, 255, 255, 0.78);
+  --aero-surface-subtle: rgba(240, 253, 244, 0.74);
+  --aero-surface-elevated: rgba(255, 255, 255, 0.90);
 
-  --color-border: oklch(29% 0.014 260);
-  --color-border-strong: oklch(40% 0.016 260);
+  --aero-ink: #0f172a;
+  --aero-ink-muted: #475569;
 
-  --color-primary: oklch(93% 0.01 260);
-  --color-primary-fg: oklch(15% 0.01 260);
+  --aero-border: rgba(255, 255, 255, 0.92);
+  --aero-border-strong: rgba(22, 163, 74, 0.38);
 
-  --color-accent: oklch(68% 0.16 250);
-  --color-accent-fg: oklch(98% 0.005 250);
+  --aero-primary: #15803d;
+  --aero-primary-fg: #ffffff;
+  --aero-accent: #16a34a;
+  --aero-accent-fg: #ffffff;
 
-  --color-danger: oklch(62% 0.21 25);
-  --color-danger-fg: oklch(98% 0.005 25);
+  --aero-danger: #dc2626;
+  --aero-danger-fg: #ffffff;
+  --aero-success: #059669;
+  --aero-success-fg: #ffffff;
+  --aero-warning: #b45309;
+  --aero-warning-fg: #ffffff;
 
-  --color-success: oklch(68% 0.16 150);
-  --color-success-fg: oklch(14% 0.02 150);
+  --aero-highlight: rgba(16, 185, 129, 0.16);
+  --aero-highlight-fg: #065f46;
 
-  --color-warning: oklch(78% 0.15 75);
-  --color-warning-fg: oklch(18% 0.02 75);
+  --aero-demo-bg: rgba(254, 243, 199, 0.88);
+  --aero-demo-border: #d97706;
+  --aero-demo-fg: #92400e;
 
-  --color-highlight: oklch(29% 0.07 155);
-  --color-highlight-fg: oklch(90% 0.09 155);
+  --aero-specular: rgba(255, 255, 255, 0.95);
+  --aero-shadow: 0 12px 32px -4px rgba(22, 163, 74, 0.14), 0 0 0 1px rgba(34, 197, 94, 0.12);
+  --aero-shadow-elevated: 0 18px 40px -6px rgba(22, 163, 74, 0.20), 0 0 0 1px rgba(34, 197, 94, 0.18);
+  --aero-gloss-sheen: rgba(255, 255, 255, 0.74);
+  --aero-cta-bg: linear-gradient(180deg, #4ade80 0%, #16a34a 55%, #15803d 100%);
+  --aero-cta-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.85), 0 6px 16px rgba(22, 163, 74, 0.34);
 
-  /* Distinct amber presentation control styling for [Demo Control] */
-  --color-demo-bg: oklch(24% 0.06 75);
-  --color-demo-border: oklch(75% 0.16 75);
-  --color-demo-fg: oklch(88% 0.12 75);
+  --aero-scrollbar-track: #dcfce7;
+  --aero-scrollbar-thumb: #86efac;
 
-  --radius-control: 0.5rem;
-  --radius-card: 0.75rem;
-  --radius-modal: 0.875rem;
+  &:has(> head > meta[name="color-scheme"][content="dark"]) {
+    color-scheme: dark;
+  }
+  &:has(> head > meta[name="color-scheme"][content="light"]) {
+    color-scheme: light;
+  }
 }
 
-dialog:modal {
-  overscroll-behavior: contain;
+.dark {
+  --aero-bg: #03120e;
+  --aero-surface: rgba(8, 28, 22, 0.76);
+  --aero-surface-subtle: rgba(11, 36, 28, 0.70);
+  --aero-surface-elevated: rgba(13, 42, 33, 0.90);
+
+  --aero-ink: #f8fafc;
+  --aero-ink-muted: #94a3b8;
+
+  --aero-border: rgba(110, 231, 183, 0.24);
+  --aero-border-strong: rgba(74, 222, 128, 0.45);
+
+  --aero-primary: #4ade80;
+  --aero-primary-fg: #022c22;
+  --aero-accent: #34d399;
+  --aero-accent-fg: #022c22;
+
+  --aero-danger: #f87171;
+  --aero-danger-fg: #2b0909;
+  --aero-success: #34d399;
+  --aero-success-fg: #022c22;
+  --aero-warning: #fbbf24;
+  --aero-warning-fg: #271502;
+
+  --aero-highlight: rgba(16, 185, 129, 0.22);
+  --aero-highlight-fg: #a7f3d0;
+
+  --aero-demo-bg: rgba(45, 29, 8, 0.82);
+  --aero-demo-border: #f59e0b;
+  --aero-demo-fg: #fde68a;
+
+  --aero-specular: rgba(255, 255, 255, 0.28);
+  --aero-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(74, 222, 128, 0.14);
+  --aero-shadow-elevated: 0 22px 44px -8px rgba(0, 0, 0, 0.82), 0 0 0 1px rgba(74, 222, 128, 0.22);
+  --aero-gloss-sheen: rgba(255, 255, 255, 0.34);
+  --aero-cta-bg: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+  --aero-cta-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.42), 0 8px 20px rgba(34, 197, 94, 0.32);
+
+  --aero-scrollbar-track: #062019;
+  --aero-scrollbar-thumb: #166534;
 }
 
-dialog::backdrop {
-  background-color: oklch(8% 0.005 260 / 0.78);
-  overflow: hidden;
-  overscroll-behavior: contain;
+@theme inline {
+  --font-sans: var(--font-jakarta), "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
+
+  --color-bg: var(--aero-bg);
+  --color-surface: var(--aero-surface);
+  --color-surface-subtle: var(--aero-surface-subtle);
+  --color-surface-elevated: var(--aero-surface-elevated);
+
+  --color-ink: var(--aero-ink);
+  --color-ink-muted: var(--aero-ink-muted);
+
+  --color-border: var(--aero-border);
+  --color-border-strong: var(--aero-border-strong);
+
+  --color-primary: var(--aero-primary);
+  --color-primary-fg: var(--aero-primary-fg);
+
+  --color-accent: var(--aero-accent);
+  --color-accent-fg: var(--aero-accent-fg);
+
+  --color-danger: var(--aero-danger);
+  --color-danger-fg: var(--aero-danger-fg);
+
+  --color-success: var(--aero-success);
+  --color-success-fg: var(--aero-success-fg);
+
+  --color-warning: var(--aero-warning);
+  --color-warning-fg: var(--aero-warning-fg);
+
+  --color-highlight: var(--aero-highlight);
+  --color-highlight-fg: var(--aero-highlight-fg);
+
+  --color-demo-bg: var(--aero-demo-bg);
+  --color-demo-border: var(--aero-demo-border);
+  --color-demo-fg: var(--aero-demo-fg);
+
+  --radius-control: 0.75rem;
+  --radius-card: 1.375rem;
+  --radius-modal: 1.5rem;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+html {
+  accent-color: var(--aero-primary);
+  scrollbar-color: var(--aero-scrollbar-thumb) var(--aero-scrollbar-track);
 }
 
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
+  }
+}
+
+/* Neo-Aero Material Surfaces inside @layer components so Tailwind @layer utilities (like `fixed`) always take precedence */
+@layer components {
+  .aero-glass {
+    background: var(--aero-surface);
+    backdrop-filter: blur(14px) saturate(165%);
+    -webkit-backdrop-filter: blur(14px) saturate(165%);
+    border: 1px solid var(--aero-border);
+    box-shadow:
+      inset 0 1.5px 1px var(--aero-specular),
+      var(--aero-shadow);
+  }
+
+  .aero-glass-elevated {
+    background: var(--aero-surface-elevated);
+    backdrop-filter: blur(16px) saturate(175%);
+    -webkit-backdrop-filter: blur(16px) saturate(175%);
+    border: 1px solid var(--aero-border);
+    box-shadow:
+      inset 0 1.5px 1px var(--aero-specular),
+      var(--aero-shadow-elevated);
+  }
+
+  .aero-pill-cta {
+    position: relative;
+    overflow: hidden;
+    background: var(--aero-cta-bg);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.45);
+    box-shadow: var(--aero-cta-shadow);
+  }
+
+  .aero-pill-cta::before {
+    content: "";
+    position: absolute;
+    inset: 1px 3px 50% 3px;
+    border-radius: 9999px 9999px 40% 40%;
+    background: linear-gradient(
+      180deg,
+      var(--aero-gloss-sheen) 0%,
+      rgba(255, 255, 255, 0.08) 100%
+    );
+    pointer-events: none;
+  }
+
+  .aero-zalo-orb {
+    background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.8),
+      0 6px 16px rgba(2, 132, 199, 0.36);
+  }
+
+  .aero-icon-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--aero-accent) 20%, rgba(255, 255, 255, 0.72)) 0%,
+      color-mix(in oklab, var(--aero-primary) 16%, rgba(255, 255, 255, 0.36)) 100%
+    );
+    border: 1px solid var(--aero-border);
+    box-shadow:
+      inset 0 1px 1px var(--aero-specular),
+      0 6px 14px rgba(22, 163, 74, 0.16);
+  }
+
+  .dark .aero-icon-badge {
+    background: linear-gradient(
+      180deg,
+      rgba(74, 222, 128, 0.24) 0%,
+      rgba(22, 163, 74, 0.12) 100%
+    );
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.24),
+      0 6px 14px rgba(0, 0, 0, 0.45);
+  }
+
+  /* Subtle GPU scroll parallax for paired Neo-Aero wallpapers */
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .aero-backdrop-parallax {
+        will-change: transform;
+        animation: aero-backdrop-parallax linear both;
+        animation-timeline: scroll(root);
+      }
+    }
+  }
+
+  /* Circular Zalo floating orb subtle heartbeat & sonar ring */
+  @media (prefers-reduced-motion: no-preference) {
+    .aero-zalo-heartbeat {
+      animation: aero-zalo-heartbeat 2.8s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+    }
+
+    .aero-zalo-ring {
+      background: radial-gradient(
+        circle,
+        rgba(56, 189, 248, 0) 45%,
+        rgba(56, 189, 248, 0.42) 100%
+      );
+      border: 1.5px solid rgba(56, 189, 248, 0.55);
+      animation: aero-zalo-ring 2.8s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+    }
+
+    .aero-zalo-wrapper:hover .aero-zalo-heartbeat,
+    .aero-zalo-wrapper:hover .aero-zalo-ring,
+    .aero-zalo-wrapper:focus-within .aero-zalo-heartbeat,
+    .aero-zalo-wrapper:focus-within .aero-zalo-ring {
+      animation-play-state: paused;
+    }
+  }
+}
+
+@keyframes aero-backdrop-parallax {
+  from {
+    transform: translate3d(0, 2%, 0) scale(1.08);
+  }
+  to {
+    transform: translate3d(0, -3.5%, 0) scale(1.08);
+  }
+}
+
+@keyframes aero-zalo-heartbeat {
+  0%,
+  46%,
+  100% {
+    transform: scale(1);
+  }
+  12% {
+    transform: scale(1.065);
+  }
+  22% {
+    transform: scale(1);
+  }
+  31% {
+    transform: scale(1.038);
+  }
+}
+
+@keyframes aero-zalo-ring {
+  0% {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  14% {
+    opacity: 0.55;
+  }
+  58%,
+  100% {
+    transform: scale(1.42);
+    opacity: 0;
+  }
+}
+
+/* Circular View Transitions API override (no blend-mode distortion on glass layers) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aero-pill-cta,
+  button,
+  a {
+    transition-duration: 0.01ms !important;
   }
 }

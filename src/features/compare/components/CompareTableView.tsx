@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { Badge, Card } from '@/components/ui/Card';
+import { Badge, Card, VendorBadge } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
+import { AeroIconBadge, SolarIcon } from '@/components/ui/Icons';
 import { ProductImage } from '@/components/ui/ProductImage';
 import { SearchableSelect, type SearchableSelectGroup } from '@/components/ui/SearchableSelect';
 import { ResponsiveTableWrapper } from '@/components/ui/Table';
@@ -19,17 +20,20 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.tools.compare.title}</h1>
-          {state.lockedCategory ? (
-            <Badge variant="accent">{state.lockedCategory.toUpperCase()}</Badge>
-          ) : null}
+        <div className="flex flex-wrap items-center gap-3">
+          <AeroIconBadge name="scale-bold-duotone" size="lg" />
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.tools.compare.title}</h1>
+            {state.lockedCategory ? (
+              <Badge variant="accent">{state.lockedCategory.toUpperCase()}</Badge>
+            ) : null}
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {!state.showThirdColumn ? (
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               data-testid={TEST_IDS.compare.addColumn}
               onClick={actions.onAddColumn}
@@ -44,7 +48,8 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
               data-testid={TEST_IDS.compare.clearAll}
               onClick={actions.onClearAll}
             >
-              {VI_MESSAGES.tools.compare.clearAll}
+              <SolarIcon name="restart-bold-duotone" className="h-4 w-4" withShadow={false} />
+              <span>{VI_MESSAGES.tools.compare.clearAll}</span>
             </Button>
           ) : null}
         </div>
@@ -62,7 +67,7 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
           }
         />
       ) : (
-        <Card className="flex flex-col gap-4">
+        <Card className="relative z-10 flex flex-col gap-4">
           <div
             className={`grid grid-cols-1 gap-4 ${
               state.showThirdColumn ? 'md:grid-cols-3' : 'md:grid-cols-2'
@@ -117,7 +122,7 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
               ];
 
               return (
-                <div key={slotIndex} className="flex flex-col gap-2">
+                <div key={slotIndex} className="flex flex-col gap-2.5">
                   <SearchableSelect
                     label={VI_MESSAGES.tools.compare.slotLabel(slotIndex + 1)}
                     value={currentId}
@@ -133,18 +138,21 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                   {selectedProduct ? (
                     <div
                       data-testid={TEST_IDS.compare.slotPreview(slotIndex)}
-                      className="flex items-center gap-3 rounded-control border border-border bg-surface-subtle p-2.5"
+                      className="flex items-center gap-3 rounded-[14px] border border-border bg-surface-subtle/85 p-2.5 shadow-[inset_0_1px_0_var(--aero-specular)]"
                     >
-                      <Link href={`/products/${selectedProduct.id}`} className="shrink-0">
+                      <Link
+                        href={`/products/${selectedProduct.id}`}
+                        className="h-20 w-20 shrink-0 overflow-hidden rounded-[12px] bg-white p-1 shadow-xs ring-1 ring-white/80 dark:ring-emerald-300/20"
+                      >
                         <ProductImage
                           src={selectedProduct.imageUrl}
                           alt={selectedProduct.name}
-                          className="h-20 w-20 object-contain p-1"
+                          className="h-full w-full object-contain"
                         />
                       </Link>
                       <div className="flex min-w-0 flex-1 flex-col gap-1">
                         <div className="flex flex-wrap items-center gap-1">
-                          <Badge>{selectedProduct.vendor.toUpperCase()}</Badge>
+                          <VendorBadge vendor={selectedProduct.vendor} />
                           {selectedProduct.aibBrand ? (
                             <Badge variant="accent">{selectedProduct.aibBrand}</Badge>
                           ) : null}
@@ -154,11 +162,11 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                         </div>
                         <Link
                           href={`/products/${selectedProduct.id}`}
-                          className="line-clamp-2 text-sm font-semibold text-ink hover:text-accent"
+                          className="line-clamp-2 text-sm font-bold text-ink hover:text-primary"
                         >
                           {selectedProduct.name}
                         </Link>
-                        <p className="text-sm font-bold text-primary">
+                        <p className="font-mono text-sm font-bold tabular-nums text-primary">
                           {formatVnd(selectedProduct.priceVnd)}
                         </p>
                       </div>
@@ -203,25 +211,35 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
           <ResponsiveTableWrapper label={VI_MESSAGES.tools.compare.title}>
             <table
               data-testid={TEST_IDS.compare.table}
-              className="w-full min-w-[540px] border-collapse text-left text-sm"
+              className="w-full min-w-[600px] border-collapse text-left text-sm sm:table-fixed"
             >
               <thead>
-                <tr className="border-b border-border bg-surface-subtle">
-                  <th className="w-48 px-3 py-3 font-semibold text-ink-muted">
-                    {VI_MESSAGES.tools.compare.criterionColumn}
+                <tr className="border-b border-border/70 bg-surface-subtle/85">
+                  <th className="w-40 px-4 py-4 align-bottom font-semibold text-ink-muted sm:w-48">
+                    <div className="flex flex-col gap-1">
+                      <span>{VI_MESSAGES.tools.compare.criterionColumn}</span>
+                      <span className="text-xs font-normal text-ink-muted">
+                        {VI_MESSAGES.catalog.imageZoomHint}
+                      </span>
+                    </div>
                   </th>
                   {state.data.products.map((product) => (
-                    <th key={product.id} className="px-3 py-3 align-top font-semibold text-ink">
-                      <div className="flex flex-col items-start gap-2">
-                        <Link href={`/products/${product.id}`} className="shrink-0">
+                    <th key={product.id} className="px-4 py-4 align-top font-semibold text-ink">
+                      <div className="flex w-full flex-col items-start gap-3">
+                        <div className="h-52 w-full overflow-hidden rounded-[16px] bg-white p-3 shadow-sm ring-1 ring-white/80 dark:ring-emerald-300/20 sm:h-60">
                           <ProductImage
                             src={product.imageUrl}
                             alt={product.name}
                             testId={TEST_IDS.compare.headerImage(product.id)}
-                            className="h-20 w-20 object-contain p-1"
+                            zoomOnHover
+                            zoomScale={1.7}
+                            className="h-full w-full object-contain"
                           />
-                        </Link>
-                        <Link href={`/products/${product.id}`} className="hover:text-accent">
+                        </div>
+                        <Link
+                          href={`/products/${product.id}`}
+                          className="text-base font-bold text-ink transition-colors hover:text-primary"
+                        >
                           {product.name}
                         </Link>
                       </div>
@@ -231,8 +249,8 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
               </thead>
               <tbody>
                 {state.data.rows.map((row) => (
-                  <tr key={row.key} className="border-b border-border last:border-b-0">
-                    <th className="bg-surface-subtle/60 px-3 py-2.5 font-medium text-ink-muted">
+                  <tr key={row.key} className="border-b border-border/60 last:border-b-0">
+                    <th className="bg-surface-subtle/60 px-4 py-3 font-medium text-ink-muted">
                       {row.label}
                     </th>
                     {row.cells.map((cell, idx) => {
@@ -241,10 +259,10 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                         <td
                           key={`${row.key}-${product.id}`}
                           data-testid={TEST_IDS.compare.cell(row.key, product.id)}
-                          className={`px-3 py-2.5 ${
+                          className={`px-4 py-3 font-mono tabular-nums ${
                             cell.highlighted
-                              ? 'bg-highlight font-semibold text-highlight-fg'
-                              : 'text-ink'
+                              ? 'bg-highlight font-bold text-highlight-fg'
+                              : 'font-medium text-ink'
                           }`}
                         >
                           {cell.display}
@@ -257,7 +275,7 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
             </table>
           </ResponsiveTableWrapper>
 
-          <Card className="flex flex-col gap-2 bg-surface-subtle text-xs text-ink-muted">
+          <Card className="flex flex-col gap-2 bg-surface-subtle/85 text-xs leading-relaxed text-ink-muted">
             {state.data.notes.map((note, index) => (
               <p key={index}>{note}</p>
             ))}

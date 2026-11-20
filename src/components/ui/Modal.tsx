@@ -1,7 +1,18 @@
 'use client';
 
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
+import { AnimatePresence, MotionConfig, motion, type HTMLMotionProps } from 'motion/react';
 import { VI_MESSAGES } from '@/shared/messages/vi';
+import {
+  DEFAULT_DIALOG_SPRING,
+  DIALOG_BACKDROP_CLASS,
+  DIALOG_BACKDROP_MOTION,
+  DIALOG_POPUP_CLASS,
+  DIALOG_VIEWPORT_CLASS,
+  getDialogSlideOffset,
+} from './AlertDialog';
+import { SolarIcon } from './Icons';
 
 export interface ModalProps {
   open: boolean;
@@ -13,8 +24,7 @@ export interface ModalProps {
 }
 
 /**
- * Native `<dialog>` modal following modern top-layer accessibility rules:
- * `showModal()` manages focus containment, Esc dismissal, and inert backdrop natively.
+ * Accessible Aero Glass dialog built on Base UI Dialog + Motion spring transitions.
  */
 export function Modal({
   open,
@@ -24,73 +34,84 @@ export function Modal({
   testId,
   children,
 }: ModalProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const titleId = useId();
+  const offset = getDialogSlideOffset('top');
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (open && !dialog.open) {
-      dialog.showModal();
-    } else if (!open && dialog.open) {
-      dialog.close();
+  function handleOpenChange(
+    nextOpen: boolean,
+    eventDetails: DialogPrimitive.Root.ChangeEventDetails,
+  ) {
+    if (!nextOpen && !dismissible) {
+      eventDetails.cancel();
+      return;
     }
-  }, [open]);
-
-  if (!open) {
-    return null;
+    if (!nextOpen) {
+      onClose?.();
+    }
   }
 
   return (
-    <dialog
-      ref={dialogRef}
-      aria-labelledby={titleId}
-      data-testid={testId}
-      onCancel={(event) => {
-        if (!dismissible) {
-          event.preventDefault();
-          return;
-        }
-        onClose?.();
-      }}
-      onClose={() => {
-        if (dismissible) {
-          onClose?.();
-        }
-      }}
-      onClick={(event) => {
-        if (!dismissible) return;
-        const dialog = dialogRef.current;
-        if (!dialog) return;
-        const rect = dialog.getBoundingClientRect();
-        const outside =
-          event.clientX < rect.left ||
-          event.clientX > rect.right ||
-          event.clientY < rect.top ||
-          event.clientY > rect.bottom;
-        if (outside) {
-          onClose?.();
-        }
-      }}
-      className="m-auto w-[calc(100%-2rem)] max-w-lg rounded-modal border border-border-strong bg-surface p-5 text-ink shadow-xl"
-    >
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <h2 id={titleId} className="text-lg font-semibold text-ink">
-          {title}
-        </h2>
-        {dismissible && onClose ? (
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={VI_MESSAGES.common.close}
-            className="min-h-9 min-w-9 rounded-control border border-border px-2 text-sm text-ink-muted hover:text-ink"
-          >
-            {VI_MESSAGES.common.close}
-          </button>
-        ) : null}
-      </div>
-      <div>{children}</div>
-    </dialog>
+    <MotionConfig reducedMotion="user">
+      <DialogPrimitive.Root
+        open={open}
+        disablePointerDismissal={!dismissible}
+        onOpenChange={handleOpenChange}
+      >
+        <AnimatePresence>
+          {open ? (
+            <DialogPrimitive.Portal key="dialog-portal" keepMounted>
+              <DialogPrimitive.Backdrop
+                forceRender
+                render={(renderProps) => {
+                  const { hidden: _hidden, ...domProps } = renderProps;
+                  void _hidden;
+                  return (
+                    <motion.div
+                      {...(domProps as HTMLMotionProps<'div'>)}
+                      {...DIALOG_BACKDROP_MOTION}
+                      className={DIALOG_BACKDROP_CLASS}
+                    />
+                  );
+                }}
+              />
+              <DialogPrimitive.Viewport className={DIALOG_VIEWPORT_CLASS}>
+                <DialogPrimitive.Popup
+                  data-testid={testId}
+                  render={(renderProps) => {
+                    const { hidden: _hidden, ...domProps } = renderProps;
+                    void _hidden;
+                    return (
+                      <motion.div
+                        {...(domProps as HTMLMotionProps<'div'>)}
+                        initial={{ opacity: 0, scale: 0.96, x: offset.x, y: offset.y }}
+                        animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.96, x: offset.x, y: offset.y }}
+                        transition={DEFAULT_DIALOG_SPRING}
+                        className={DIALOG_POPUP_CLASS}
+                      >
+                        <div className="mb-4 flex items-start justify-between gap-3">
+                          <DialogPrimitive.Title className="text-lg font-bold tracking-tight text-ink">
+                            {title}
+                          </DialogPrimitive.Title>
+                          {dismissible && onClose ? (
+                            <DialogPrimitive.Close
+                              aria-label={VI_MESSAGES.common.close}
+                              title={VI_MESSAGES.common.close}
+                              className="inline-flex min-h-9 min-w-9 cursor-pointer items-center justify-center rounded-full border border-border-strong bg-surface-subtle/80 px-2.5 text-sm font-medium text-ink-muted transition-[transform,color,background-color] duration-150 hover:bg-surface-elevated hover:text-ink active:scale-95"
+                            >
+                              <SolarIcon name="close-circle-bold-duotone" className="h-5 w-5" />
+                            </DialogPrimitive.Close>
+                          ) : null}
+                        </div>
+                        <div>{children}</div>
+                      </motion.div>
+                    );
+                  }}
+                />
+              </DialogPrimitive.Viewport>
+            </DialogPrimitive.Portal>
+          ) : null}
+        </AnimatePresence>
+      </DialogPrimitive.Root>
+    </MotionConfig>
   );
 }

@@ -1,13 +1,21 @@
 'use client';
 
 import { VI_MESSAGES } from '@/shared/messages/vi';
+import { SolarIcon, type SolarIconName } from './Icons';
 import { useToastStore, type ToastTone } from './toast-store';
 
 const TONE_CLASSES: Record<ToastTone, string> = {
-  info: 'border-border-strong bg-surface-elevated text-ink',
-  success: 'border-success/60 bg-highlight text-highlight-fg',
-  warning: 'border-warning/60 bg-surface-elevated text-warning',
-  error: 'border-danger/60 bg-danger text-danger-fg',
+  info: 'aero-glass-elevated border-border-strong text-ink',
+  success: 'aero-glass-elevated border-success/55 text-highlight-fg',
+  warning: 'aero-glass-elevated border-warning/55 text-warning',
+  error: 'aero-glass-elevated border-danger/60 text-danger',
+};
+
+const TONE_ICONS: Record<ToastTone, SolarIconName> = {
+  info: 'info-circle-bold-duotone',
+  success: 'check-circle-bold-duotone',
+  warning: 'danger-triangle-bold-duotone',
+  error: 'close-circle-bold-duotone',
 };
 
 export function ToastContainer() {
@@ -25,16 +33,19 @@ export function ToastContainer() {
         <div
           key={toast.id}
           role="status"
-          className={`pointer-events-auto flex items-start justify-between gap-3 rounded-control border px-3 py-2.5 text-sm shadow-lg ${TONE_CLASSES[toast.tone]}`}
+          className={`pointer-events-auto flex items-center justify-between gap-3 rounded-card px-4 py-3 text-sm ${TONE_CLASSES[toast.tone]}`}
         >
-          <p className="leading-snug">{toast.message}</p>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <SolarIcon name={TONE_ICONS[toast.tone]} className="h-5 w-5" />
+            <p className="leading-snug font-medium text-ink">{toast.message}</p>
+          </div>
           <button
             type="button"
             onClick={() => dismiss(toast.id)}
             aria-label={VI_MESSAGES.common.close}
-            className="shrink-0 rounded px-1.5 py-0.5 text-xs opacity-80 hover:opacity-100"
+            className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-subtle hover:text-ink"
           >
-            {VI_MESSAGES.common.close}
+            <SolarIcon name="close-circle-bold-duotone" className="h-4 w-4" withShadow={false} />
           </button>
         </div>
       ))}

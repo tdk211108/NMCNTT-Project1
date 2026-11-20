@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { Badge, Card } from '@/components/ui/Card';
+import { Badge, Card, VendorBadge } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { CartPlusIcon } from '@/components/ui/Icons';
+import { CartPlusIcon, SolarIcon } from '@/components/ui/Icons';
 import { ProductImage } from '@/components/ui/ProductImage';
-import { formatNumberVi, formatVnd } from '@/lib/format';
+import { formatVnd } from '@/lib/format';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
 import type { ProductCard as ProductCardDto } from '@/shared/types';
@@ -24,12 +24,12 @@ export function ProductCard({
   return (
     <Card
       data-testid={TEST_IDS.listing.productCard(product.id)}
-      className="flex flex-col justify-between gap-3"
+      className="flex flex-col justify-between gap-3 p-4 transition-[transform,border-color,box-shadow] duration-150 ease-out [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-0.5 [@media(hover:hover)_and_(pointer:fine)]:hover:border-border-strong"
     >
       <div className="flex flex-col gap-3">
         <Link
           href={`/products/${product.id}`}
-          className="block aspect-square w-full overflow-hidden rounded-control bg-white p-1.5"
+          className="block aspect-square w-full overflow-hidden rounded-[14px] bg-white p-2 shadow-xs ring-1 ring-white/80 dark:ring-emerald-300/20"
         >
           <ProductImage
             src={product.imageUrl}
@@ -39,32 +39,29 @@ export function ProductCard({
         </Link>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge>{product.vendor.toUpperCase()}</Badge>
+          <VendorBadge vendor={product.vendor} />
           {product.aibBrand ? <Badge variant="accent">{product.aibBrand}</Badge> : null}
           {product.isLimitedEdition ? (
             <Badge variant="warning">{VI_MESSAGES.catalog.limitedEditionBadge}</Badge>
-          ) : null}
-          {product.score.normalized !== null ? (
-            <Badge variant="success">
-              {formatNumberVi(product.score.normalized, 1)} / 100
-            </Badge>
           ) : null}
         </div>
 
         <Link
           href={`/products/${product.id}`}
-          className="text-base font-semibold text-ink hover:text-accent"
+          className="text-base leading-snug font-bold text-ink transition-colors hover:text-primary"
         >
           {product.name}
         </Link>
 
-        <p className="text-lg font-bold text-primary">{formatVnd(product.priceVnd)}</p>
+        <p className="font-mono text-lg font-bold tabular-nums text-primary">
+          {formatVnd(product.priceVnd)}
+        </p>
 
-        <dl className="grid grid-cols-2 gap-x-3 gap-y-1 border-t border-border pt-2 text-xs">
+        <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-border/70 pt-2.5 text-xs">
           {product.summary.map((item) => (
             <div key={item.key} className="flex flex-col">
               <dt className="text-ink-muted">{item.label}</dt>
-              <dd className="font-medium text-ink">{item.value}</dd>
+              <dd className="font-semibold text-ink">{item.value}</dd>
             </div>
           ))}
         </dl>
@@ -86,11 +83,11 @@ export function ProductCard({
             size="sm"
             aria-label={VI_MESSAGES.catalog.addToCartAria(product.name)}
             title={VI_MESSAGES.catalog.addToCart}
-            className="h-11 w-11 shrink-0 p-0"
+            className="h-11 w-11 shrink-0 rounded-full p-0"
             data-testid={TEST_IDS.listing.productCardAddToCart(product.id)}
             onClick={() => onAddToCart(product)}
           >
-            <CartPlusIcon className="h-5 w-5" />
+            <CartPlusIcon className="h-5 w-5 text-primary" />
           </Button>
         </div>
         <Button
@@ -100,7 +97,8 @@ export function ProductCard({
           data-testid={TEST_IDS.listing.productCardCompare(product.id)}
           onClick={() => onCompare(product)}
         >
-          {VI_MESSAGES.catalog.compare}
+          <SolarIcon name="scale-bold-duotone" className="h-4 w-4 text-primary" withShadow={false} />
+          <span>{VI_MESSAGES.catalog.compare}</span>
         </Button>
       </div>
     </Card>

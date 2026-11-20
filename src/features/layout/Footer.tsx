@@ -7,18 +7,18 @@ export function Footer() {
     process.env.NEXT_PUBLIC_GITHUB_REPO_URL || 'https://github.com/tdk211108/NMCNTT-Project1';
 
   return (
-    <footer className="mt-auto border-t border-border bg-surface pt-6 pb-20">
+    <footer className="aero-glass mt-auto border-x-0 border-b-0 pt-6 pb-20">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <a
             href={githubUrl}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={VI_MESSAGES.nav.githubLabel}
             data-testid={TEST_IDS.layout.footerGithubButton}
-            className="inline-flex min-h-10 items-center gap-2 rounded-control border border-border bg-surface-subtle px-3 py-1.5 text-sm text-ink hover:border-border-strong"
+            className="aero-glass inline-flex min-h-10 items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium text-ink transition-[transform,border-color,background-color] duration-150 hover:border-border-strong hover:bg-surface-elevated active:scale-95"
           >
-            <img src="/icons/github.svg" alt="" className="h-5 w-5" />
+            <img src="/icons/github.svg" alt="" className="h-5 w-5 dark:invert" />
             <span>GitHub</span>
           </a>
           <span className="text-xs text-ink-muted">{VI_MESSAGES.brand.tagline}</span>
@@ -26,33 +26,33 @@ export function Footer() {
 
         <nav
           aria-label="Chính sách"
-          className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-muted"
+          className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-ink-muted"
         >
           <Link
             href="/policies/warranty"
             data-testid={TEST_IDS.layout.footerLinkWarranty}
-            className="hover:text-ink"
+            className="font-medium transition-colors hover:text-primary"
           >
             {VI_MESSAGES.policies.warrantyTitle}
           </Link>
           <Link
             href="/policies/payment-shipping"
             data-testid={TEST_IDS.layout.footerLinkPaymentShipping}
-            className="hover:text-ink"
+            className="font-medium transition-colors hover:text-primary"
           >
             {VI_MESSAGES.policies.paymentShippingTitle}
           </Link>
           <Link
             href="/policies/contact"
             data-testid={TEST_IDS.layout.footerLinkContact}
-            className="hover:text-ink"
+            className="font-medium transition-colors hover:text-primary"
           >
             {VI_MESSAGES.policies.contactTitle}
           </Link>
           <Link
             href="/policies/privacy"
             data-testid={TEST_IDS.layout.footerLinkPrivacy}
-            className="hover:text-ink"
+            className="font-medium transition-colors hover:text-primary"
           >
             {VI_MESSAGES.policies.privacyTitle}
           </Link>

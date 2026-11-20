@@ -1,20 +1,57 @@
-export function CartPlusIcon({ className = 'h-5 w-5' }: { className?: string }) {
+import { Icon } from '@iconify/react/dist/offline';
+import type { ReactNode } from 'react';
+import { SOLAR_ICONS, type SolarIconName } from './solar-icons.data';
+
+export type { SolarIconName };
+
+export interface SolarIconProps {
+  name: SolarIconName;
+  className?: string;
+  size?: number | string;
+  withShadow?: boolean;
+}
+
+export function SolarIcon({
+  name,
+  className = 'h-5 w-5',
+  size,
+  withShadow = true,
+}: SolarIconProps) {
   return (
-    <svg
+    <Icon
+      icon={SOLAR_ICONS[name]}
+      ssr
       aria-hidden="true"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <circle cx="9" cy="20" r="1.25" />
-      <circle cx="17" cy="20" r="1.25" />
-      <path d="M3 4h2l2.2 10.5a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.4-1l1.8-6.2H6.1" />
-      <path d="M12.5 5v4" />
-      <path d="M10.5 7h4" />
-    </svg>
+      width={size}
+      height={size}
+      className={`shrink-0 ${withShadow ? 'drop-shadow-[0_2px_4px_rgba(22,163,74,0.24)]' : ''} ${className}`}
+    />
   );
+}
+
+export function AeroIconBadge({
+  name,
+  size = 'md',
+  className = '',
+  children,
+}: {
+  name?: SolarIconName;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+  children?: ReactNode;
+}) {
+  const boxClass =
+    size === 'sm' ? 'h-9 w-9' : size === 'lg' ? 'h-12 w-12' : 'h-10 w-10';
+  const iconClass =
+    size === 'sm' ? 'h-5 w-5' : size === 'lg' ? 'h-6 w-6' : 'h-5 w-5';
+
+  return (
+    <span className={`aero-icon-badge text-primary ${boxClass} ${className}`}>
+      {name ? <SolarIcon name={name} className={iconClass} /> : children}
+    </span>
+  );
+}
+
+export function CartPlusIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return <SolarIcon name="cart-plus-bold-duotone" className={className} />;
 }

@@ -6,6 +6,7 @@ export const TEST_IDS = {
     cartLink: 'header-cart-link',
     cartCount: 'header-cart-count',
     adminToggle: 'header-admin-toggle',
+    themeToggle: 'header-theme-toggle',
   },
   auth: {
     headerLoginButton: 'auth-header-login',
