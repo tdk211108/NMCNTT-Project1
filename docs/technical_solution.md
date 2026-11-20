@@ -1194,7 +1194,7 @@ Each feature splits into three replaceable layers so Phase 2 visual customizatio
 2. **Headless controllers (`use*Controller.ts`):** Data fetching (TanStack Query), Zustand persisted stores, React Hook Form + Zod, toasts, and routing live in hooks returning `{ state, actions }`.
 3. **Presentational views (`*View.tsx`):** Props in, JSX out, no fetch, no store access, keeping `data-testid` from `src/shared/testids.ts`. On dynamic or query routes, Server Component `page.tsx` awaits `params`/`searchParams` and passes primitives into `*Client.tsx` wrappers so Next.js 16 builds without Suspense bailouts.
 
-Pages compose only these layers and remain **responsive from the start** (usable at 360 px width) so evaluators can open the demo on phones **[Call]**. Phase 2 is visual design only, scheduled at Step 6 after Step 5 E2E passes.
+Pages compose only these layers and remain **responsive from the start** (usable at 360 px width) so evaluators can open the demo on phones **[Call]**. Phase 2 is visual design only, scheduled at Step 5 before Step 6 E2E and Step 7 deployment.
 
 ### 12.3 `data-testid` convention
 
@@ -1335,7 +1335,7 @@ Data rules: prices from reputable Vietnamese retailers on the seeding date. Pass
 20. A price change between review and order creation is applied silently (C30).
 21. `/search?q=` fans out across `GET /api/products?category=cpu&q=...` and `GET /api/products?category=gpu&q=...` in parallel so `category` remains required on `GET /api/products` (Phương án B).
 22. Vitest runs sequentially (`fileParallelism: false`) against local Docker `postgres:16-alpine` (`techcore-test-db` on port `5433`, `techcore_test`), with `npm run test:coverage` enforcing 100% coverage on `src/server/domain/*`.
-23. The Step 4 UI skeleton adopts a 3-layer theme-ready split: Dark Neutral Tailwind v4 `@theme` tokens (`src/app/globals.css`) + `src/components/ui/*`, headless `use*Controller.ts` `{ state, actions }` hooks, and props-only `*View.tsx` components (plus Server-to-Client `*Client.tsx` wrappers for `searchParams` routes and `docs/UI_WIRING.md`), deferring final visual styling to Step 6 after Step 5 E2E passes.
+23. The Step 4 UI skeleton adopts a 3-layer theme-ready split: Dark Neutral Tailwind v4 `@theme` tokens (`src/app/globals.css`) + `src/components/ui/*`, headless `use*Controller.ts` `{ state, actions }` hooks, and props-only `*View.tsx` components (plus Server-to-Client `*Client.tsx` wrappers for `searchParams` routes and `docs/UI_WIRING.md`), deferring final visual styling to Step 5 ahead of Step 6 E2E and Step 7 Vercel deployment (see Call #33).
 24. `postgres@4.1.1` runtime pool configures `prepare: false`, `max_pipeline: 1`, `max: 5`, `connect_timeout: 10`, `query_timeout: 15`, `queue_timeout: 10` in `src/server/db/client.ts` to prevent Supavisor `:6543` transaction-pool extended-query pipelining deadlocks, paired with a 15 s default `AbortSignal.timeout` in `src/lib/api-client.ts`.
 25. Storefront cards (`ProductCard`) and detail (`ProductDetailView`) promote a primary `"Mua ngay"` CTA (appends 1 unit preserving existing cart items and opens `/cart`) next to a compact square icon `"Thêm vào giỏ"` button (`min-h-11 min-w-11` / `h-12 w-12`, per-product `aria-label`).
 26. The sticky `ComparisonBar` was removed: `"So sánh"` on products navigates straight to `/compare?ids=<id>`, and `/compare` provides 2–3 interactive comparison slots (optional 3rd column via `compare-add-column`) that automatically lock remaining columns to the category of whichever slot is picked first.
@@ -1345,6 +1345,7 @@ Data rules: prices from reputable Vietnamese retailers on the seeding date. Pass
 30. All browsing, tools, cart management, and `/orders/lookup` remain open to guests, while `/checkout`, `/checkout/payment`, `POST /api/checkout/prepare`, `POST /api/orders`, and `/orders` ("Đơn hàng của tôi") require an authenticated session.
 31. `Reset Sample Data` truncates `orders` and restores the baseline catalog while preserving `users` and `oauth_accounts`.
 32. `/gpu` includes two client-side tabs (`Tất cả GPU` and `Limited Edition`) backed by `gpu_variants.is_limited_edition` (`8` seeded variants: 2 ASUS T1 collabs + 6 limited RTX 5080/5090 editions) while `Tất cả GPU` still displays all active GPUs.
+33. Roadmap reordered after Step 4: Step 5 executes final UI polish (strictly scoped to `globals.css`, `layout.tsx` typography/favicon, `components/ui/*`, layout chrome, and `*View.tsx` while preserving all `data-testid` contracts and `use*Controller.ts` bindings), followed by Step 6 Playwright E2E and full verification against the finalized DOM, and Step 7 Vercel production deployment.
 
 ## 17. Left to the Builder
 

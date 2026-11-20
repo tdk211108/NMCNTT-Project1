@@ -1,6 +1,6 @@
-# TechCore — Hướng dẫn Tùy biến Giao diện & Nối dây API (Bước 6)
+# TechCore — Hướng dẫn Tùy biến Giao diện & Nối dây API (Bước 5)
 
-Tài liệu này mô tả cấu trúc 3 tầng của Frontend được xây dựng ở Bước 4 để bạn dễ dàng đổi theme hoặc thiết kế lại hoàn toàn giao diện trước khi deploy mà **không làm gãy logic backend hay bộ test E2E**.
+Tài liệu này mô tả cấu trúc 3 tầng của Frontend được xây dựng ở Bước 4 để bạn dễ dàng đổi theme hoặc thiết kế lại hoàn toàn giao diện ở Bước 5 trước khi viết E2E (Bước 6) và deploy (Bước 7), mà **không làm gãy logic backend hay chuẩn selector E2E**.
 
 ## 1. Mức 1 — Đổi Theme / Màu sắc / Bo góc toàn trang
 
@@ -38,7 +38,7 @@ Mỗi màn hình gồm **Controller Hook** (`{ state, actions }`) + **Presentati
 | `/checkout` | `useCheckoutController()` | `CheckoutClient`, `CheckoutView`, `ReviewModal` | `checkout.*`, `orders.checkoutAuthGate`, `orders.checkoutAuthLogin` |
 | `/checkout/payment` | `usePaymentController()` | `PaymentClient`, `PaymentView` | `checkout.paymentQrImage`, `paymentCardNumber`, `paymentConfirm`, `orders.checkoutAuthGate` |
 | `/orders` & `/orders/lookup` | `useMyOrdersController`, `useOrderLookupController` | `MyOrdersClient`, `MyOrdersView`, `OrderLookupClient`, `OrderLookupView` | `orders.myOrders*`, `orders.lookup*` |
-| `/orders/[orderId]` | `useOrderBoardController(orderId)` | `OrderBoardView` (Bước 6 vẽ lại `board.stages` thành progress bar Shopee) | `orders.idDisplay`, `stage`, `demoAdvance`, `completedMessage` |
+| `/orders/[orderId]` | `useOrderBoardController(orderId)` | `OrderBoardView` (Bước 5 vẽ lại `board.stages` thành progress bar Shopee) | `orders.idDisplay`, `stage`, `demoAdvance`, `completedMessage` |
 | Trang tĩnh & Lỗi (`not-found.tsx`, `error.tsx`, `/policies/*`) | — | Server pages + `GlobalErrorBoundary` | `layout.footerLink*` (gồm `footerLinkPrivacy`), `errors.*` (`notFoundPage`, `runtimeErrorPage`, `retryButton`, `backHomeButton`) |
 | `/admin/*` | `useAdminDashboardController`, `useAdminProductsController`, `useAdminGpuSeriesController`, `useAdminLegacyCpusController`, `useAdminOrdersController` | `Admin*View` | `admin.*` |
 

@@ -66,7 +66,7 @@
 
 ### Bước 4 — UI Skeleton & Kiến trúc 3 tầng Theme-Ready (`DONE`)
 - [x] Tầng Theme & Primitives: cấu hình Dark Neutral semantic tokens (`@theme`) trong `src/app/globals.css`, mở rộng `src/shared/messages/vi.ts` + `src/shared/testids.ts`, dựng `src/lib/*` (`api-client.ts`, `format.ts`, `query-provider.tsx`, `safe-storage.ts`) và `src/components/ui/*` (`Button`, `Input`, `Select`, `Card`, `Feedback`, `Table`, `Modal` `<dialog>`, `Toast`, `toast-store`, `ProductImage` dùng `<img>` thường với fallback `/icons/placeholder-product.svg`).
-- [x] Tầng Headless Controller (`use*Controller.ts` xuất `{ state, actions }`) + Presentational Views (`*View.tsx`, props-only, responsive từ `360px`, giữ nguyên `data-testid`) trong `src/features/*` + tài liệu nối dây `docs/UI_WIRING.md` để tùy biến UI sâu ở Bước 6 (trước khi deploy).
+- [x] Tầng Headless Controller (`use*Controller.ts` xuất `{ state, actions }`) + Presentational Views (`*View.tsx`, props-only, responsive từ `360px`, giữ nguyên `data-testid`) trong `src/features/*` + tài liệu nối dây `docs/UI_WIRING.md` để tùy biến UI sâu ở Bước 5 (trước khi viết E2E và deploy).
 - [x] Dựng toàn bộ trang App Router (kèm Server wrapper truyền props hoặc giữ Client logic tách riêng qua `*Client.tsx` trên mọi route để export `metadata` sạch trên Next.js 16), cấu hình `layout.tsx` (`title.template` `%s | TechCore` + `openGraph` gốc + `robots`), `buildPageMetadata` trong `src/lib/metadata.ts` (gắn `noIndex` cho `/cart`, `/checkout*`, `/orders*`, `/search`, `/admin*`), trang `not-found.tsx` & `error.tsx`, đồng bộ Supavisor `max_pipeline: 1` trong `src/server/db/client.ts` + timeout 15s ở `src/lib/api-client.ts`:
   - Layout chung (`AppShell`, `Header`, `SearchBar`, Cart badge, nút Tài khoản/Đăng nhập + `AuthModal`, `Footer`, `ZaloButton` cố định góc dưới phải; bỏ `ComparisonBar`).
   - Storefront: `/` (Hero full-viewport `100dvh`, lướt xuống tới 8 CPU nổi bật 2x4 + 8 GPU nổi bật 2x4 đa hãng/phân khúc qua `/api/products/featured`, kèm nút `Xem tất cả CPU` / `Xem tất cả GPU`), `/cpu`, `/gpu` (có 2 tab `Tất cả GPU` và `Limited Edition` lọc 8 biến thể giới hạn qua cờ `is_limited_edition` + migration `drizzle/0003_certain_wasp.sql`), `/search`, `/products/[id]` (nút `Mua ngay` primary giữ món cũ & chuyển `/cart`, nút ô vuông `Thêm vào giỏ` icon, nút `So sánh` nhảy thẳng sang `/compare?ids=...`; khung ảnh `ProductCard` `aspect-square` và `ProductDetailView` `md:min-h-[420px]` nền `bg-white`).
@@ -77,12 +77,17 @@
   - Admin (`/admin`, `/admin/products`, `/admin/gpu-series`, `/admin/legacy-cpus`, `/admin/orders`).
 - [x] Bổ sung unit test cho `src/lib/*` (`format`, `metadata`, `safe-storage`, `apiFetch` timeout), Zustand cart store (`tests/unit/client/lib-and-stores.test.ts`), `text-rules.test.ts` quét cả `policies/privacy`, `not-found.tsx`, `error.tsx`, và `createDbConnection` Supavisor flags (`tests/unit/infra/infra.test.ts`).
 
-### Bước 5 — E2E Tests (Playwright) & Kiểm thử tổng thể (`NEXT`)
-- [ ] Chạy `npm test` (Vitest domain + service integration + text rules).
-- [ ] Viết và chạy `tests/e2e/*` bằng `data-testid` phủ đủ các luồng trong `docs/technical_solution.md` §15.
-- [ ] Chạy `npm run lint` và `npm run build` sạch lỗi.
+### Bước 5 — Polish UI & Tinh chỉnh Giao diện (`NEXT`)
+- [ ] Chốt quyết định giao diện còn mở trước khi sửa code: phong cách thiết kế, bảng màu/accent, và cặp font (đã cài `lucide-react` và bộ web skills từ `emilkowalski/skills`; đã định hướng sơ bộ: có toggle Light/Dark, Split Hero bằng code, ưu tiên Desktop-first nhưng vẫn giữ `360px` không vỡ layout, thiết kế đồng bộ cả Storefront/Tools/Orders/Policies và `/admin/*`).
+- [ ] Tinh chỉnh / tùy biến sâu giao diện bằng Tailwind theo hướng dẫn tại `docs/UI_WIRING.md` (thêm `favicon` / `icon.*`, áp dụng `unslop`, `tailwind-design-system`, `web-design-guidelines`, `modern-web-guidance`, và `emilkowalski/skills`): chỉ sửa `@theme` tokens trong `src/app/globals.css`, `src/app/layout.tsx`, `src/components/ui/*`, `src/features/layout/*` và `*View.tsx`, nối vào `{ state, actions }` của `use*Controller.ts` và giữ nguyên toàn bộ `data-testid`.
+- [ ] Xử lý các điểm UI trọng tâm: tối ưu `Header` cho viewport `360px`, hoàn thiện Hero trang chủ (bỏ nhãn `uppercase tracking-wider` dư thừa, giữ 8 CPU + 8 GPU 2x4 và 3 card công cụ), đổi lưới 5 bước ở `OrderBoardView.tsx` thành thanh progress kiểu Shopee (giữ nguyên `order-stage-{0..4}`, `data-active`, `data-reached`), chuẩn hóa `tabular-nums` và nhịp spacing `4px` (bỏ `uppercase tracking-wide` không cần thiết trong `SearchableSelect` / `MyOrdersView`).
+- [ ] Cổng kiểm tra sau Bước 5: xác nhận giữ đủ `data-testid`, không `<ul>`/`<ol>`, không `—`/bullet, `ProductImage` dùng `<img>`, `ZaloButton` cố định góc dưới phải + `Footer pb-20`, nút `"Thêm vào giỏ"` `>= 44x44px`, chạy sạch `npm run typecheck`, `npm run lint`, `npm test` (gồm `tests/unit/text-rules.test.ts`), và `npm run build`.
 
-### Bước 6 — Polish UI & Deploy Vercel
-- [ ] Tinh chỉnh / tùy biến sâu giao diện ngay trước khi deploy bằng Tailwind (thêm `favicon` / `icon.*`, áp dụng `unslop`, `tailwind-design-system`, `web-design-guidelines`) theo hướng dẫn tại `docs/UI_WIRING.md`: chỉ sửa `@theme` tokens trong `src/app/globals.css`, `src/components/ui/*` và layout `*View.tsx` (bao gồm tối ưu `Header` cho `360px` và đổi lưới 5 bước ở `OrderBoardView.tsx` thành thanh progress kiểu Shopee), nối vào `{ state, actions }` của `use*Controller.ts` và giữ nguyên toàn bộ `data-testid`.
+### Bước 6 — E2E Tests (Playwright) & Kiểm thử tổng thể
+- [ ] Chạy `npm run test:coverage` (Vitest domain 100% + service integration trên Docker `postgres:16-alpine` port `5433` + text rules).
+- [ ] Chốt môi trường DB cho E2E (Docker Postgres local port `5433` hoặc Supabase dev) và viết/chạy `tests/e2e/*` bằng `data-testid` phủ đủ các luồng trong `docs/technical_solution.md` §15 (desktop và `360px`).
+- [ ] Chạy `npm run typecheck`, `npm run lint`, và `npm run build` sạch lỗi trên UI đã chốt.
+
+### Bước 7 — Deploy Vercel & Kiểm thử Production
 - [x] Init Git, tạo repo dưới tài khoản GitHub cá nhân (`https://github.com/tdk211108/NMCNTT-Project1.git`), đồng bộ và push mã nguồn lên `origin/main`.
 - [ ] Cấu hình Env Vars trên Vercel Hobby, deploy production, kiểm tra `/api/health`, chạy `Reset Sample Data`, và chạy Playwright smoke suite trên URL production.
