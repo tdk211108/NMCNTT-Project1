@@ -12,11 +12,15 @@ export function ZaloButton() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={VI_MESSAGES.nav.zaloSupportLabel}
+      title={VI_MESSAGES.nav.zaloSupportLabel}
       data-testid={TEST_IDS.layout.zaloFloatButton}
-      className="fixed right-4 bottom-4 z-30 inline-flex items-center gap-2 rounded-full border border-border-strong bg-accent px-3.5 py-2.5 text-sm font-semibold text-accent-fg shadow-lg hover:opacity-90"
+      className="zalo-heartbeat fixed right-4 bottom-4 z-30 inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/25 bg-[#0068FF] shadow-lg focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-accent"
     >
-      <img src="/icons/zalo.svg" alt="" className="h-5 w-5" />
-      <span>Zalo</span>
+      <span
+        aria-hidden="true"
+        className="zalo-pulse-ring pointer-events-none absolute inset-0 rounded-full bg-[#0068FF]"
+      />
+      <img src="/icons/zalo.svg" alt="" className="relative h-11 w-11 rounded-full" />
     </a>
   );
 }

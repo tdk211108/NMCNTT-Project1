@@ -1,11 +1,11 @@
-# TechCore — Tiến độ & Lộ trình triển khai
+# CoreRaster — Tiến độ & Lộ trình triển khai
 
 > File ghi nhớ trạng thái dự án giữa các session. Khi bắt đầu session mới, đọc file này cùng `docs/technical_solution.md`, `docs/idea.md`, và `.agents/rules/AGENTS.md`.
 
 ## 1. Thông tin & Quyết định đã chốt
 
-- **Tên repo / `package.json`:** `techcore`
-- **Tên cửa hàng (`STORE_NAME`):** `TechCore`
+- **Tên repo / `package.json`:** `techcore` (mã kỹ thuật nội bộ)
+- **Tên thương hiệu / cửa hàng (`STORE_NAME` / `STORE_DISPLAY_NAME`):** `CoreRaster` (đã đổi tên từ `TechCore`)
 - **Đặc tả & Kiến trúc:** Theo `docs/technical_solution.md` (Next.js 16 App Router, TypeScript 6.0.3, Drizzle ORM + `postgres`, Supabase PostgreSQL + Storage, Tailwind CSS 4, TanStack Query, Zustand 5, Zod 4, Vitest, Playwright).
 - **Đã xác nhận sai khác & `[Call]` (`docs/technical_solution.md` §0.2, §16):**
   - `D1`: Địa chỉ giao hàng 2 cấp (34 Tỉnh/Thành phố -> 3.321 Phường/Xã/Đặc khu từ `vietnamese-provinces-database` bản `2026-09-20`) + ô số nhà/tên đường.
@@ -26,9 +26,9 @@
 
 ### Bước 1 — Khởi tạo Skeleton & Guardrails (`DONE`)
 - [x] Tạo `package.json` (`"name": "techcore"`) pin đúng phiên bản theo `docs/technical_solution.md` §3 (`next@16.4.6`, `react@19.3.1`, `typescript@6.0.3`, `drizzle-orm@0.45.4`, `drizzle-kit@0.31.11`, `postgres@4.1.1`, `@supabase/supabase-js@2.119.0`, `zod@4.6.7`, `tailwindcss@4.3.5`, `vitest@5.1.0`, `@playwright/test@1.65.1`, v.v.) và chạy `npm install`.
-- [x] Cấu hình `tsconfig.json` (`@/* -> src/*`), `next.config.ts` (security headers §11.7), `postcss.config.mjs`, `drizzle.config.ts`, `vitest.config.ts`, `playwright.config.ts`, `vercel.json` (`regions: ["sin1"]`, cron `/api/health`).
+- [x] Cấu hình `tsconfig.json` (`@/* -> src/*`), `next.config.ts` (security headers §11.7 + `devIndicators: false`), `postcss.config.mjs`, `drizzle.config.ts`, `vitest.config.ts`, `playwright.config.ts`, `vercel.json` (`regions: ["sin1"]`, cron `/api/health`).
 - [x] Cấu hình `eslint.config.mjs`: rule `no-restricted-imports` chặn client import `src/server/*` và `next/image`, rule `no-restricted-syntax` cấm `<ul>`/`<ol>` trong `src/features/**` (trừ `admin`) và `src/app/policies/**`.
-- [x] Tạo `.env.example` (điền sẵn `NEXT_PUBLIC_ZALO_URL=https://zalo.me/84363267165`, `NEXT_PUBLIC_GITHUB_REPO_URL=https://github.com/tdk211108/NMCNTT-Project1`, `STORE_NAME=TechCore`) và `.gitignore`.
+- [x] Tạo `.env.example` (điền sẵn `NEXT_PUBLIC_ZALO_URL=https://zalo.me/84363267165`, `NEXT_PUBLIC_GITHUB_REPO_URL=https://github.com/tdk211108/NMCNTT-Project1`, `STORE_NAME=CoreRaster`) và `.gitignore`.
 - [x] Tạo icon trong `public/icons/` (`zalo.svg`, `github.svg`, `placeholder-product.svg`) và app shell tối thiểu (`src/app/layout.tsx`, `src/app/page.tsx`, `src/app/globals.css`).
 - [x] Tạo `src/shared/*`: `constants.ts`, `types/` (`common.ts`, `catalog.ts`, `cart-order.ts`, `tools.ts`, `admin.ts`, `index.ts`), `schemas/` (`catalog.ts`, `checkout.ts`, `admin.ts`, `storage.ts`, `index.ts`), `messages/vi.ts`, `testids.ts` cùng `tests/unit/text-rules.test.ts`.
 - [x] Viết và chạy `scripts/vendor-address-data.ts` -> tạo `src/data/vn-admin-units.json` (34 tỉnh/thành, 3.321 phường/xã) và `LICENSES/vietnamese-provinces-database.MIT.txt`.
@@ -67,7 +67,7 @@
 ### Bước 4 — UI Skeleton & Kiến trúc 3 tầng Theme-Ready (`DONE`)
 - [x] Tầng Theme & Primitives: cấu hình Dark Neutral semantic tokens (`@theme`) trong `src/app/globals.css`, mở rộng `src/shared/messages/vi.ts` + `src/shared/testids.ts`, dựng `src/lib/*` (`api-client.ts`, `format.ts`, `query-provider.tsx`, `safe-storage.ts`) và `src/components/ui/*` (`Button`, `Input`, `Select`, `Card`, `Feedback`, `Table`, `Modal` `<dialog>`, `Toast`, `toast-store`, `ProductImage` dùng `<img>` thường với fallback `/icons/placeholder-product.svg`).
 - [x] Tầng Headless Controller (`use*Controller.ts` xuất `{ state, actions }`) + Presentational Views (`*View.tsx`, props-only, responsive từ `360px`, giữ nguyên `data-testid`) trong `src/features/*` + tài liệu nối dây `docs/UI_WIRING.md` để tùy biến UI sâu ở Bước 5 (trước khi viết E2E và deploy).
-- [x] Dựng toàn bộ trang App Router (kèm Server wrapper truyền props hoặc giữ Client logic tách riêng qua `*Client.tsx` trên mọi route để export `metadata` sạch trên Next.js 16), cấu hình `layout.tsx` (`title.template` `%s | TechCore` + `openGraph` gốc + `robots`), `buildPageMetadata` trong `src/lib/metadata.ts` (gắn `noIndex` cho `/cart`, `/checkout*`, `/orders*`, `/search`, `/admin*`), trang `not-found.tsx` & `error.tsx`, đồng bộ Supavisor `max_pipeline: 1` trong `src/server/db/client.ts` + timeout 15s ở `src/lib/api-client.ts`:
+- [x] Dựng toàn bộ trang App Router (kèm Server wrapper truyền props hoặc giữ Client logic tách riêng qua `*Client.tsx` trên mọi route để export `metadata` sạch trên Next.js 16), cấu hình `layout.tsx` (`title.template` `%s | CoreRaster` + `openGraph` gốc + `robots`), `buildPageMetadata` trong `src/lib/metadata.ts` (gắn `noIndex` cho `/cart`, `/checkout*`, `/orders*`, `/search`, `/admin*`), trang `not-found.tsx` & `error.tsx`, đồng bộ Supavisor `max_pipeline: 1` trong `src/server/db/client.ts` + timeout 15s ở `src/lib/api-client.ts`:
   - Layout chung (`AppShell`, `Header`, `SearchBar`, Cart badge, nút Tài khoản/Đăng nhập + `AuthModal`, `Footer`, `ZaloButton` cố định góc dưới phải; bỏ `ComparisonBar`).
   - Storefront: `/` (Hero full-viewport `100dvh`, lướt xuống tới 8 CPU nổi bật 2x4 + 8 GPU nổi bật 2x4 đa hãng/phân khúc qua `/api/products/featured`, kèm nút `Xem tất cả CPU` / `Xem tất cả GPU`), `/cpu`, `/gpu` (có 2 tab `Tất cả GPU` và `Limited Edition` lọc 8 biến thể giới hạn qua cờ `is_limited_edition` + migration `drizzle/0003_certain_wasp.sql`), `/search`, `/products/[id]` (nút `Mua ngay` primary giữ món cũ & chuyển `/cart`, nút ô vuông `Thêm vào giỏ` icon, nút `So sánh` nhảy thẳng sang `/compare?ids=...`; khung ảnh `ProductCard` `aspect-square` và `ProductDetailView` `md:min-h-[420px]` nền `bg-white`).
   - 3 Công cụ: `/compare` (chọn 2–3 cột bằng dropdown có ô tìm kiếm `SearchableSelect` tự lọc khóa cùng loại `cpu`/`gpu`, preview ảnh `80×80` dưới mỗi cột đã chọn + ảnh tiêu đề bảng; chỉ highlight Giá, Điểm benchmark, Nhân/luồng ở CPU và Giá, Điểm benchmark, VRAM, CUDA Cores/Stream Processors, Độ rộng bus ở GPU — bỏ highlight xung nhịp, TDP/TBP và L3 Cache), `/tools/perf-per-price`, `/tools/psu` (dropdown `SearchableSelect` + prefill + nút Thử lại).
@@ -77,11 +77,14 @@
   - Admin (`/admin`, `/admin/products`, `/admin/gpu-series`, `/admin/legacy-cpus`, `/admin/orders`).
 - [x] Bổ sung unit test cho `src/lib/*` (`format`, `metadata`, `safe-storage`, `apiFetch` timeout), Zustand cart store (`tests/unit/client/lib-and-stores.test.ts`), `text-rules.test.ts` quét cả `policies/privacy`, `not-found.tsx`, `error.tsx`, và `createDbConnection` Supavisor flags (`tests/unit/infra/infra.test.ts`).
 
-### Bước 5 — Polish UI & Tinh chỉnh Giao diện (`NEXT`)
-- [ ] Chốt quyết định giao diện còn mở trước khi sửa code: phong cách thiết kế, bảng màu/accent, và cặp font (đã cài `lucide-react` và bộ web skills từ `emilkowalski/skills`; đã định hướng sơ bộ: có toggle Light/Dark, Split Hero bằng code, ưu tiên Desktop-first nhưng vẫn giữ `360px` không vỡ layout, thiết kế đồng bộ cả Storefront/Tools/Orders/Policies và `/admin/*`).
-- [ ] Tinh chỉnh / tùy biến sâu giao diện bằng Tailwind theo hướng dẫn tại `docs/UI_WIRING.md` (thêm `favicon` / `icon.*`, áp dụng `unslop`, `tailwind-design-system`, `web-design-guidelines`, `modern-web-guidance`, và `emilkowalski/skills`): chỉ sửa `@theme` tokens trong `src/app/globals.css`, `src/app/layout.tsx`, `src/components/ui/*`, `src/features/layout/*` và `*View.tsx`, nối vào `{ state, actions }` của `use*Controller.ts` và giữ nguyên toàn bộ `data-testid`.
-- [ ] Xử lý các điểm UI trọng tâm: tối ưu `Header` cho viewport `360px`, hoàn thiện Hero trang chủ (bỏ nhãn `uppercase tracking-wider` dư thừa, giữ 8 CPU + 8 GPU 2x4 và 3 card công cụ), đổi lưới 5 bước ở `OrderBoardView.tsx` thành thanh progress kiểu Shopee (giữ nguyên `order-stage-{0..4}`, `data-active`, `data-reached`), chuẩn hóa `tabular-nums` và nhịp spacing `4px` (bỏ `uppercase tracking-wide` không cần thiết trong `SearchableSelect` / `MyOrdersView`).
-- [ ] Cổng kiểm tra sau Bước 5: xác nhận giữ đủ `data-testid`, không `<ul>`/`<ol>`, không `—`/bullet, `ProductImage` dùng `<img>`, `ZaloButton` cố định góc dưới phải + `Footer pb-20`, nút `"Thêm vào giỏ"` `>= 44x44px`, chạy sạch `npm run typecheck`, `npm run lint`, `npm test` (gồm `tests/unit/text-rules.test.ts`), và `npm run build`.
+### Bước 5 — Polish UI & Tinh chỉnh Giao diện (`IN PROGRESS`)
+- [x] Đổi tên thương hiệu toàn hệ thống từ `TechCore` sang `CoreRaster` (`STORE_DISPLAY_NAME`, `RESERVED_USERNAMES`, `VI_MESSAGES`, `placeholder-product.svg`, `demo-bank.ts`, `.env.example`, unit tests và tài liệu).
+- [x] Nâng cấp tương tác & chuyển động trên `main`:
+  - So sánh (`/compare`): giữ ảnh preview trên cùng `80×80` tĩnh, phóng lớn ảnh hàng `Tiêu chí` (`compare-header-image-{id}` `aspect-square w-full max-w-60`), thêm `ZoomableImageFrame` zoom theo con trỏ chuột (bám `ref`, chạy trên compositor `transform`) cho ảnh lớn ở `/compare` và `/products/[id]`, cộng hiệu ứng zoom nhẹ `.product-card-zoom-img` trên `ProductCard` (không zoom ảnh thu nhỏ ở tìm kiếm, giỏ hàng, preview đầu trang so sánh hay preview admin).
+  - Trang chủ (`/`): bỏ khung card ở Hero, bố trí 3 tầng chữ căn trái lệch trái (`Raw Compute. / Pure Raster.`, `Uncompromising performance. Precision-engineered computing.`, `CPU & GPU RETAILER`) với fluid typography `clamp()`, kết hợp lớp nền đa tầng (`parallax-layer-slow`, `parallax-layer-mid`, `parallax-layer-front`) và chuyển động cuộn `parallax-section-rise` bằng CSS Scroll-Driven Animations (`view-timeline` / `animation-timeline: view()`) kèm fallback `IntersectionObserver` + `scroll`, tuân thủ `prefers-reduced-motion`.
+  - Bố cục chung: đổi `ZaloButton` thành bong bóng tròn thuần icon `56×56px` hiệu ứng nhịp heartbeat nhẹ (`zalo-heartbeat` / `zalo-pulse-ring`), và ẩn tab `"Tra cứu đơn hàng"` trên `Header` khi đăng nhập chế độ Admin (`role === 'admin'`).
+  - Thẻ & Tag sản phẩm (`Card.tsx`, `ProductCard.tsx`, `CompareTableView.tsx`, `ProductDetailView.tsx`): bỏ badge điểm chuẩn hóa trên thẻ preview sản phẩm (`ProductCard`), dùng màu logo chuẩn cho hãng chip qua `vendorBadgeVariant` (`NVIDIA` `#76B900` chữ tối, `AMD` `#ED1C24` chữ trắng, `Intel` `#0068B5` chữ trắng), và thống nhất tag hãng AIB (`ASUS`, `MSI`, `Gigabyte`, `Sapphire`, `ZOTAC`...) sang 1 màu trung tính xám titan (`variant="aib"`).
+- [ ] Chốt quyết định giao diện còn lại trước khi hoàn tất Bước 5: bảng màu/accent Light-Dark, cặp font, và tối ưu `Header` cho `360px` / thanh progress bar kiểu Shopee ở `OrderBoardView.tsx` (giữ `order-stage-{0..4}`, `data-active`, `data-reached`), chuẩn hóa `tabular-nums`, rồi chạy cổng kiểm tra đầy đủ sau Bước 5.
 
 ### Bước 6 — E2E Tests (Playwright) & Kiểm thử tổng thể
 - [ ] Chạy `npm run test:coverage` (Vitest domain 100% + service integration trên Docker `postgres:16-alpine` port `5433` + text rules).

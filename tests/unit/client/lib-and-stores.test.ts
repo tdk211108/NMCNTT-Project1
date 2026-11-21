@@ -141,7 +141,7 @@ describe('client cart store', () => {
       type: 'website',
       locale: 'vi_VN',
       siteName: VI_MESSAGES.brand.name,
-      title: 'Bộ vi xử lý (CPU) | TechCore',
+      title: 'Bộ vi xử lý (CPU) | CoreRaster',
       description: 'Danh mục CPU chính hãng.',
     });
     expect(publicMeta.robots).toBeUndefined();

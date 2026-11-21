@@ -5,7 +5,7 @@ const formatVndPlain = (amount: number): string =>
 
 export const VI_MESSAGES = {
   brand: {
-    name: 'TechCore',
+    name: 'CoreRaster',
     tagline: 'Cửa hàng CPU và GPU chính hãng cùng công cụ phân tích phần cứng',
   },
   nav: {
@@ -49,9 +49,10 @@ export const VI_MESSAGES = {
     requestTimeoutError: 'Kết nối máy chủ quá thời gian chờ, vui lòng thử lại.',
   },
   home: {
-    heroTitle: 'Linh kiện CPU & GPU chính hãng, định lượng hiệu năng minh bạch',
-    heroSubtitle:
-      'Chọn mua CPU Intel, AMD và GPU NVIDIA, AMD mới nguyên hộp kèm bộ công cụ so sánh thông số, xếp hạng hiệu năng trên giá và ước tính công suất nguồn PSU.',
+    heroTitleLine1: 'Raw Compute.',
+    heroTitleLine2: 'Pure Raster.',
+    heroSubtitle: 'Uncompromising performance. Precision-engineered computing.',
+    heroRetailerLabel: 'CPU & GPU RETAILER',
     heroScrollCta: 'Khám phá sản phẩm nổi bật',
     browseCpuTitle: 'Danh mục CPU',
     browseCpuDesc: 'Bộ vi xử lý Intel Core và AMD Ryzen chính hãng Full Box.',
@@ -317,7 +318,7 @@ export const VI_MESSAGES = {
   },
   policies: {
     warrantyTitle: 'Chính sách bảo hành',
-    warrantyBody: `Tất cả CPU và GPU bán tại TechCore đều là hàng mới chính hãng, nguyên hộp Full Box với thời gian bảo hành tiêu chuẩn ${WARRANTY_MONTHS} tháng theo chính sách nhà sản xuất và nhà phân phối tại Việt Nam.`,
+    warrantyBody: `Tất cả CPU và GPU bán tại CoreRaster đều là hàng mới chính hãng, nguyên hộp Full Box với thời gian bảo hành tiêu chuẩn ${WARRANTY_MONTHS} tháng theo chính sách nhà sản xuất và nhà phân phối tại Việt Nam.`,
     warrantyDetails:
       'Sản phẩm tiếp nhận bảo hành cần giữ nguyên tem nhà phân phối, số seri và không có dấu hiệu hư hỏng vật lý do tác động bên ngoài. Thời gian xử lý bảo hành được thực hiện theo quy trình tiêu chuẩn của trung tâm bảo hành ủy quyền.',
     paymentShippingTitle: 'Chính sách thanh toán và vận chuyển',
@@ -328,14 +329,14 @@ export const VI_MESSAGES = {
     contactBody:
       'Mọi thắc mắc về cấu hình CPU, GPU, đơn hàng đã đặt hoặc yêu cầu tư vấn kỹ thuật xin vui lòng liên hệ trực tiếp qua nút hỗ trợ Zalo ở góc dưới bên phải màn hình hoặc tham khảo mã nguồn dự án tại liên kết GitHub ở chân trang.',
     contactDetails:
-      'TechCore hoạt động như hệ thống bán lẻ trực tuyến phục vụ trình diễn kỹ thuật với quy trình đặt hàng, tính giá và theo dõi đơn hàng đồng bộ từ máy chủ.',
+      'CoreRaster hoạt động như hệ thống bán lẻ trực tuyến phục vụ trình diễn kỹ thuật với quy trình đặt hàng, tính giá và theo dõi đơn hàng đồng bộ từ máy chủ.',
     privacyTitle: 'Chính sách quyền riêng tư',
     privacyIntro:
-      'TechCore tôn trọng quyền riêng tư của người dùng và chỉ thu thập thông tin tối thiểu cần thiết để vận hành đăng nhập tài khoản, xử lý đơn hàng và tra cứu trạng thái đơn hàng trực tuyến.',
+      'CoreRaster tôn trọng quyền riêng tư của người dùng và chỉ thu thập thông tin tối thiểu cần thiết để vận hành đăng nhập tài khoản, xử lý đơn hàng và tra cứu trạng thái đơn hàng trực tuyến.',
     privacyDataCollected:
       'Khi đăng nhập bằng Google hoặc Facebook, hệ thống chỉ tiếp nhận tên hiển thị, địa chỉ email (nếu nhà cung cấp trả về), ảnh đại diện và mã định danh tài khoản OAuth để tạo hồ sơ người dùng. Với tài khoản đăng ký trực tiếp, hệ thống lưu tên đăng nhập, tên hiển thị và mật khẩu được băm một chiều bằng thuật toán scrypt. Khi đặt hàng, hệ thống lưu họ tên người nhận, số điện thoại liên hệ, địa chỉ giao hàng và ghi chú đơn hàng.',
     privacyPurpose:
-      'Dữ liệu chỉ được dùng để xác thực phiên đăng nhập, hiển thị lịch sử đơn hàng của bạn, xuất trình thông tin đơn hàng theo yêu cầu và liên hệ giao nhận. TechCore không bán, cho thuê hay chia sẻ dữ liệu cá nhân của người dùng cho bên thứ ba phục vụ quảng cáo.',
+      'Dữ liệu chỉ được dùng để xác thực phiên đăng nhập, hiển thị lịch sử đơn hàng của bạn, xuất trình thông tin đơn hàng theo yêu cầu và liên hệ giao nhận. CoreRaster không bán, cho thuê hay chia sẻ dữ liệu cá nhân của người dùng cho bên thứ ba phục vụ quảng cáo.',
     privacyCookies:
       'Website sử dụng cookie phiên bảo mật HTTP-only phục vụ duy trì đăng nhập và lưu giỏ hàng, danh sách so sánh tạm thời trên trình duyệt (localStorage). Số điện thoại được ẩn bớt khi hiển thị công khai trên bảng đơn hàng và thông tin thẻ ở bước thanh toán mô phỏng không được gửi về máy chủ.',
     privacyDeletion:
@@ -347,7 +348,7 @@ export const VI_MESSAGES = {
       'Đường dẫn bạn vừa truy cập không tồn tại, đã bị thay đổi hoặc sản phẩm liên quan đã ngừng kinh doanh.',
     runtimeTitle: 'Đã xảy ra sự cố khi hiển thị trang',
     runtimeDesc:
-      'Hệ thống gặp lỗi tạm thời trong quá trình tải nội dung. Bạn vui lòng thử tải lại trang hoặc quay về trang chủ TechCore.',
+      'Hệ thống gặp lỗi tạm thời trong quá trình tải nội dung. Bạn vui lòng thử tải lại trang hoặc quay về trang chủ CoreRaster.',
     retryAction: 'Thử tải lại',
     backHomeAction: 'Về trang chủ',
     browseCpuAction: 'Xem danh mục CPU',

@@ -2,7 +2,7 @@
 
 | Item | Value |
 | --- | --- |
-| Source specification | `idea.md` (Project "TechCore") |
+| Source specification | `idea.md` (Project "CoreRaster") |
 | Document status | Draft for approval |
 | Date | 2026-11-17 |
 | Package versions verified against | npm registry, 2026-11-17 |
@@ -1008,7 +1008,7 @@ Client-sent prices are never read. The idempotency key is created when the revie
 ### 8.10 Unified authentication, OAuth2 & Admin Mode (`auth/password.ts`, `auth/session.ts`, `auth/oauth.ts`)
 
 1. The `ADMIN_PASSWORD` value has the format `scrypt:<N>:<r>:<p>:<saltB64url>:<hashB64url>`, produced by `npm run admin:hash -- "<password>"` with `N = 2^15`, `r = 8`, `p = 1`, a 16-byte salt and a 32-byte key. Customer passwords use the same `hashPassword` / `verifyPassword` helper (`:` separator because `@next/env` expands `$` in `.env` files).
-2. Login recomputes scrypt with the stored parameters (pass `maxmem: 64 * 1024 * 1024`) and compares with `crypto.timingSafeEqual`. Entering `username === 'admin'` authenticates against `ADMIN_PASSWORD` and issues a `role: 'admin'` session (8 h TTL). Any other `username` authenticates against `users` (`role: 'customer'`, 7 d TTL). Customer registration reserves and blocks `'admin'`, `'root'`, `'system'`, `'techcore'` both in Zod and at DB `CHECK`.
+2. Login recomputes scrypt with the stored parameters (pass `maxmem: 64 * 1024 * 1024`) and compares with `crypto.timingSafeEqual`. Entering `username === 'admin'` authenticates against `ADMIN_PASSWORD` and issues a `role: 'admin'` session (8 h TTL). Any other `username` authenticates against `users` (`role: 'customer'`, 7 d TTL). Customer registration reserves and blocks `'admin'`, `'root'`, `'system'`, `'coreraster'` both in Zod and at DB `CHECK`.
 3. **OAuth2 (Google & Facebook):** Self-implemented without Supabase Auth or `next-auth`. `GET /api/auth/oauth/[provider]` signs a 10-minute HS256 `oauth_tx` cookie (`state`, Google `codeVerifier` PKCE S256, and open-redirect-sanitized `next` path). `GET /api/auth/oauth/[provider]/callback` exchanges the code server-side (`fetch` with 10 s timeout, Google `openid email profile`, Facebook `public_profile` + `appsecret_proof` HMAC-SHA256) and upserts `users` + `oauth_accounts` (only Google verified emails can link by email; Facebook accounts stay isolated per `(provider, provider_account_id)`).
 4. **Unified session cookie:** Cookie `auth_session` = HS256 JWT `{sub: userId | 'admin', role, username, displayName, avatarUrl, provider, aud:'techcore-session'}` signed with `AUTH_SECRET`. Cookie attributes: `HttpOnly; SameSite=Lax; Path=/; Secure` (Secure in production; `SameSite=Lax` allows OAuth redirect callbacks while all mutations enforce `assertSameOrigin`).
 5. `requireAdmin()` verifies `role === 'admin'`; `requireSession()` verifies any logged-in session (required for `/api/checkout/prepare`, `POST /api/orders`, and `GET /api/orders/mine`). `requireOrderViewer()` accepts `role === 'admin'`, a customer session owning `orders.user_id === session.id`, or a valid 24 h `Bearer <orderToken>`.

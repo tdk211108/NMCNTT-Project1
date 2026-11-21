@@ -26,9 +26,9 @@ export async function buildBankInstructions(
   amountVnd: number,
 ): Promise<BankInstructions> {
   const storeName = (process.env.STORE_NAME ?? STORE_DISPLAY_NAME).trim() || STORE_DISPLAY_NAME;
-  const bankName = (process.env.DEMO_BANK_NAME ?? 'TechCore Demo Bank').trim();
+  const bankName = (process.env.DEMO_BANK_NAME ?? 'CoreRaster Demo Bank').trim();
   const accountNumber = (process.env.DEMO_BANK_ACCOUNT_NO ?? '190020268888').trim();
-  const accountHolder = (process.env.DEMO_BANK_ACCOUNT_HOLDER ?? 'TECHCORE HARDWARE DEMO').trim();
+  const accountHolder = (process.env.DEMO_BANK_ACCOUNT_HOLDER ?? 'CORERASTER HARDWARE DEMO').trim();
   const transferMemo = `${storeName} ${paymentReference}`;
   const payload = buildDemoQrPayload(bankName, accountNumber, amountVnd, transferMemo);
   const qrImageDataUrl = await QRCode.toDataURL(payload, { width: 240, margin: 1 });

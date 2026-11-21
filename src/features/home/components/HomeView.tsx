@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
@@ -10,18 +13,145 @@ import type { useHomeController } from '../useHomeController';
 export type HomeViewProps = ReturnType<typeof useHomeController>;
 
 export function HomeView({ state, actions }: HomeViewProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const heroWrapperRef = useRef<HTMLDivElement>(null);
+  const slowLayerRef = useRef<HTMLDivElement>(null);
+  const midLayerRef = useRef<HTMLDivElement>(null);
+  const frontLayerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      CSS.supports('(animation-timeline: view()) and (animation-range: entry)') ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      return;
+    }
+
+    const root = rootRef.current;
+    const heroWrapper = heroWrapperRef.current;
+    if (!root || !heroWrapper) return;
+
+    const sectionNodes = Array.from(
+      root.querySelectorAll<HTMLElement>('.parallax-section-rise'),
+    );
+    const activeNodes = new Set<Element>();
+    let rafId: number | null = null;
+    let listeningScroll = false;
+
+    const updateTransforms = () => {
+      rafId = null;
+
+      if (activeNodes.has(heroWrapper)) {
+        const rect = heroWrapper.getBoundingClientRect();
+        const progress =
+          rect.height > 0 ? Math.min(1, Math.max(0, -rect.top / rect.height)) : 0;
+        if (slowLayerRef.current) {
+          slowLayerRef.current.style.transform = `translate3d(0, ${(96 * progress).toFixed(1)}px, 0)`;
+        }
+        if (midLayerRef.current) {
+          midLayerRef.current.style.transform = `translate3d(0, ${(52 * progress).toFixed(1)}px, 0)`;
+        }
+        if (frontLayerRef.current) {
+          frontLayerRef.current.style.transform = `translate3d(0, ${(-24 * progress).toFixed(1)}px, 0)`;
+        }
+      }
+
+      const entrySpan = Math.max(1, window.innerHeight * 0.35);
+      for (const node of sectionNodes) {
+        if (!activeNodes.has(node)) continue;
+        const rect = node.getBoundingClientRect();
+        const progress = Math.min(1, Math.max(0, (window.innerHeight - rect.top) / entrySpan));
+        node.style.transform = `translate3d(0, ${((1 - progress) * 28).toFixed(1)}px, 0)`;
+        node.style.opacity = (0.9 + 0.1 * progress).toFixed(3);
+      }
+    };
+
+    const scheduleUpdate = () => {
+      if (rafId === null) {
+        rafId = requestAnimationFrame(updateTransforms);
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            activeNodes.add(entry.target);
+          } else {
+            activeNodes.delete(entry.target);
+          }
+        }
+
+        if (activeNodes.size > 0 && !listeningScroll) {
+          window.addEventListener('scroll', scheduleUpdate, { passive: true });
+          listeningScroll = true;
+          scheduleUpdate();
+        } else if (activeNodes.size === 0 && listeningScroll) {
+          window.removeEventListener('scroll', scheduleUpdate);
+          listeningScroll = false;
+        }
+      },
+      { threshold: 0 },
+    );
+
+    observer.observe(heroWrapper);
+    for (const node of sectionNodes) {
+      observer.observe(node);
+    }
+    updateTransforms();
+
+    return () => {
+      observer.disconnect();
+      if (listeningScroll) {
+        window.removeEventListener('scroll', scheduleUpdate);
+      }
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+    };
+  }, [state.isLoading]);
+
   return (
-    <div className="flex flex-col gap-12">
-      <section className="flex min-h-[calc(100dvh-8.5rem)] flex-col justify-center">
-        <div className="rounded-card border border-border-strong bg-surface p-6 sm:p-10">
-          <p className="text-xs font-semibold tracking-wider text-accent uppercase">
-            {VI_MESSAGES.brand.name}
-          </p>
-          <h1 className="mt-3 max-w-4xl text-3xl font-bold tracking-tight text-ink sm:text-4xl lg:text-5xl">
-            {VI_MESSAGES.home.heroTitle}
+    <div ref={rootRef} className="flex flex-col gap-12">
+      <section
+        ref={heroWrapperRef}
+        className="parallax-hero-wrapper relative flex min-h-[calc(100dvh-8.5rem)] flex-col justify-center overflow-clip py-8 sm:py-12"
+      >
+        <div
+          ref={slowLayerRef}
+          aria-hidden="true"
+          className="parallax-layer-slow pointer-events-none absolute inset-0"
+        >
+          <div className="absolute top-1/2 right-0 h-72 w-72 -translate-y-1/2 rounded-full bg-accent/16 blur-3xl sm:h-96 sm:w-96" />
+          <div className="absolute bottom-4 left-12 h-56 w-56 rounded-full bg-success/10 blur-3xl sm:h-72 sm:w-72" />
+        </div>
+
+        <div
+          ref={midLayerRef}
+          aria-hidden="true"
+          className="parallax-layer-mid pointer-events-none absolute inset-0"
+        >
+          <div className="hero-tech-grid absolute inset-0" />
+          <div className="absolute top-1/2 right-6 hidden h-64 w-64 -translate-y-1/2 rounded-full border border-accent/20 lg:block" />
+          <div className="absolute top-1/2 right-16 hidden h-44 w-44 -translate-y-1/2 rounded-full border border-border-strong/50 lg:block" />
+        </div>
+
+        <div
+          ref={frontLayerRef}
+          className="parallax-layer-front relative z-10 flex w-full max-w-2xl flex-col items-start text-left"
+        >
+          <h1 className="text-[clamp(2.25rem,1.4rem+3.6vw,4.75rem)] leading-[1.04] font-bold tracking-tight text-ink text-balance">
+            <span className="block">{VI_MESSAGES.home.heroTitleLine1}</span>
+            <span className="block">{VI_MESSAGES.home.heroTitleLine2}</span>
           </h1>
-          <p className="mt-4 max-w-3xl text-base leading-relaxed text-ink-muted sm:text-lg">
+
+          <p className="mt-5 max-w-xl text-[clamp(1rem,0.92rem+0.45vw,1.35rem)] leading-relaxed text-ink-muted text-pretty">
             {VI_MESSAGES.home.heroSubtitle}
+          </p>
+
+          <p className="mt-4 text-xs font-semibold tracking-[0.22em] text-accent">
+            {VI_MESSAGES.home.heroRetailerLabel}
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -58,7 +188,7 @@ export function HomeView({ state, actions }: HomeViewProps) {
           <div className="flex flex-col gap-12">
             <section
               data-testid={TEST_IDS.home.featuredCpuSection}
-              className="flex flex-col gap-4"
+              className="parallax-section-rise flex flex-col gap-4"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -88,7 +218,7 @@ export function HomeView({ state, actions }: HomeViewProps) {
             <section
               id="featured-gpu"
               data-testid={TEST_IDS.home.featuredGpuSection}
-              className="flex flex-col gap-4 scroll-mt-6"
+              className="parallax-section-rise flex flex-col gap-4 scroll-mt-6"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -118,7 +248,7 @@ export function HomeView({ state, actions }: HomeViewProps) {
         )}
       </div>
 
-      <section className="flex flex-col gap-4">
+      <section className="parallax-section-rise flex flex-col gap-4">
         <h2 className="text-xl font-semibold text-ink">{VI_MESSAGES.home.toolsHeading}</h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Card className="flex flex-col justify-between gap-4">

@@ -10,16 +10,16 @@ import {
 
 describe('Admin scrypt password helper', () => {
   it('generates colon-separated scrypt hashes without $ and verifies roundtrip', async () => {
-    const hash1 = await hashAdminPassword('TechCoreDemo!2026');
-    const hash2 = await hashAdminPassword('TechCoreDemo!2026');
+    const hash1 = await hashAdminPassword('CoreRasterDemo!2026');
+    const hash2 = await hashAdminPassword('CoreRasterDemo!2026');
 
     expect(hash1).toMatch(new RegExp(`^scrypt:${SCRYPT_N}:${SCRYPT_R}:${SCRYPT_P}:[^:$]+:[^:$]+$`));
     expect(hash1).not.toContain('$');
     expect(hash1).not.toBe(hash2);
     expect(isValidScryptHashFormat(hash1)).toBe(true);
 
-    expect(await verifyAdminPassword('TechCoreDemo!2026', hash1)).toBe(true);
-    expect(await verifyAdminPassword('TechCoreDemo!2026', hash2)).toBe(true);
+    expect(await verifyAdminPassword('CoreRasterDemo!2026', hash1)).toBe(true);
+    expect(await verifyAdminPassword('CoreRasterDemo!2026', hash2)).toBe(true);
     expect(await verifyAdminPassword('wrong-password', hash1)).toBe(false);
     expect(await verifyAdminPassword('', hash1)).toBe(false);
   });

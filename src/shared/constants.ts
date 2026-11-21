@@ -1,4 +1,4 @@
-export const STORE_DISPLAY_NAME = 'TechCore';
+export const STORE_DISPLAY_NAME = 'CoreRaster';
 
 export const CART_STORAGE_KEY = 'pcstore.cart.v1';
 export const COMPARE_STORAGE_KEY = 'pcstore.compare.v1';
@@ -63,7 +63,7 @@ export const PASSWORD_MIN_LEN = 6;
 export const PASSWORD_MAX_LEN = 128;
 export const DISPLAY_NAME_MIN_LEN = 2;
 export const DISPLAY_NAME_MAX_LEN = 50;
-export const RESERVED_USERNAMES = ['admin', 'root', 'system', 'techcore'] as const;
+export const RESERVED_USERNAMES = ['admin', 'root', 'system', 'coreraster'] as const;
 export const MY_ORDERS_MAX_ROWS = 100;
 
 export const WARRANTY_MONTHS = 36;

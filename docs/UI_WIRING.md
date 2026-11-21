@@ -1,4 +1,4 @@
-# TechCore — Hướng dẫn Tùy biến Giao diện & Nối dây API (Bước 5)
+# CoreRaster — Hướng dẫn Tùy biến Giao diện & Nối dây API (Bước 5)
 
 Tài liệu này mô tả cấu trúc 3 tầng của Frontend được xây dựng ở Bước 4 để bạn dễ dàng đổi theme hoặc thiết kế lại hoàn toàn giao diện ở Bước 5 trước khi viết E2E (Bước 6) và deploy (Bước 7), mà **không làm gãy logic backend hay chuẩn selector E2E**.
 
@@ -14,11 +14,11 @@ Toàn bộ màu sắc và bán kính bo góc nằm tại `@theme` trong `src/app
 ## 2. Mức 2 — Đổi Component Hệ thống (`src/components/ui/*`)
 
 - `Button.tsx` (`primary`, `secondary`, `outline`, `ghost`, `danger`, `demo`)
-- `Input.tsx`, `Select.tsx`, `SearchableSelect.tsx` (dropdown có ô tìm kiếm nhóm theo danh mục cho `/compare` và `/tools/psu`), `Card.tsx` (`Card`, `Badge`), `Feedback.tsx` (`Spinner`, `EmptyState`), `Icons.tsx` (`CartPlusIcon`)
+- `Input.tsx`, `Select.tsx`, `SearchableSelect.tsx` (dropdown có ô tìm kiếm nhóm theo danh mục cho `/compare` và `/tools/psu`), `Card.tsx` (`Card`, `Badge` có biến thể `nvidia`/`amd`/`intel`/`aib` và helper `vendorBadgeVariant`), `Feedback.tsx` (`Spinner`, `EmptyState`), `Icons.tsx` (`CartPlusIcon`)
 - `Modal.tsx` (dùng `<dialog>` native `showModal()`, giữ `data-testid`)
 - `Table.tsx` (`ResponsiveTableWrapper` cuộn ngang an toàn từ `360px`)
 - `Toast.tsx` & `toast-store.ts` (`showToast(message, tone)`)
-- `ProductImage.tsx` (dùng `<img>` thường nền trắng `bg-white` với fallback `/icons/placeholder-product.svg`; `ProductCard` dùng `aspect-square`, `ProductDetailView` dùng khung `md:min-h-[420px]`)
+- `ProductImage.tsx` (dùng `<img>` thường nền trắng `bg-white` với fallback `/icons/placeholder-product.svg`; thêm `ZoomableImageFrame` zoom theo con trỏ bằng `transform` qua `ref` cho ảnh lớn không phải ảnh thu nhỏ; `ProductCard` dùng `.product-card-zoom-img` phóng nhẹ trong khung `overflow-hidden`)
 
 ## 3. Mức 3 — Thiết kế lại JSX từng trang mà giữ nguyên dây nối Backend
 
@@ -26,12 +26,12 @@ Mỗi màn hình gồm **Controller Hook** (`{ state, actions }`) + **Presentati
 
 | Màn hình / Route | Controller Hook (`src/features/...`) | View Component (`*View.tsx`) | Dây nối `{ state, actions }` mới / `TEST_IDS` trọng tâm |
 | --- | --- | --- | --- |
-| Layout chung | `useSearchSuggest`, `useAuthSession` | `Header`, `Footer`, `ZaloButton`, `AuthModal` | `header.*`, `auth.*`, `layout.*` |
-| `/` (Trang chủ) | `useHomeController` | `HomeView`, `ProductCard` | Hero `100dvh`, `cpus` (8), `gpus` (8), `onRetry`, `onBuyNow`, `onAddToCart`, `onCompare` / `home.*` (`heroScrollCta`, `featuredCpuAll`, `featuredGpuAll`, `browseCpu`, `browseGpu`, `tool*`) |
+| Layout chung | `useSearchSuggest`, `useAuthSession` | `Header` (ẩn tab `Tra cứu đơn hàng` khi `role === 'admin'`), `Footer`, `ZaloButton` (tròn `56×56px` heartbeat), `AuthModal` | `header.*`, `auth.*`, `layout.*` |
+| `/` (Trang chủ) | `useHomeController` | `HomeView` (Hero không card căn trái lệch trái với 3 tầng chữ + đa tầng parallax + `parallax-section-rise` cuộn trang), `ProductCard` (`.product-card-zoom-img`) | Hero `100dvh`, `cpus` (8), `gpus` (8), `onRetry`, `onBuyNow`, `onAddToCart`, `onCompare` / `home.*` (`heroScrollCta`, `featuredCpuAll`, `featuredGpuAll`, `browseCpu`, `browseGpu`, `tool*`) |
 | `/cpu`, `/gpu` | `useCatalogController(category)` | `CatalogClient`, `CatalogView`, `ProductCard` | `limitedOnly`, `onChangeLimitedOnly` (tab `/gpu`: `Tất cả GPU` \| `Limited Edition`), `onBuyNow`, `onAddToCart`, `onCompare` / `listing.*` (`gpuTabAll`, `gpuTabLimited`, `productCardBuyNow`, `productCardAddToCart`, `productCardCompare`) |
 | `/search` | `useSearchResultsController(query)` | `SearchResultsView` | `onBuyNow`, `onAddToCart`, `onCompare` / `listing.productCard*` |
-| `/products/[id]` | `useProductDetailController(id)` | `ProductDetailView` | `onBuyNow`, `onAddToCart`, `onCompare`, `onCalculatePsu` / `detail.*` (`buyNow`, `addToCart`, `compareThis`, `calcPsu`) |
-| `/compare` | `useComparePageController(rawIds)` | `CompareTableView` | `SearchableSelect` từng cột, `state.slots`, `selectedProducts` (preview ảnh 80x80 cho slot 1–3), `lockedCategory`, `showThirdColumn`, `data`; `onSelectSlot`, `onClearSlot`, `onAddColumn`, `onClearAll`, `onRetryCatalog` / `compare.*` (`slotSelect`, `slotSearch`, `slotOption`, `slotClear`, `slotPreview`, `addColumn`, `clearAll`, `table`, `headerImage`, `cell`, `errorBack`) |
+| `/products/[id]` | `useProductDetailController(id)` | `ProductDetailView` (`ZoomableImageFrame` cho ảnh chính) | `onBuyNow`, `onAddToCart`, `onCompare`, `onCalculatePsu` / `detail.*` (`buyNow`, `addToCart`, `compareThis`, `calcPsu`) |
+| `/compare` | `useComparePageController(rawIds)` | `CompareTableView` (giữ preview đầu trang `80×80` tĩnh; phóng lớn ảnh hàng tiêu chí trong `ZoomableImageFrame`) | `SearchableSelect` từng cột, `state.slots`, `selectedProducts`, `lockedCategory`, `showThirdColumn`, `data`; `onSelectSlot`, `onClearSlot`, `onAddColumn`, `onClearAll`, `onRetryCatalog` / `compare.*` (`slotSelect`, `slotSearch`, `slotOption`, `slotClear`, `slotPreview`, `addColumn`, `clearAll`, `table`, `headerImage`, `cell`, `errorBack`) |
 | `/tools/perf-per-price` | `usePerfPerPriceController(...)` | `PerfPerPriceView` | `ppp.*` |
 | `/tools/psu` | `usePsuController(...)` | `PsuEstimatorView` | `SearchableSelect` cho CPU/GPU series; `onSelectCpu`, `onSelectGpu`, `onCalculate`, `onRetryOptions` / `psu.*` (`cpuSelect`, `cpuSearch`, `cpuOption`, `gpuSelect`, `gpuSearch`, `gpuOption`, ...) |
 | `/cart` | `useCartController(notice)` | `CartView` | `cart.*` |

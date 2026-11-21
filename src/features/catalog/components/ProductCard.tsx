@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { Badge, Card } from '@/components/ui/Card';
+import { Badge, Card, vendorBadgeVariant } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { CartPlusIcon } from '@/components/ui/Icons';
 import { ProductImage } from '@/components/ui/ProductImage';
-import { formatNumberVi, formatVnd } from '@/lib/format';
+import { formatVnd } from '@/lib/format';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
 import type { ProductCard as ProductCardDto } from '@/shared/types';
@@ -29,25 +29,22 @@ export function ProductCard({
       <div className="flex flex-col gap-3">
         <Link
           href={`/products/${product.id}`}
-          className="block aspect-square w-full overflow-hidden rounded-control bg-white p-1.5"
+          className="group/card-img block aspect-square w-full overflow-hidden rounded-control bg-white p-1.5"
         >
           <ProductImage
             src={product.imageUrl}
             alt={product.name}
-            className="h-full w-full object-contain"
+            className="product-card-zoom-img h-full w-full object-contain"
           />
         </Link>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge>{product.vendor.toUpperCase()}</Badge>
-          {product.aibBrand ? <Badge variant="accent">{product.aibBrand}</Badge> : null}
+          <Badge variant={vendorBadgeVariant(product.vendor)}>
+            {product.vendor.toUpperCase()}
+          </Badge>
+          {product.aibBrand ? <Badge variant="aib">{product.aibBrand}</Badge> : null}
           {product.isLimitedEdition ? (
             <Badge variant="warning">{VI_MESSAGES.catalog.limitedEditionBadge}</Badge>
-          ) : null}
-          {product.score.normalized !== null ? (
-            <Badge variant="success">
-              {formatNumberVi(product.score.normalized, 1)} / 100
-            </Badge>
           ) : null}
         </div>
 

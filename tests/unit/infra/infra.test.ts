@@ -121,7 +121,7 @@ describe('infra/address, demo-bank, storage, errors', () => {
     expect(ref1).toBe(ref2);
     expect(ref1).toMatch(new RegExp(`^TT[${ORDER_ID_ALPHABET}]{8}$`));
 
-    const payload = buildDemoQrPayload('Demo Bank', '1234', 500000, `TechCore ${ref1}`);
+    const payload = buildDemoQrPayload('Demo Bank', '1234', 500000, `CoreRaster ${ref1}`);
     expect(payload.startsWith('DEMO')).toBe(true);
 
     const instructions = await buildBankInstructions(ref1, 500000);

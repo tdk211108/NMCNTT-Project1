@@ -61,3 +61,146 @@ dialog::backdrop {
     scroll-behavior: smooth;
   }
 }
+
+:root {
+  --ease-out-ui: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.product-card-zoom-img {
+  transition: transform 220ms var(--ease-out-ui);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .zoom-frame-cursor {
+    cursor: zoom-in;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .group\/card-img:hover .product-card-zoom-img {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes zalo-heartbeat {
+  0%,
+  42%,
+  100% {
+    transform: scale(1);
+  }
+  8% {
+    transform: scale(1.07);
+  }
+  16% {
+    transform: scale(1);
+  }
+  24% {
+    transform: scale(1.045);
+  }
+}
+
+@keyframes zalo-pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  55%,
+  100% {
+    transform: scale(1.48);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .zalo-heartbeat {
+    animation: zalo-heartbeat 2.8s var(--ease-out-ui) infinite;
+  }
+
+  .zalo-heartbeat:hover,
+  .zalo-heartbeat:focus-visible {
+    animation-play-state: paused;
+    transform: scale(1.06);
+  }
+
+  .zalo-pulse-ring {
+    animation: zalo-pulse-ring 2.8s var(--ease-out-ui) infinite;
+  }
+}
+
+.hero-tech-grid {
+  background-image:
+    linear-gradient(to right, oklch(40% 0.016 260 / 0.16) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(40% 0.016 260 / 0.16) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: radial-gradient(ellipse 85% 80% at 70% 42%, black 20%, transparent 100%);
+}
+
+@keyframes hero-layer-slow {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 96px, 0);
+  }
+}
+
+@keyframes hero-layer-mid {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 52px, 0);
+  }
+}
+
+@keyframes hero-content-shift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, -24px, 0);
+  }
+}
+
+@keyframes section-scroll-rise {
+  from {
+    transform: translate3d(0, 28px, 0);
+    opacity: 0.9;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@supports ((animation-timeline: view()) and (animation-range: entry)) {
+  @media (prefers-reduced-motion: no-preference) {
+    .parallax-hero-wrapper {
+      view-timeline: --hero-scroll;
+    }
+
+    .parallax-layer-slow {
+      animation: hero-layer-slow linear both;
+      animation-timeline: --hero-scroll;
+      animation-range: exit 0% exit 100%;
+    }
+
+    .parallax-layer-mid {
+      animation: hero-layer-mid linear both;
+      animation-timeline: --hero-scroll;
+      animation-range: exit 0% exit 100%;
+    }
+
+    .parallax-layer-front {
+      animation: hero-content-shift linear both;
+      animation-timeline: --hero-scroll;
+      animation-range: exit 0% exit 100%;
+    }
+
+    .parallax-section-rise {
+      animation: section-scroll-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+}

@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { Badge, Card } from '@/components/ui/Card';
+import { Badge, Card, vendorBadgeVariant } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { CartPlusIcon } from '@/components/ui/Icons';
-import { ProductImage } from '@/components/ui/ProductImage';
+import { ProductImage, ZoomableImageFrame } from '@/components/ui/ProductImage';
 import { ResponsiveTableWrapper } from '@/components/ui/Table';
 import { formatNumberVi, formatVnd } from '@/lib/format';
 import { VI_MESSAGES } from '@/shared/messages/vi';
@@ -43,19 +43,24 @@ export function ProductDetailView({ state, actions }: ProductDetailViewProps) {
       </div>
 
       <Card className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-card bg-white p-2 md:aspect-auto md:h-full md:min-h-[420px]">
+        <ZoomableImageFrame
+          zoomScale={1.75}
+          className="flex aspect-square w-full items-center justify-center rounded-card bg-white md:aspect-auto md:h-full md:min-h-[420px]"
+        >
           <ProductImage
             src={detail.imageUrl}
             alt={detail.name}
-            className="h-full max-h-[460px] w-full object-contain"
+            className="h-full max-h-[460px] w-full object-contain p-2"
           />
-        </div>
+        </ZoomableImageFrame>
 
         <div className="flex flex-col justify-between gap-5">
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge>{detail.vendor.toUpperCase()}</Badge>
-              {detail.aibBrand ? <Badge variant="accent">{detail.aibBrand}</Badge> : null}
+              <Badge variant={vendorBadgeVariant(detail.vendor)}>
+                {detail.vendor.toUpperCase()}
+              </Badge>
+              {detail.aibBrand ? <Badge variant="aib">{detail.aibBrand}</Badge> : null}
               {detail.series ? <Badge>{detail.series.name}</Badge> : null}
             </div>
 

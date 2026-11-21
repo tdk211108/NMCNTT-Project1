@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { Badge, Card } from '@/components/ui/Card';
+import { Badge, Card, vendorBadgeVariant } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
-import { ProductImage } from '@/components/ui/ProductImage';
+import { ProductImage, ZoomableImageFrame } from '@/components/ui/ProductImage';
 import { SearchableSelect, type SearchableSelectGroup } from '@/components/ui/SearchableSelect';
 import { ResponsiveTableWrapper } from '@/components/ui/Table';
 import { formatVnd } from '@/lib/format';
@@ -144,9 +144,11 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                       </Link>
                       <div className="flex min-w-0 flex-1 flex-col gap-1">
                         <div className="flex flex-wrap items-center gap-1">
-                          <Badge>{selectedProduct.vendor.toUpperCase()}</Badge>
+                          <Badge variant={vendorBadgeVariant(selectedProduct.vendor)}>
+                            {selectedProduct.vendor.toUpperCase()}
+                          </Badge>
                           {selectedProduct.aibBrand ? (
-                            <Badge variant="accent">{selectedProduct.aibBrand}</Badge>
+                            <Badge variant="aib">{selectedProduct.aibBrand}</Badge>
                           ) : null}
                           {selectedProduct.isLimitedEdition ? (
                             <Badge variant="warning">{VI_MESSAGES.catalog.limitedEditionBadge}</Badge>
@@ -211,15 +213,23 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                     {VI_MESSAGES.tools.compare.criterionColumn}
                   </th>
                   {state.data.products.map((product) => (
-                    <th key={product.id} className="px-3 py-3 align-top font-semibold text-ink">
-                      <div className="flex flex-col items-start gap-2">
-                        <Link href={`/products/${product.id}`} className="shrink-0">
-                          <ProductImage
-                            src={product.imageUrl}
-                            alt={product.name}
-                            testId={TEST_IDS.compare.headerImage(product.id)}
-                            className="h-20 w-20 object-contain p-1"
-                          />
+                    <th
+                      key={product.id}
+                      className="min-w-48 px-3 py-3 align-top font-semibold text-ink"
+                    >
+                      <div className="flex flex-col items-start gap-2.5">
+                        <Link href={`/products/${product.id}`} className="block w-full max-w-60">
+                          <ZoomableImageFrame
+                            zoomScale={1.75}
+                            className="flex aspect-square w-full items-center justify-center rounded-card bg-white"
+                          >
+                            <ProductImage
+                              src={product.imageUrl}
+                              alt={product.name}
+                              testId={TEST_IDS.compare.headerImage(product.id)}
+                              className="h-full w-full object-contain p-2"
+                            />
+                          </ZoomableImageFrame>
                         </Link>
                         <Link href={`/products/${product.id}`} className="hover:text-accent">
                           {product.name}

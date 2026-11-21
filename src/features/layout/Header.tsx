@@ -15,6 +15,7 @@ export function Header() {
   const cartHydrated = useCartStore((s) => s.hasHydrated);
   const { state: authState, actions: authActions } = useAuthSession();
 
+  const isAdmin = authState.user?.role === 'admin';
   const totalCartCount = cartHydrated
     ? cartItems.reduce((sum, item) => sum + item.quantity, 0)
     : 0;
@@ -62,16 +63,18 @@ export function Header() {
               >
                 {VI_MESSAGES.nav.psu}
               </Link>
-              <Link
-                href="/orders/lookup"
-                className={
-                  pathname?.startsWith('/orders')
-                    ? 'font-semibold text-accent'
-                    : 'text-ink-muted hover:text-ink'
-                }
-              >
-                {VI_MESSAGES.nav.orderLookup}
-              </Link>
+              {!isAdmin ? (
+                <Link
+                  href="/orders/lookup"
+                  className={
+                    pathname?.startsWith('/orders')
+                      ? 'font-semibold text-accent'
+                      : 'text-ink-muted hover:text-ink'
+                  }
+                >
+                  {VI_MESSAGES.nav.orderLookup}
+                </Link>
+              ) : null}
             </nav>
           </div>
 
@@ -91,7 +94,7 @@ export function Header() {
             </Link>
 
             {authState.user ? (
-              authState.user.role === 'admin' ? (
+              isAdmin ? (
                 <div className="flex flex-wrap items-center gap-2">
                   <Link
                     href="/admin"
