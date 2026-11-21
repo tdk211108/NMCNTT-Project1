@@ -11,7 +11,7 @@ export type OrderLookupViewProps = ReturnType<typeof useOrderLookupController>;
 export function OrderLookupView({ state, actions }: OrderLookupViewProps) {
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6">
-      <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.orders.lookupTitle}</h1>
+      <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.orders.lookupTitle}</h1>
 
       <Card className="flex flex-col gap-3 bg-surface-subtle">
         <p className="text-sm text-ink-muted">{VI_MESSAGES.orders.lookupLoginBanner}</p>

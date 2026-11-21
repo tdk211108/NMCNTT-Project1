@@ -17,6 +17,23 @@ export const COMPARE_MAX_ITEMS = 3;
 
 export const CATALOG_MAX_RESULTS = 200;
 export const FEATURED_PER_CATEGORY = 8;
+export const LANDING_FEATURED_CPU_IDS = [
+  'cpu-intel-core-i5-14600k',
+  'cpu-amd-ryzen-7-9800x3d',
+  'cpu-intel-core-ultra-7-270k-plus',
+  'cpu-amd-ryzen-5-7500f',
+  'cpu-intel-core-ultra-9-285k',
+] as const;
+export const LANDING_FEATURED_GPU_IDS = [
+  'gpu-asus-t1-rtx-5060-ti-8gb-oc',
+  'gpu-asus-rog-astral-rtx-5090-dhahab-oc',
+  'gpu-asus-rog-matrix-30th-rtx-5090-32gb',
+  'gpu-asus-rog-astral-rtx-5080-16gb-hatsune-miku-oc',
+  'gpu-msi-rtx-5090-32gb-lightning-z',
+] as const;
+export const CPU_PER_BRAND_PAGE_SIZE = 16;
+export const GPU_PAGE_SIZE = 40;
+export const MUSIC_ALLOWED_EXTENSIONS = ['.mp3', '.wav', '.ogg', '.m4a', '.flac', '.webm'] as const;
 export const SEARCH_SUGGEST_MAX_RESULTS = 8;
 export const SEARCH_SUGGEST_MIN_LEN = 2;
 export const SEARCH_SUGGEST_MAX_LEN = 50;

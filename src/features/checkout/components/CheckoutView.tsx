@@ -41,7 +41,7 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.checkout.title}</h1>
+      <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.checkout.title}</h1>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <form onSubmit={actions.onSubmitForm} className="flex flex-col gap-4 lg:col-span-2" noValidate>
@@ -127,14 +127,14 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
               {paymentMethodSchema.options.map((method) => (
                 <label
                   key={method}
-                  className="flex cursor-pointer items-center gap-3 rounded-control border border-border bg-surface-subtle px-3 py-2.5 text-sm text-ink"
+                  className="flex cursor-pointer items-center gap-3 rounded-control border-2 border-border-strong bg-surface-subtle px-3 py-2.5 text-sm font-medium text-ink"
                 >
                   <input
                     type="radio"
                     value={method}
                     data-testid={TEST_IDS.checkout.payment(method)}
                     {...form.register('paymentMethod')}
-                    className="h-4 w-4 accent-accent"
+                    className="h-4 w-4"
                   />
                   <span>{VI_MESSAGES.checkout.paymentMethods[method]}</span>
                 </label>
@@ -155,16 +155,16 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
 
         <aside className="lg:col-span-1">
           <Card className="flex flex-col gap-3">
-            <h2 className="text-base font-semibold text-ink">{VI_MESSAGES.orders.summaryHeading}</h2>
+            <h2 className="font-display text-base font-bold text-ink">{VI_MESSAGES.orders.summaryHeading}</h2>
             {state.quote ? (
               <>
-                <div className="flex flex-col gap-2 border-b border-border pb-3 text-sm">
+                <div className="flex flex-col gap-2 border-b-2 border-border pb-3 text-sm">
                   {state.quote.lines.map((line) => (
                     <div key={line.productId} className="flex justify-between gap-2">
                       <span className="text-ink-muted">
                         {line.name} x {line.quantity}
                       </span>
-                      <span className="shrink-0 font-medium text-ink">
+                      <span className="shrink-0 font-mono font-medium tabular-nums text-ink">
                         {formatVnd(line.lineTotalVnd)}
                       </span>
                     </div>
@@ -172,13 +172,13 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-ink-muted">{VI_MESSAGES.cart.subtotal}</span>
-                  <span className="font-medium text-ink">
+                  <span className="font-mono font-medium tabular-nums text-ink">
                     {formatVnd(state.quote.subtotalVnd)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-ink-muted">{VI_MESSAGES.cart.shippingFee}</span>
-                  <span className="font-medium text-ink">
+                  <span className="font-mono font-medium tabular-nums text-ink">
                     {state.quote.freeShipping ? (
                       <Badge variant="success">{VI_MESSAGES.common.freeShippingLabel}</Badge>
                     ) : (
@@ -186,9 +186,11 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
                     )}
                   </span>
                 </div>
-                <div className="flex justify-between border-t border-border pt-3 text-base font-bold">
+                <div className="flex justify-between border-t-2 border-border pt-3 text-base font-bold">
                   <span className="text-ink">{VI_MESSAGES.cart.total}</span>
-                  <span className="text-primary">{formatVnd(state.quote.totalVnd)}</span>
+                  <span className="font-mono tabular-nums text-accent-ink">
+                    {formatVnd(state.quote.totalVnd)}
+                  </span>
                 </div>
               </>
             ) : (

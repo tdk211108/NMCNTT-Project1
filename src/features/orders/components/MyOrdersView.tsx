@@ -18,7 +18,7 @@ export function MyOrdersView({ state, actions }: MyOrdersViewProps) {
   if (!state.isAuthenticated) {
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.orders.myOrdersTitle}</h1>
+        <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.orders.myOrdersTitle}</h1>
         <EmptyState
           title={VI_MESSAGES.orders.myOrdersLoginPrompt}
           action={
@@ -39,7 +39,7 @@ export function MyOrdersView({ state, actions }: MyOrdersViewProps) {
   if (state.isAdmin) {
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.orders.myOrdersTitle}</h1>
+        <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.orders.myOrdersTitle}</h1>
         <EmptyState
           title={VI_MESSAGES.admin.navOrders}
           action={
@@ -55,7 +55,7 @@ export function MyOrdersView({ state, actions }: MyOrdersViewProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.orders.myOrdersTitle}</h1>
+        <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.orders.myOrdersTitle}</h1>
         <Link href="/orders/lookup">
           <Button variant="outline" size="sm">
             {VI_MESSAGES.orders.myOrdersCodeLookupLink}
@@ -101,14 +101,16 @@ export function MyOrdersView({ state, actions }: MyOrdersViewProps) {
               <tbody className="divide-y divide-border">
                 {state.orders.map((order) => (
                   <tr key={order.orderId} data-testid={TEST_IDS.orders.myOrdersRow(order.orderId)}>
-                    <td className="px-4 py-3 font-mono font-semibold text-primary">
+                    <td className="px-4 py-3 font-mono font-semibold tabular-nums text-accent-ink">
                       {order.orderId}
                     </td>
-                    <td className="px-4 py-3 text-ink-muted">
+                    <td className="px-4 py-3 font-mono tabular-nums text-ink-muted">
                       {formatDateTimeVi(order.createdAt)}
                     </td>
-                    <td className="px-4 py-3 text-right text-ink">{order.totalQuantity}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-ink">
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-ink">
+                      {order.totalQuantity}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums text-ink">
                       {formatVnd(order.totalVnd)}
                     </td>
                     <td className="px-4 py-3">

@@ -12,17 +12,17 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
-    'bg-primary text-primary-fg border-transparent hover:opacity-90',
+    'bg-primary text-primary-fg border-border-strong mtx-shadow-sm hover:bg-[var(--color-primary-hover)] hover:border-ink active:translate-x-[2px] active:translate-y-[2px] active:shadow-none',
   secondary:
-    'bg-surface-elevated text-ink border-border hover:border-border-strong',
+    'bg-surface-elevated text-ink border-border-strong mtx-shadow-sm hover:border-signal active:translate-x-[2px] active:translate-y-[2px] active:shadow-none',
   outline:
-    'bg-transparent text-ink border-border-strong hover:bg-surface-subtle',
+    'bg-surface text-ink border-border-strong mtx-shadow-sm hover:border-signal hover:text-accent-ink active:translate-x-[2px] active:translate-y-[2px] active:shadow-none',
   ghost:
-    'bg-transparent text-ink-muted border-transparent hover:text-ink hover:bg-surface-subtle',
+    'bg-transparent text-ink-muted border-transparent hover:text-ink hover:bg-surface-subtle hover:border-border',
   danger:
-    'bg-danger text-danger-fg border-transparent hover:opacity-90',
+    'bg-danger text-danger-fg border-border-strong mtx-shadow-sm hover:opacity-90 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none',
   demo:
-    'bg-demo-bg text-demo-fg border-2 border-dashed border-demo-border hover:opacity-90',
+    'bg-demo-bg text-demo-fg border-2 border-dashed border-demo-border mtx-shadow-sm hover:opacity-90 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none',
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
@@ -45,16 +45,16 @@ export function Button({
     <button
       type={type}
       disabled={disabled || isLoading}
-      className={`inline-flex items-center justify-center gap-2 rounded-control border font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className}`}
+      className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-control border-2 font-semibold motion-safe:transition-[transform,box-shadow,background-color,border-color,color] duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal disabled:cursor-not-allowed disabled:opacity-50 ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className}`}
       {...rest}
     >
       {isLoading ? (
         <span
           aria-hidden="true"
-          className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+          className="inline-block h-4 w-4 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin"
         />
       ) : null}
-      <span>{children}</span>
+      <span className="inline-flex items-center justify-center gap-1.5">{children}</span>
     </button>
   );
 }

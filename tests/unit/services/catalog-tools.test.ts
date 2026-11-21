@@ -1,13 +1,18 @@
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { DbClient } from '@/server/db/client';
 import { products } from '@/server/db/schema';
 import {
   getFeaturedProducts,
+  getLandingShowcaseProducts,
   getProductDetail,
   listProducts,
   resolveProducts,
 } from '@/server/services/catalog.service';
+import { listLocalMusicTracks, parseMusicTrackFilename } from '@/server/services/music.service';
 import { compareProducts } from '@/server/services/compare.service';
 import { getPerfPerPriceRanking } from '@/server/services/perf-per-price.service';
 import { estimatePsu, getPsuOptions } from '@/server/services/psu.service';
@@ -226,5 +231,43 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     expect(estimate.exactW).toBe(1156.25);
     expect(estimate.recommendedTierW).toBe(1200);
     expect(estimate.exceedsMaxTier).toBe(false);
+  });
+
+  it('returns curated 5 CPU + 5 GPU showcase models for landing page', async () => {
+    const landing = await getLandingShowcaseProducts(db);
+    expect(landing.cpus.map((c) => c.id)).toEqual([
+      'cpu-intel-core-i5-14600k',
+      'cpu-amd-ryzen-7-9800x3d',
+      'cpu-intel-core-ultra-7-270k-plus',
+      'cpu-amd-ryzen-5-7500f',
+      'cpu-intel-core-ultra-9-285k',
+    ]);
+    expect(landing.gpus.map((g) => g.id)).toEqual([
+      'gpu-asus-t1-rtx-5060-ti-8gb-oc',
+      'gpu-asus-rog-astral-rtx-5090-dhahab-oc',
+      'gpu-asus-rog-matrix-30th-rtx-5090-32gb',
+      'gpu-asus-rog-astral-rtx-5080-16gb-hatsune-miku-oc',
+      'gpu-msi-rtx-5090-32gb-lightning-z',
+    ]);
+  });
+
+  it('scans local music folder dynamically and ignores non-audio files', async () => {
+    const parsedWithArtist = parseMusicTrackFilename('HOYO-MiX - Endless_Tower.mp3');
+    expect(parsedWithArtist).toMatchObject({
+      artist: 'HOYO-MiX',
+      title: 'Endless Tower',
+      src: '/music/HOYO-MiX%20-%20Endless_Tower.mp3',
+    });
+
+    const tmpDir = await mkdtemp(path.join(os.tmpdir(), 'cr-music-'));
+    try {
+      await writeFile(path.join(tmpDir, 'README.txt'), 'ignore');
+      await writeFile(path.join(tmpDir, '02 - Track B.mp3'), 'dummy');
+      await writeFile(path.join(tmpDir, '01_Track_A.wav'), 'dummy');
+      const tracks = await listLocalMusicTracks(tmpDir);
+      expect(tracks.map((t) => t.fileName)).toEqual(['01_Track_A.wav', '02 - Track B.mp3']);
+    } finally {
+      await rm(tmpDir, { recursive: true, force: true });
+    }
   });
 });

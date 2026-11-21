@@ -14,7 +14,7 @@ export type PerfPerPriceViewProps = ReturnType<typeof usePerfPerPriceController>
 export function PerfPerPriceView({ state, actions }: PerfPerPriceViewProps) {
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.tools.perfPerPrice.title}</h1>
+      <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.tools.perfPerPrice.title}</h1>
 
       <Card>
         <form
@@ -129,10 +129,10 @@ export function PerfPerPriceView({ state, actions }: PerfPerPriceViewProps) {
                   data-testid={TEST_IDS.ppp.row(item.id)}
                   className="border-b border-border last:border-b-0"
                 >
-                  <td className="px-3 py-2.5 font-semibold text-ink">#{item.rank}</td>
+                  <td className="px-3 py-2.5 font-mono font-bold tabular-nums text-ink">#{item.rank}</td>
                   <td className="px-3 py-2.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Link href={`/products/${item.id}`} className="font-medium text-ink hover:text-accent">
+                      <Link href={`/products/${item.id}`} className="font-medium text-ink hover:text-accent-ink">
                         {item.name}
                       </Link>
                       {item.bestValue ? (
@@ -145,14 +145,16 @@ export function PerfPerPriceView({ state, actions }: PerfPerPriceViewProps) {
                       ) : null}
                     </div>
                   </td>
-                  <td className="px-3 py-2.5 text-ink-muted">{item.vendor.toUpperCase()}</td>
-                  <td className="px-3 py-2.5 font-medium text-ink">{formatVnd(item.priceVnd)}</td>
-                  <td className="px-3 py-2.5 text-ink">
+                  <td className="px-3 py-2.5 font-mono text-ink-muted">{item.vendor.toUpperCase()}</td>
+                  <td className="px-3 py-2.5 font-mono font-medium tabular-nums text-ink">
+                    {formatVnd(item.priceVnd)}
+                  </td>
+                  <td className="px-3 py-2.5 font-mono tabular-nums text-ink">
                     {item.score.normalized !== null
                       ? `${formatNumberVi(item.score.normalized, 1)} (${formatNumberVi(item.score.raw)})`
                       : VI_MESSAGES.common.noData}
                   </td>
-                  <td className="px-3 py-2.5 font-bold text-accent">
+                  <td className="px-3 py-2.5 font-mono font-bold tabular-nums text-accent-ink">
                     {formatNumberVi(item.perfPerPrice, 2)}
                   </td>
                 </tr>

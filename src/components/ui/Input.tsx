@@ -1,6 +1,6 @@
-import { useId, type InputHTMLAttributes } from 'react';
+import { useId, type ComponentProps } from 'react';
 
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends ComponentProps<'input'> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -13,6 +13,7 @@ export function Input({
   id,
   className = '',
   required,
+  ref,
   ...rest
 }: InputProps) {
   const generatedId = useId();
@@ -36,12 +37,13 @@ export function Input({
         </label>
       ) : null}
       <input
+        ref={ref}
         id={inputId}
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
-        className={`min-h-11 w-full rounded-control border bg-surface px-3 py-2 text-base text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${
-          error ? 'border-danger' : 'border-border'
+        className={`min-h-11 w-full rounded-control border-2 bg-surface px-3 py-2 text-base text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-signal disabled:cursor-not-allowed disabled:opacity-50 ${
+          error ? 'border-danger' : 'border-border-strong'
         } ${className}`}
         {...rest}
       />

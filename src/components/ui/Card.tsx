@@ -8,7 +8,7 @@ export function Card({
 }: HTMLAttributes<HTMLDivElement> & { children: ReactNode }) {
   return (
     <div
-      className={`rounded-card border border-border bg-surface p-4 text-ink ${className}`}
+      className={`mtx-shadow rounded-card border-2 border-border-strong bg-surface p-4 text-ink ${className}`}
       {...rest}
     >
       {children}
@@ -31,10 +31,10 @@ export type BadgeVariant =
 const BADGE_CLASSES: Record<BadgeVariant, string> = {
   default: 'bg-surface-elevated text-ink border-border',
   aib: 'bg-surface-elevated text-ink border-border-strong',
-  accent: 'bg-accent text-accent-fg border-transparent',
-  success: 'bg-highlight text-highlight-fg border-success/40',
-  warning: 'bg-warning/20 text-warning border-warning/40',
-  danger: 'bg-danger/20 text-danger border-danger/40',
+  accent: 'bg-accent text-accent-fg border-border-strong font-semibold',
+  success: 'bg-highlight text-highlight-fg border-success/60',
+  warning: 'bg-warning/20 text-warning border-warning/60',
+  danger: 'bg-danger/20 text-danger border-danger/60',
   demo: 'bg-demo-bg text-demo-fg border-dashed border-demo-border',
   nvidia: 'bg-[#76B900] text-[#0A1400] border-[#76B900] font-semibold',
   amd: 'bg-[#ED1C24] text-white border-[#ED1C24] font-semibold',
@@ -59,7 +59,7 @@ export function Badge({
 }: HTMLAttributes<HTMLSpanElement> & { variant?: BadgeVariant; children: ReactNode }) {
   return (
     <span
-      className={`inline-flex items-center rounded-control border px-2 py-0.5 text-xs font-medium ${BADGE_CLASSES[variant]} ${className}`}
+      className={`inline-flex items-center rounded-control border-2 px-2 py-0.5 font-mono text-xs font-medium tracking-wide ${BADGE_CLASSES[variant]} ${className}`}
       {...rest}
     >
       {children}

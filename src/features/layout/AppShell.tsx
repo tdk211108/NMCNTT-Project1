@@ -1,15 +1,24 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { ToastContainer } from '@/components/ui/Toast';
 import { AuthModal } from '@/features/auth/components/AuthModal';
 import { Footer } from './Footer';
 import { Header } from './Header';
+import { InteractiveBackground } from './InteractiveBackground';
+import { getMainContainerClass } from './layout-width';
 import { ZaloButton } from './ZaloButton';
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const mainClass = getMainContainerClass(pathname);
+
   return (
-    <div className="flex min-h-screen flex-col bg-bg text-ink">
+    <div className="relative flex min-h-screen flex-col text-ink">
+      <InteractiveBackground />
       <Header />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">{children}</main>
+      <main className={`${mainClass} relative z-10`}>{children}</main>
       <Footer />
       <ZaloButton />
       <ToastContainer />

@@ -36,14 +36,14 @@ export function ReviewModal({
       <div className="flex flex-col gap-4 text-sm">
         <p
           data-testid={TEST_IDS.checkout.reviewCountdown}
-          className="rounded-control border border-accent/40 bg-surface-subtle px-3 py-2 font-medium text-accent"
+          className="rounded-control border-2 border-signal bg-surface-subtle px-3 py-2 font-mono font-semibold tabular-nums text-accent-ink"
         >
           {VI_MESSAGES.checkout.reviewCountdownText(Math.max(0, countdown))}
         </p>
 
-        <div className="flex flex-col gap-1 rounded-control border border-border bg-surface-subtle p-3">
+        <div className="flex flex-col gap-1 rounded-control border-2 border-border-strong bg-surface-subtle p-3">
           <p className="font-semibold text-ink">{prepared.customer.fullName}</p>
-          <p className="text-ink-muted">{prepared.customer.phoneMasked}</p>
+          <p className="font-mono tabular-nums text-ink-muted">{prepared.customer.phoneMasked}</p>
           <p className="text-ink-muted">{prepared.customer.addressLine}</p>
           {prepared.customer.note ? (
             <p className="text-ink-muted">{prepared.customer.note}</p>
@@ -54,20 +54,22 @@ export function ReviewModal({
           </p>
         </div>
 
-        <div className="flex flex-col gap-1 border-t border-border pt-2">
+        <div className="flex flex-col gap-1 border-t-2 border-border pt-2">
           {prepared.quote.lines.map((line) => (
             <div key={line.productId} className="flex justify-between gap-2">
               <span className="text-ink">
                 {line.name} x {line.quantity}
               </span>
-              <span className="shrink-0 font-medium text-ink">
+              <span className="shrink-0 font-mono font-medium tabular-nums text-ink">
                 {formatVnd(line.lineTotalVnd)}
               </span>
             </div>
           ))}
-          <div className="mt-2 flex justify-between border-t border-border pt-2 font-bold text-ink">
+          <div className="mt-2 flex justify-between border-t-2 border-border pt-2 font-bold text-ink">
             <span>{VI_MESSAGES.cart.total}</span>
-            <span className="text-primary">{formatVnd(prepared.quote.totalVnd)}</span>
+            <span className="font-mono tabular-nums text-accent-ink">
+              {formatVnd(prepared.quote.totalVnd)}
+            </span>
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { X } from 'lucide-react';
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 
@@ -73,10 +74,10 @@ export function Modal({
           onClose?.();
         }
       }}
-      className="m-auto w-[calc(100%-2rem)] max-w-lg rounded-modal border border-border-strong bg-surface p-5 text-ink shadow-xl"
+      className="mtx-shadow-accent m-auto w-[calc(100%-2rem)] max-w-lg rounded-modal border-2 border-border-strong bg-surface p-5 text-ink"
     >
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <h2 id={titleId} className="text-lg font-semibold text-ink">
+      <div className="mb-4 flex items-start justify-between gap-3 border-b-2 border-border pb-3">
+        <h2 id={titleId} className="font-display text-lg font-bold tracking-wide text-ink">
           {title}
         </h2>
         {dismissible && onClose ? (
@@ -84,9 +85,10 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label={VI_MESSAGES.common.close}
-            className="min-h-9 min-w-9 rounded-control border border-border px-2 text-sm text-ink-muted hover:text-ink"
+            className="inline-flex min-h-9 min-w-9 cursor-pointer items-center justify-center rounded-control border-2 border-border-strong bg-surface-subtle px-2 text-sm text-ink-muted hover:border-signal hover:text-ink focus-visible:outline-2 focus-visible:outline-signal"
           >
-            {VI_MESSAGES.common.close}
+            <X className="h-4 w-4" aria-hidden="true" />
+            <span className="sr-only">{VI_MESSAGES.common.close}</span>
           </button>
         ) : null}
       </div>

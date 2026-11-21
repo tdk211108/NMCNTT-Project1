@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AnimatedCopyButton } from '@/components/ui/AnimatedCopyButton';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
@@ -51,9 +52,9 @@ export function PaymentView({ state, actions }: PaymentViewProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
-      <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.checkout.paymentTitle}</h1>
+      <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.checkout.paymentTitle}</h1>
 
-      <Card className="border-warning/60 bg-surface-subtle text-sm text-warning">
+      <Card className="border-warning bg-surface-subtle text-sm text-warning">
         {VI_MESSAGES.checkout.demoPaymentBanner}
       </Card>
 
@@ -63,16 +64,23 @@ export function PaymentView({ state, actions }: PaymentViewProps) {
             src={prepared.bankInstructions.qrImageDataUrl}
             alt="QR chuyển khoản mô phỏng"
             data-testid={TEST_IDS.checkout.paymentQrImage}
-            className="h-56 w-56 rounded-control bg-white p-2"
+            className="h-56 w-56 rounded-control border-2 border-border-strong bg-white p-2"
           />
-          <dl className="grid w-full grid-cols-1 gap-2 border-t border-border pt-3 text-sm sm:grid-cols-2">
+          <dl className="grid w-full grid-cols-1 gap-2 border-t-2 border-border pt-3 text-sm sm:grid-cols-2">
             <div>
               <dt className="text-ink-muted">{VI_MESSAGES.checkout.bankNameLabel}</dt>
               <dd className="font-semibold text-ink">{prepared.bankInstructions.bankName}</dd>
             </div>
             <div>
               <dt className="text-ink-muted">{VI_MESSAGES.checkout.bankAccountLabel}</dt>
-              <dd className="font-semibold text-ink">{prepared.bankInstructions.accountNumber}</dd>
+              <dd className="mt-0.5 flex items-center gap-2 font-mono font-semibold tabular-nums text-ink">
+                <span>{prepared.bankInstructions.accountNumber}</span>
+                <AnimatedCopyButton
+                  textToCopy={prepared.bankInstructions.accountNumber}
+                  ariaLabel={`${VI_MESSAGES.common.copyAction} ${VI_MESSAGES.checkout.bankAccountLabel}`}
+                  testId={TEST_IDS.checkout.paymentCopyAccount}
+                />
+              </dd>
             </div>
             <div>
               <dt className="text-ink-muted">{VI_MESSAGES.checkout.bankHolderLabel}</dt>
@@ -80,21 +88,31 @@ export function PaymentView({ state, actions }: PaymentViewProps) {
             </div>
             <div>
               <dt className="text-ink-muted">{VI_MESSAGES.checkout.bankAmountLabel}</dt>
-              <dd className="font-bold text-primary">
-                {formatVnd(prepared.bankInstructions.amountVnd)}
+              <dd className="mt-0.5 flex items-center gap-2 font-mono font-bold tabular-nums text-accent-ink">
+                <span>{formatVnd(prepared.bankInstructions.amountVnd)}</span>
+                <AnimatedCopyButton
+                  textToCopy={String(prepared.bankInstructions.amountVnd)}
+                  ariaLabel={`${VI_MESSAGES.common.copyAction} ${VI_MESSAGES.checkout.bankAmountLabel}`}
+                  testId={TEST_IDS.checkout.paymentCopyAmount}
+                />
               </dd>
             </div>
             <div className="sm:col-span-2">
               <dt className="text-ink-muted">{VI_MESSAGES.checkout.bankMemoLabel}</dt>
-              <dd className="font-mono font-semibold text-accent">
-                {prepared.bankInstructions.transferMemo}
+              <dd className="mt-0.5 flex items-center justify-between gap-2 font-mono font-semibold text-accent-ink">
+                <span className="break-all">{prepared.bankInstructions.transferMemo}</span>
+                <AnimatedCopyButton
+                  textToCopy={prepared.bankInstructions.transferMemo}
+                  ariaLabel={`${VI_MESSAGES.common.copyAction} ${VI_MESSAGES.checkout.bankMemoLabel}`}
+                  testId={TEST_IDS.checkout.paymentCopyMemo}
+                />
               </dd>
             </div>
           </dl>
         </Card>
       ) : (
         <Card className="flex flex-col gap-4">
-          <p className="text-base font-bold text-primary">
+          <p className="font-mono text-base font-bold tabular-nums text-accent-ink">
             {VI_MESSAGES.checkout.bankAmountLabel}: {formatVnd(prepared.quote.totalVnd)}
           </p>
           <Input

@@ -1,3 +1,7 @@
+'use client';
+
+import { useState } from 'react';
+import { AlertDialog } from '@/components/ui/AlertDialog';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
@@ -12,6 +16,8 @@ import type { useAdminLegacyCpusController } from '../useAdminLegacyCpusControll
 export type AdminLegacyCpusViewProps = ReturnType<typeof useAdminLegacyCpusController>;
 
 export function AdminLegacyCpusView({ state, actions }: AdminLegacyCpusViewProps) {
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -137,7 +143,7 @@ export function AdminLegacyCpusView({ state, actions }: AdminLegacyCpusViewProps
                         variant="danger"
                         disabled={state.isDeleting}
                         data-testid={TEST_IDS.admin.legacyCpuDelete(item.id)}
-                        onClick={() => actions.onDelete(item.id)}
+                        onClick={() => setPendingDeleteId(item.id)}
                       >
                         {VI_MESSAGES.common.delete}
                       </Button>
@@ -149,6 +155,24 @@ export function AdminLegacyCpusView({ state, actions }: AdminLegacyCpusViewProps
           </table>
         </ResponsiveTableWrapper>
       )}
+
+      <AlertDialog
+        open={pendingDeleteId !== null}
+        title={VI_MESSAGES.admin.deleteConfirmTitle}
+        description={VI_MESSAGES.admin.deleteConfirmBody}
+        confirmLabel={VI_MESSAGES.common.delete}
+        cancelLabel={VI_MESSAGES.common.cancel}
+        isConfirming={state.isDeleting}
+        confirmTestId={TEST_IDS.admin.deleteConfirm}
+        cancelTestId={TEST_IDS.admin.deleteCancel}
+        onConfirm={() => {
+          if (pendingDeleteId) {
+            actions.onDelete(pendingDeleteId);
+            setPendingDeleteId(null);
+          }
+        }}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </div>
   );
 }

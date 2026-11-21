@@ -20,6 +20,7 @@
     "address:vendor": "tsx scripts/vendor-address-data.ts"
   },
   "dependencies": {
+    "@base-ui/react": "^1.9.0",
     "@hookform/resolvers": "7.0.6",
     "@supabase/supabase-js": "2.119.0",
     "@tanstack/react-query": "5.107.1",
@@ -27,6 +28,7 @@
     "drizzle-orm": "0.45.4",
     "jose": "6.2.17",
     "lucide-react": "^1.77.0",
+    "motion": "^14.14.0",
     "next": "16.4.6",
     "postgres": "4.1.1",
     "qrcode": "1.5.4",
@@ -34,6 +36,7 @@
     "react-dom": "19.3.1",
     "react-hook-form": "7.92.0",
     "server-only": "0.0.1",
+    "swiper": "^14.4.0",
     "zod": "4.6.7",
     "zustand": "5.1.0"
   },

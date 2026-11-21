@@ -4,6 +4,8 @@ import { and, asc, desc, eq, gte, inArray, isNull, lte, sql, type SQL } from 'dr
 import {
   CATALOG_MAX_RESULTS,
   FEATURED_PER_CATEGORY,
+  LANDING_FEATURED_CPU_IDS,
+  LANDING_FEATURED_GPU_IDS,
   PACKAGING_DEFAULT,
   WARRANTY_MONTHS,
 } from '@/shared/constants';
@@ -348,6 +350,42 @@ export async function getFeaturedProducts(
   return {
     cpus: pickFeaturedCandidates(cpuRows.map(toCandidate), limit).map((item) => item.card),
     gpus: pickFeaturedCandidates(gpuRows.map(toCandidate), limit).map((item) => item.card),
+  };
+}
+
+function orderCardsByIds(rows: Array<{ card: ProductCard }>, orderedIds: readonly string[]): ProductCard[] {
+  const byId = new Map(rows.map((row) => [row.card.id, row.card]));
+  return orderedIds.map((id) => byId.get(id)).filter((card): card is ProductCard => Boolean(card));
+}
+
+export async function getLandingShowcaseProducts(
+  db: DbClient = getDb(),
+): Promise<FeaturedProductsResponse> {
+  const orderBy = buildSortOrder('default');
+  const [cpuRows, gpuRows] = await Promise.all([
+    queryCpuCardRows(
+      and(
+        eq(storefrontProductsV.category, 'cpu'),
+        inArray(storefrontProductsV.id, [...LANDING_FEATURED_CPU_IDS]),
+      ),
+      orderBy,
+      LANDING_FEATURED_CPU_IDS.length,
+      db,
+    ),
+    queryGpuCardRows(
+      and(
+        eq(storefrontProductsV.category, 'gpu'),
+        inArray(storefrontProductsV.id, [...LANDING_FEATURED_GPU_IDS]),
+      ),
+      orderBy,
+      LANDING_FEATURED_GPU_IDS.length,
+      db,
+    ),
+  ]);
+
+  return {
+    cpus: orderCardsByIds(cpuRows, LANDING_FEATURED_CPU_IDS),
+    gpus: orderCardsByIds(gpuRows, LANDING_FEATURED_GPU_IDS),
   };
 }
 

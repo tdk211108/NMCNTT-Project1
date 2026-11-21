@@ -8,6 +8,13 @@ import {
   safeLocalStorage,
   safeSessionStorage,
 } from '@/lib/safe-storage';
+import {
+  DEFAULT_THEME_MODE,
+  THEME_STORAGE_KEY,
+  applyTheme,
+  getThemeInitScript,
+  parseStoredTheme,
+} from '@/lib/theme';
 import { useCartStore } from '@/features/cart/store';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { cartStoredStateSchema, compareStoredStateSchema } from '@/shared/schemas';
@@ -152,5 +159,36 @@ describe('client cart store', () => {
     });
     expect(privateMeta.description).toBe(VI_MESSAGES.brand.tagline);
     expect(privateMeta.robots).toEqual({ index: false, follow: false });
+  });
+
+  it('parses, persists, and initializes dual-theme preferences cleanly with dark default', () => {
+    expect(DEFAULT_THEME_MODE).toBe('dark');
+    expect(parseStoredTheme('light')).toBe('light');
+    expect(parseStoredTheme('dark')).toBe('dark');
+    expect(parseStoredTheme('invalid')).toBe('dark');
+    expect(parseStoredTheme(null)).toBe('dark');
+
+    const metaAttrs = new Map<string, string>();
+    const fakeMeta = {
+      setAttribute: (k: string, v: string) => metaAttrs.set(k, v),
+      getAttribute: (k: string) => metaAttrs.get(k) ?? null,
+    };
+    const fakeDoc = {
+      documentElement: { dataset: {} as DOMStringMap },
+      querySelector: (selector: string) =>
+        selector === 'meta[name="color-scheme"]' ? fakeMeta : null,
+    } as unknown as Document;
+    const stored = new Map<string, string>();
+    const fakeStorage = {
+      setItem: (k: string, v: string) => stored.set(k, v),
+    };
+
+    applyTheme('light', { doc: fakeDoc, storage: fakeStorage });
+    expect(metaAttrs.get('content')).toBe('light');
+    expect(fakeDoc.documentElement.dataset.theme).toBe('light');
+    expect(stored.get(THEME_STORAGE_KEY)).toBe('light');
+
+    expect(getThemeInitScript()).toContain(THEME_STORAGE_KEY);
+    expect(getThemeInitScript()).toContain('meta[name="color-scheme"]');
   });
 });

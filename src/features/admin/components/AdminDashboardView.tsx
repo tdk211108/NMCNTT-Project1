@@ -1,7 +1,7 @@
 import Link from 'next/link';
+import { AlertDialog } from '@/components/ui/AlertDialog';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
 import type { useAdminDashboardController } from '../useAdminDashboardController';
@@ -60,28 +60,17 @@ export function AdminDashboardView({ state, actions }: AdminDashboardViewProps) 
         ) : null}
       </Card>
 
-      <Modal
+      <AlertDialog
         open={state.confirmOpen}
         title={VI_MESSAGES.admin.resetConfirmTitle}
-        onClose={actions.onCloseConfirm}
-      >
-        <div className="flex flex-col gap-4">
-          <p className="text-sm text-ink-muted">{VI_MESSAGES.admin.resetConfirmBody}</p>
-          <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={actions.onCloseConfirm}>
-              {VI_MESSAGES.common.cancel}
-            </Button>
-            <Button
-              variant="danger"
-              isLoading={state.isResetting}
-              data-testid={TEST_IDS.admin.resetConfirm}
-              onClick={actions.onConfirmReset}
-            >
-              {VI_MESSAGES.common.confirm}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        description={VI_MESSAGES.admin.resetConfirmBody}
+        confirmLabel={VI_MESSAGES.common.confirm}
+        cancelLabel={VI_MESSAGES.common.cancel}
+        isConfirming={state.isResetting}
+        confirmTestId={TEST_IDS.admin.resetConfirm}
+        onConfirm={actions.onConfirmReset}
+        onCancel={actions.onCloseConfirm}
+      />
     </div>
   );
 }

@@ -2,15 +2,12 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
-import { useProductCardActions } from '@/features/catalog/useProductCardActions';
 import type { FeaturedProductsResponse } from '@/shared/types';
 
 export function useHomeController() {
-  const cardActions = useProductCardActions();
-
   const featuredQuery = useQuery({
-    queryKey: ['products', 'featured'],
-    queryFn: () => apiFetch<FeaturedProductsResponse>('/api/products/featured'),
+    queryKey: ['products', 'featured', 'landing'],
+    queryFn: () => apiFetch<FeaturedProductsResponse>('/api/products/featured?preset=landing'),
   });
 
   return {
@@ -24,7 +21,6 @@ export function useHomeController() {
       onRetry: () => {
         void featuredQuery.refetch();
       },
-      ...cardActions,
     },
   };
 }

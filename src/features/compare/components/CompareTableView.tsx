@@ -1,3 +1,4 @@
+import { Plus, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { Badge, Card, vendorBadgeVariant } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -20,7 +21,7 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.tools.compare.title}</h1>
+          <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.tools.compare.title}</h1>
           {state.lockedCategory ? (
             <Badge variant="accent">{state.lockedCategory.toUpperCase()}</Badge>
           ) : null}
@@ -34,7 +35,8 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
               data-testid={TEST_IDS.compare.addColumn}
               onClick={actions.onAddColumn}
             >
-              {VI_MESSAGES.tools.compare.addThirdColumn}
+              <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>{VI_MESSAGES.tools.compare.addThirdColumn}</span>
             </Button>
           ) : null}
           {anySelected || state.showThirdColumn ? (
@@ -44,7 +46,8 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
               data-testid={TEST_IDS.compare.clearAll}
               onClick={actions.onClearAll}
             >
-              {VI_MESSAGES.tools.compare.clearAll}
+              <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>{VI_MESSAGES.tools.compare.clearAll}</span>
             </Button>
           ) : null}
         </div>
@@ -108,7 +111,7 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                         options: filteredGpus.map((gpu) => ({
                           value: gpu.id,
                           label: gpu.name,
-                          meta: `${gpu.vendor.toUpperCase()}${gpu.aibBrand ? ` - ${gpu.aibBrand}` : ''} | ${formatVnd(gpu.priceVnd)}`,
+                          meta: `${gpu.vendor.toUpperCase()}${gpu.aibBrand ? ` / ${gpu.aibBrand}` : ''} | ${formatVnd(gpu.priceVnd)}`,
                           keywords: `${gpu.vendor} ${gpu.aibBrand ?? ''}`,
                         })),
                       },
@@ -133,7 +136,7 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                   {selectedProduct ? (
                     <div
                       data-testid={TEST_IDS.compare.slotPreview(slotIndex)}
-                      className="flex items-center gap-3 rounded-control border border-border bg-surface-subtle p-2.5"
+                      className="flex items-center gap-3 rounded-control border-2 border-border-strong bg-surface-subtle p-2.5"
                     >
                       <Link href={`/products/${selectedProduct.id}`} className="shrink-0">
                         <ProductImage
@@ -156,11 +159,11 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                         </div>
                         <Link
                           href={`/products/${selectedProduct.id}`}
-                          className="line-clamp-2 text-sm font-semibold text-ink hover:text-accent"
+                          className="line-clamp-2 text-sm font-semibold text-ink hover:text-accent-ink"
                         >
                           {selectedProduct.name}
                         </Link>
-                        <p className="text-sm font-bold text-primary">
+                        <p className="font-mono text-sm font-bold tabular-nums text-ink">
                           {formatVnd(selectedProduct.priceVnd)}
                         </p>
                       </div>
@@ -175,9 +178,12 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                         data-testid={TEST_IDS.compare.slotClear(slotIndex)}
                         onClick={() => actions.onClearSlot(slotIndex)}
                       >
-                        {slotIndex === 2 && !currentId
-                          ? VI_MESSAGES.tools.compare.removeColumn
-                          : VI_MESSAGES.common.reset}
+                        <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                        <span>
+                          {slotIndex === 2 && !currentId
+                            ? VI_MESSAGES.tools.compare.removeColumn
+                            : VI_MESSAGES.common.reset}
+                        </span>
                       </Button>
                     </div>
                   ) : null}
@@ -208,7 +214,7 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
               className="w-full min-w-[540px] border-collapse text-left text-sm"
             >
               <thead>
-                <tr className="border-b border-border bg-surface-subtle">
+                <tr className="border-b-2 border-border-strong bg-surface-subtle">
                   <th className="w-48 px-3 py-3 font-semibold text-ink-muted">
                     {VI_MESSAGES.tools.compare.criterionColumn}
                   </th>
@@ -221,7 +227,7 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                         <Link href={`/products/${product.id}`} className="block w-full max-w-60">
                           <ZoomableImageFrame
                             zoomScale={1.75}
-                            className="flex aspect-square w-full items-center justify-center rounded-card bg-white"
+                            className="flex aspect-square w-full items-center justify-center rounded-card border-2 border-border-strong bg-white"
                           >
                             <ProductImage
                               src={product.imageUrl}
@@ -231,7 +237,7 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                             />
                           </ZoomableImageFrame>
                         </Link>
-                        <Link href={`/products/${product.id}`} className="hover:text-accent">
+                        <Link href={`/products/${product.id}`} className="hover:text-accent-ink">
                           {product.name}
                         </Link>
                       </div>
@@ -251,7 +257,7 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                         <td
                           key={`${row.key}-${product.id}`}
                           data-testid={TEST_IDS.compare.cell(row.key, product.id)}
-                          className={`px-3 py-2.5 ${
+                          className={`px-3 py-2.5 font-mono tabular-nums ${
                             cell.highlighted
                               ? 'bg-highlight font-semibold text-highlight-fg'
                               : 'text-ink'

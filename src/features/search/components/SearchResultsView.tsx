@@ -11,7 +11,7 @@ export function SearchResultsView({ state, actions }: SearchResultsViewProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.catalog.searchResultsTitle}</h1>
+        <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.catalog.searchResultsTitle}</h1>
         {state.query ? (
           <p className="mt-1 text-sm text-ink-muted">
             {VI_MESSAGES.catalog.searchQueryLabel}: {state.query} ({state.total})

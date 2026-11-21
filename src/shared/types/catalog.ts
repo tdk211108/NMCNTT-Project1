@@ -74,3 +74,15 @@ export interface ResolveResponse {
   active: Pick<ProductCard, 'id' | 'name' | 'category' | 'priceVnd' | 'imageUrl'>[];
   removed: RemovedItem[];
 }
+
+export interface MusicTrack {
+  id: string;
+  title: string;
+  artist: string;
+  fileName: string;
+  src: string;
+}
+
+export interface MusicPlaylistResponse {
+  tracks: MusicTrack[];
+}

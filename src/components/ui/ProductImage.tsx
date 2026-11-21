@@ -13,6 +13,7 @@ export interface ProductImageProps {
   src: string | null | undefined;
   alt: string;
   className?: string;
+  loading?: 'lazy' | 'eager';
   testId?: string;
 }
 
@@ -20,6 +21,7 @@ export function ProductImage({
   src,
   alt,
   className = 'h-40 w-full object-contain',
+  loading = 'lazy',
   testId,
 }: ProductImageProps) {
   const normalizedSrc = src && src.trim().length > 0 ? src : PLACEHOLDER_IMAGE_PATH;
@@ -30,7 +32,7 @@ export function ProductImage({
     <img
       src={displaySrc}
       alt={alt}
-      loading="lazy"
+      loading={loading}
       data-testid={testId}
       onError={() => {
         if (displaySrc !== PLACEHOLDER_IMAGE_PATH) {
@@ -46,6 +48,7 @@ export interface ZoomableImageFrameProps {
   children: ReactNode;
   className?: string;
   zoomScale?: number;
+  lensSize?: number;
 }
 
 function canUseInteractiveZoom(event: ReactPointerEvent<HTMLDivElement>): boolean {
@@ -59,19 +62,19 @@ function canUseInteractiveZoom(event: ReactPointerEvent<HTMLDivElement>): boolea
 }
 
 /**
- * Interactive cursor-tracking zoom frame for large product images.
- * Updates DOM transform directly via ref to stay off React's render loop.
+ * Lightswind Lens magnifying zoom overlay for large non-thumbnail hardware images.
+ * Tracks mouse pointer coordinates over the container without zooming thumbnails.
  */
 export function ZoomableImageFrame({
   children,
   className = '',
-  zoomScale = 1.75,
+  zoomScale = 1.85,
+  lensSize = 156,
 }: ZoomableImageFrameProps) {
   const frameRef = useRef<HTMLDivElement>(null);
-  const targetRef = useRef<HTMLDivElement>(null);
+  const [isHovering, setIsHovering] = useState(false);
+  const [pointer, setPointer] = useState({ x: 0, y: 0 });
   const rafRef = useRef<number | null>(null);
-  const activeRef = useRef(false);
-  const enteredAtRef = useRef(0);
 
   useEffect(() => {
     return () => {
@@ -81,73 +84,87 @@ export function ZoomableImageFrame({
     };
   }, []);
 
-  function applyZoomAtPointer(clientX: number, clientY: number, transitionValue: string) {
+  function updateCoords(clientX: number, clientY: number) {
     const frame = frameRef.current;
-    const target = targetRef.current;
-    if (!frame || !target) return;
-
+    if (!frame) return;
     const rect = frame.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) return;
-
-    const clamp = (val: number) => Math.max(-0.5, Math.min(0.5, val));
-    const u = clamp((clientX - rect.left) / rect.width - 0.5);
-    const v = clamp((clientY - rect.top) / rect.height - 0.5);
-    const tx = -u * (zoomScale - 1) * 100;
-    const ty = -v * (zoomScale - 1) * 100;
-
-    target.style.transition = transitionValue;
-    target.style.transform = `translate3d(${tx.toFixed(2)}%, ${ty.toFixed(2)}%, 0) scale(${zoomScale})`;
+    const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+    const y = Math.max(0, Math.min(rect.height, clientY - rect.top));
+    setPointer({ x, y });
   }
 
   function handlePointerEnter(event: ReactPointerEvent<HTMLDivElement>) {
     if (!canUseInteractiveZoom(event)) return;
-    activeRef.current = true;
-    enteredAtRef.current = performance.now();
-    applyZoomAtPointer(event.clientX, event.clientY, 'transform 180ms cubic-bezier(0.23, 1, 0.32, 1)');
+    setIsHovering(true);
+    updateCoords(event.clientX, event.clientY);
   }
 
   function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
-    if (!activeRef.current) return;
+    if (!isHovering) return;
     const { clientX, clientY } = event;
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
     }
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = null;
-      if (!activeRef.current) return;
-      const settled = performance.now() - enteredAtRef.current > 180;
-      applyZoomAtPointer(
-        clientX,
-        clientY,
-        settled ? 'transform 45ms linear' : 'transform 180ms cubic-bezier(0.23, 1, 0.32, 1)',
-      );
+      updateCoords(clientX, clientY);
     });
   }
 
-  function resetZoom() {
-    activeRef.current = false;
+  function handlePointerLeave() {
+    setIsHovering(false);
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-    const target = targetRef.current;
-    if (!target) return;
-    target.style.transition = 'transform 200ms cubic-bezier(0.23, 1, 0.32, 1)';
-    target.style.transform = 'translate3d(0, 0, 0) scale(1)';
   }
+
+  const radius = lensSize / 2;
 
   return (
     <div
       ref={frameRef}
       onPointerEnter={handlePointerEnter}
       onPointerMove={handlePointerMove}
-      onPointerLeave={resetZoom}
-      onPointerCancel={resetZoom}
+      onPointerLeave={handlePointerLeave}
+      onPointerCancel={handlePointerLeave}
       className={`zoom-frame-cursor relative overflow-hidden ${className}`}
     >
-      <div ref={targetRef} className="flex h-full w-full items-center justify-center">
-        {children}
-      </div>
+      <div className="flex h-full w-full items-center justify-center">{children}</div>
+
+      {isHovering ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-20"
+          style={{
+            maskImage: `radial-gradient(circle ${radius}px at ${pointer.x}px ${pointer.y}px, black 98%, transparent 100%)`,
+            WebkitMaskImage: `radial-gradient(circle ${radius}px at ${pointer.x}px ${pointer.y}px, black 98%, transparent 100%)`,
+          }}
+        >
+          <div
+            className="flex h-full w-full items-center justify-center bg-white"
+            style={{
+              transform: `scale(${zoomScale})`,
+              transformOrigin: `${pointer.x}px ${pointer.y}px`,
+            }}
+          >
+            {children}
+          </div>
+        </div>
+      ) : null}
+
+      {isHovering ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute z-30 rounded-full border-2 border-signal shadow-[0_0_0_2px_rgba(11,13,18,0.28),0_10px_24px_rgba(0,0,0,0.28)]"
+          style={{
+            width: lensSize,
+            height: lensSize,
+            left: pointer.x - radius,
+            top: pointer.y - radius,
+          }}
+        />
+      ) : null}
     </div>
   );
 }

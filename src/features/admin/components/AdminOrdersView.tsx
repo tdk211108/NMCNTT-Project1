@@ -17,7 +17,7 @@ export function AdminOrdersView({ state }: AdminOrdersViewProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.admin.navOrders}</h1>
+      <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.admin.navOrders}</h1>
 
       {state.errorMessage ? (
         <EmptyState title={state.errorMessage} />
@@ -44,10 +44,12 @@ export function AdminOrdersView({ state }: AdminOrdersViewProps) {
                   data-testid={TEST_IDS.admin.orderRow(order.orderId)}
                   className="border-b border-border last:border-b-0"
                 >
-                  <td className="px-3 py-2.5 font-mono font-semibold text-ink">{order.orderId}</td>
+                  <td className="px-3 py-2.5 font-mono font-semibold tabular-nums text-ink">
+                    {order.orderId}
+                  </td>
                   <td className="px-3 py-2.5 text-ink">{order.customerName}</td>
-                  <td className="px-3 py-2.5 text-ink">{order.phone}</td>
-                  <td className="px-3 py-2.5 font-medium text-primary">
+                  <td className="px-3 py-2.5 font-mono tabular-nums text-ink">{order.phone}</td>
+                  <td className="px-3 py-2.5 font-mono font-semibold tabular-nums text-accent-ink">
                     {formatVnd(order.totalVnd)}
                   </td>
                   <td className="px-3 py-2.5">
@@ -55,7 +57,7 @@ export function AdminOrdersView({ state }: AdminOrdersViewProps) {
                       {order.stageLabel}
                     </Badge>
                   </td>
-                  <td className="px-3 py-2.5 text-xs text-ink-muted">
+                  <td className="px-3 py-2.5 font-mono text-xs tabular-nums text-ink-muted">
                     {formatDateTimeVi(order.createdAt)}
                   </td>
                   <td className="px-3 py-2.5">

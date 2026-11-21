@@ -36,8 +36,8 @@ export function Select({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        className={`min-h-11 w-full rounded-control border bg-surface px-3 py-2 text-base text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 ${
-          error ? 'border-danger' : 'border-border'
+        className={`min-h-11 w-full rounded-control border-2 bg-surface px-3 py-2 text-base text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-signal disabled:cursor-not-allowed disabled:opacity-50 ${
+          error ? 'border-danger' : 'border-border-strong'
         } ${className}`}
         {...rest}
       >

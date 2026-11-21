@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
@@ -17,6 +17,11 @@ export function AuthModal() {
   const [regDisplayName, setRegDisplayName] = useState('');
   const [regPassword, setRegPassword] = useState('');
 
+  const loginFormRef = useRef<HTMLFormElement>(null);
+  const registerFormRef = useRef<HTMLFormElement>(null);
+  const loginUsernameRef = useRef<HTMLInputElement>(null);
+  const registerUsernameRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const url = new URL(window.location.href);
@@ -31,6 +36,18 @@ export function AuthModal() {
     window.history.replaceState({}, '', url.pathname + url.search + url.hash);
   }, []);
 
+  useEffect(() => {
+    if (!state.modalOpen || typeof window === 'undefined') return;
+    const frame = window.requestAnimationFrame(() => {
+      if (state.activeTab === 'login') {
+        loginUsernameRef.current?.focus();
+      } else {
+        registerUsernameRef.current?.focus();
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [state.modalOpen, state.activeTab]);
+
   function resetFormsAndClose() {
     setLoginUsername('');
     setLoginPassword('');
@@ -40,20 +57,32 @@ export function AuthModal() {
     actions.closeAuthModal();
   }
 
+  function handleFormEnterSubmit(
+    event: ReactKeyboardEvent<HTMLFormElement>,
+    form: HTMLFormElement | null,
+    isBusy: boolean,
+  ) {
+    if (event.key !== 'Enter' || event.nativeEvent.isComposing || isBusy) {
+      return;
+    }
+    const target = event.target as HTMLElement | null;
+    if (target instanceof HTMLButtonElement && target.type === 'button') {
+      return;
+    }
+    event.preventDefault();
+    form?.requestSubmit();
+  }
+
   const title =
     state.activeTab === 'login'
       ? VI_MESSAGES.auth.modalTitleLogin
       : VI_MESSAGES.auth.modalTitleRegister;
 
   return (
-    <Modal
-      open={state.modalOpen}
-      title={title}
-      onClose={resetFormsAndClose}
-    >
+    <Modal open={state.modalOpen} title={title} onClose={resetFormsAndClose}>
       <div data-testid={TEST_IDS.auth.modal} className="flex flex-col gap-4">
         {state.authNotice ? (
-          <p className="rounded-control border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-ink">
+          <p className="rounded-control border-2 border-signal bg-surface-subtle px-3 py-2 text-sm text-ink">
             {state.authNotice}
           </p>
         ) : null}
@@ -62,7 +91,7 @@ export function AuthModal() {
           <a
             href={buildOAuthStartUrl('google', state.oauthNextPath)}
             data-testid={TEST_IDS.auth.googleButton}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-strong bg-surface-subtle px-3 py-2 text-sm font-medium text-ink hover:bg-surface-elevated"
+            className="mtx-shadow-sm inline-flex min-h-11 items-center justify-center gap-2 rounded-control border-2 border-border-strong bg-surface-subtle px-3 py-2 text-sm font-semibold text-ink hover:border-signal hover:bg-surface-elevated"
           >
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -76,7 +105,7 @@ export function AuthModal() {
           <a
             href={buildOAuthStartUrl('facebook', state.oauthNextPath)}
             data-testid={TEST_IDS.auth.facebookButton}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-control border border-border-strong bg-surface-subtle px-3 py-2 text-sm font-medium text-ink hover:bg-surface-elevated"
+            className="mtx-shadow-sm inline-flex min-h-11 items-center justify-center gap-2 rounded-control border-2 border-border-strong bg-surface-subtle px-3 py-2 text-sm font-semibold text-ink hover:border-signal hover:bg-surface-elevated"
           >
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -94,12 +123,12 @@ export function AuthModal() {
           <div className="h-px flex-1 bg-border" />
         </div>
 
-        <div className="grid grid-cols-2 gap-2 rounded-control bg-surface-subtle p-1">
+        <div className="grid grid-cols-2 gap-2 rounded-control border-2 border-border-strong bg-surface-subtle p-1">
           <button
             type="button"
             data-testid={TEST_IDS.auth.tabLogin}
             onClick={() => actions.setActiveTab('login')}
-            className={`min-h-9 rounded-control px-3 text-sm font-medium transition ${
+            className={`min-h-9 cursor-pointer rounded-control px-3 text-sm font-semibold transition ${
               state.activeTab === 'login'
                 ? 'bg-primary text-primary-fg'
                 : 'text-ink-muted hover:text-ink'
@@ -111,7 +140,7 @@ export function AuthModal() {
             type="button"
             data-testid={TEST_IDS.auth.tabRegister}
             onClick={() => actions.setActiveTab('register')}
-            className={`min-h-9 rounded-control px-3 text-sm font-medium transition ${
+            className={`min-h-9 cursor-pointer rounded-control px-3 text-sm font-semibold transition ${
               state.activeTab === 'register'
                 ? 'bg-primary text-primary-fg'
                 : 'text-ink-muted hover:text-ink'
@@ -125,7 +154,7 @@ export function AuthModal() {
           <p
             role="alert"
             data-testid={TEST_IDS.auth.errorAlert}
-            className="rounded-control border border-danger/50 bg-danger/10 px-3 py-2 text-sm text-danger"
+            className="rounded-control border-2 border-danger bg-danger/10 px-3 py-2 text-sm text-danger"
           >
             {state.errorMessage}
           </p>
@@ -133,6 +162,8 @@ export function AuthModal() {
 
         {state.activeTab === 'login' ? (
           <form
+            ref={loginFormRef}
+            onKeyDown={(e) => handleFormEnterSubmit(e, loginFormRef.current, state.isLoggingIn)}
             onSubmit={async (e) => {
               e.preventDefault();
               try {
@@ -148,6 +179,7 @@ export function AuthModal() {
             className="flex flex-col gap-3"
           >
             <Input
+              ref={loginUsernameRef}
               label={VI_MESSAGES.auth.usernameLabel}
               autoComplete="username"
               required
@@ -188,6 +220,10 @@ export function AuthModal() {
           </form>
         ) : (
           <form
+            ref={registerFormRef}
+            onKeyDown={(e) =>
+              handleFormEnterSubmit(e, registerFormRef.current, state.isRegistering)
+            }
             onSubmit={async (e) => {
               e.preventDefault();
               try {
@@ -204,6 +240,7 @@ export function AuthModal() {
             className="flex flex-col gap-3"
           >
             <Input
+              ref={registerUsernameRef}
               label={VI_MESSAGES.auth.usernameLabel}
               autoComplete="username"
               required

@@ -1,6 +1,9 @@
 'use client';
 
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Combobox } from '@base-ui/react/combobox';
+import { Check, ChevronDown, Search } from 'lucide-react';
+import { motion } from 'motion/react';
+import { useId, useMemo, useState } from 'react';
 import { matchesSearchTokens } from '@/lib/search-filter';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 
@@ -32,6 +35,13 @@ export interface SearchableSelectProps {
   onChange: (value: string) => void;
 }
 
+interface InternalOption extends SearchableSelectOption {
+  groupLabel: string;
+}
+
+/**
+ * Animate UI / Base UI Combobox powering grouped searchable selectors across Compare & PSU.
+ */
 export function SearchableSelect({
   label,
   value,
@@ -47,22 +57,22 @@ export function SearchableSelect({
   onChange,
 }: SearchableSelectProps) {
   const triggerId = useId();
-  const listboxId = useId();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const listboxRef = useRef<HTMLDivElement>(null);
-
-  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [activeIndex, setActiveIndex] = useState(0);
 
-  const selectedOption = useMemo(() => {
+  const { allOptions, selectedOption } = useMemo(() => {
+    const flat: InternalOption[] = [];
+    let matched: InternalOption | null = null;
     for (const group of groups) {
-      const hit = group.options.find((opt) => opt.value === value);
-      if (hit) return hit;
+      for (const opt of group.options) {
+        const entry: InternalOption = { ...opt, groupLabel: group.label };
+        flat.push(entry);
+        if (opt.value === value) {
+          matched = entry;
+        }
+      }
     }
-    return null;
+    return { allOptions: flat, selectedOption: matched };
   }, [groups, value]);
 
   const filteredGroups = useMemo(
@@ -78,85 +88,8 @@ export function SearchableSelect({
     [groups, query],
   );
 
-  const flatOptions = useMemo(
-    () => filteredGroups.flatMap((group) => group.options),
-    [filteredGroups],
-  );
-
-  useEffect(() => {
-    if (isOpen) {
-      searchInputRef.current?.focus();
-    }
-  }, [isOpen]);
-
-  function openPanel() {
-    if (disabled) return;
-    setQuery('');
-    setActiveIndex(0);
-    setIsOpen(true);
-  }
-
-  function closePanel(returnFocus: boolean) {
-    setIsOpen(false);
-    setQuery('');
-    if (returnFocus) {
-      triggerRef.current?.focus();
-    }
-  }
-
-  function selectValue(nextValue: string) {
-    onChange(nextValue);
-    closePanel(true);
-  }
-
-  function scrollActiveOptionIntoView(nextIndex: number) {
-    const optEl = listboxRef.current?.querySelector<HTMLElement>(
-      `[data-option-idx="${nextIndex}"]`,
-    );
-    optEl?.scrollIntoView({ block: 'nearest' });
-  }
-
-  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      closePanel(true);
-      return;
-    }
-    if (e.key === 'ArrowDown' && flatOptions.length > 0) {
-      e.preventDefault();
-      const next = (activeIndex + 1) % flatOptions.length;
-      setActiveIndex(next);
-      scrollActiveOptionIntoView(next);
-      return;
-    }
-    if (e.key === 'ArrowUp' && flatOptions.length > 0) {
-      e.preventDefault();
-      const next = (activeIndex - 1 + flatOptions.length) % flatOptions.length;
-      setActiveIndex(next);
-      scrollActiveOptionIntoView(next);
-      return;
-    }
-    if (e.key === 'Enter' && !e.nativeEvent.isComposing && flatOptions.length > 0) {
-      e.preventDefault();
-      const target = flatOptions[activeIndex] ?? flatOptions[0];
-      if (target) {
-        selectValue(target.value);
-      }
-    }
-  }
-
-  let runningIndex = 0;
-
   return (
-    <div
-      ref={containerRef}
-      className="relative flex flex-col gap-1.5"
-      onBlur={(event) => {
-        if (!containerRef.current?.contains(event.relatedTarget as Node | null)) {
-          closePanel(false);
-        }
-      }}
-    >
+    <div className="relative flex flex-col gap-1.5">
       <label htmlFor={triggerId} className="text-sm font-medium text-ink">
         {label}
         {required ? (
@@ -166,122 +99,117 @@ export function SearchableSelect({
         ) : null}
       </label>
 
-      <button
-        ref={triggerRef}
-        id={triggerId}
-        type="button"
-        disabled={disabled}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-        aria-controls={isOpen ? listboxId : undefined}
-        data-testid={triggerTestId}
-        onClick={() => (isOpen ? closePanel(false) : openPanel())}
-        onKeyDown={(e) => {
-          if (!isOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
-            e.preventDefault();
-            openPanel();
+      <Combobox.Root<InternalOption>
+        items={allOptions}
+        value={selectedOption}
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (!nextOpen) {
+            setQuery('');
           }
         }}
-        className="flex min-h-11 w-full items-center justify-between gap-2 rounded-control border border-border bg-surface px-3 py-2 text-left text-base text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
+        inputValue={query}
+        onInputValueChange={(nextInput) => setQuery(nextInput)}
+        onValueChange={(nextOption) => {
+          if (nextOption) {
+            onChange(nextOption.value);
+          }
+        }}
+        isItemEqualToValue={(item, current) => item.value === current.value}
+        itemToStringLabel={(item) => item.label}
+        itemToStringValue={(item) => item.value}
+        filter={null}
+        disabled={disabled}
       >
-        <span className={selectedOption ? 'truncate font-medium text-ink' : 'truncate text-ink-muted'}>
-          {selectedOption ? selectedOption.label : placeholder}
-        </span>
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 20 20"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          className={`h-4 w-4 shrink-0 text-ink-muted transition-transform ${
-            isOpen ? 'rotate-180' : ''
-          }`}
+        <Combobox.Trigger
+          id={triggerId}
+          data-testid={triggerTestId}
+          className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-control border-2 border-border-strong bg-surface px-3 py-2 text-left text-base text-ink transition-colors hover:border-signal focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-signal disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <path d="m6 8 4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
+          <span className={selectedOption ? 'truncate font-medium text-ink' : 'truncate text-ink-muted'}>
+            {selectedOption ? selectedOption.label : placeholder}
+          </span>
+          <ChevronDown
+            aria-hidden="true"
+            className={`h-4 w-4 shrink-0 text-ink-muted motion-safe:transition-transform ${
+              open ? 'rotate-180' : ''
+            }`}
+          />
+        </Combobox.Trigger>
 
-      {isOpen ? (
-        <div className="absolute right-0 left-0 top-full z-30 mt-1 flex flex-col overflow-hidden rounded-card border border-border-strong bg-surface-elevated shadow-xl">
-          <div className="border-b border-border bg-surface p-2">
-            <input
-              ref={searchInputRef}
-              type="search"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setActiveIndex(0);
-              }}
-              onKeyDown={handleSearchKeyDown}
-              placeholder={searchPlaceholder}
-              aria-label={searchPlaceholder}
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="none"
-              spellCheck={false}
-              data-testid={searchTestId}
-              className="min-h-10 w-full rounded-control border border-border bg-surface-subtle px-3 py-1.5 text-sm text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-accent"
-            />
-          </div>
+        <Combobox.Portal>
+          <Combobox.Positioner side="bottom" sideOffset={6} align="start" className="z-50 w-[var(--anchor-width)]">
+            <Combobox.Popup className="mtx-shadow overflow-hidden rounded-card border-2 border-border-strong bg-surface-elevated text-ink outline-none">
+              <motion.div
+                initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
+                className="flex flex-col"
+              >
+                <div className="flex items-center gap-2 border-b border-border bg-surface p-2">
+                  <Search className="h-4 w-4 shrink-0 text-ink-muted" aria-hidden="true" />
+                  <Combobox.Input
+                    placeholder={searchPlaceholder}
+                    aria-label={searchPlaceholder}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    data-testid={searchTestId}
+                    className="min-h-9 w-full bg-transparent text-sm text-ink placeholder:text-ink-muted focus:outline-none"
+                  />
+                </div>
 
-          <div
-            ref={listboxRef}
-            id={listboxId}
-            role="listbox"
-            aria-label={label}
-            className="max-h-72 overflow-y-auto p-1"
-          >
-            {filteredGroups.length === 0 ? (
-              <p className="px-3 py-4 text-center text-sm text-ink-muted">{emptyMessage}</p>
-            ) : (
-              filteredGroups.map((group) => {
-                const groupHeadingId = `${listboxId}-group-${group.id}`;
-                return (
-                  <div key={group.id} role="group" aria-labelledby={groupHeadingId} className="mb-1 last:mb-0">
-                    <div
-                      id={groupHeadingId}
-                      className="px-2.5 py-1 text-xs font-semibold tracking-wide text-ink-muted uppercase"
-                    >
-                      {group.label}
-                    </div>
-                    {group.options.map((opt) => {
-                      const currentIdx = runningIndex;
-                      runningIndex += 1;
-                      const isSelected = opt.value === value;
-                      const isActive = currentIdx === activeIndex;
-                      return (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          role="option"
-                          aria-selected={isSelected}
-                          data-option-idx={currentIdx}
-                          data-testid={optionTestId?.(opt.value)}
-                          onMouseDown={(e) => e.preventDefault()}
-                          onMouseEnter={() => setActiveIndex(currentIdx)}
-                          onClick={() => selectValue(opt.value)}
-                          className={`flex min-h-10 w-full items-center justify-between gap-2 rounded-control px-2.5 py-1.5 text-left text-sm ${
-                            isSelected
-                              ? 'bg-highlight font-semibold text-highlight-fg'
-                              : isActive
-                                ? 'bg-surface-subtle text-ink'
-                                : 'text-ink hover:bg-surface-subtle'
-                          }`}
-                        >
-                          <span className="truncate">{opt.label}</span>
-                          {opt.meta ? (
-                            <span className="shrink-0 text-xs text-ink-muted">{opt.meta}</span>
-                          ) : null}
-                        </button>
-                      );
-                    })}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      ) : null}
+                <Combobox.List className="max-h-72 overflow-y-auto p-1">
+                  {filteredGroups.length === 0 ? (
+                    <p className="px-3 py-4 text-center text-sm text-ink-muted">{emptyMessage}</p>
+                  ) : (
+                    filteredGroups.map((group) => (
+                      <Combobox.Group key={group.id} className="mb-1 last:mb-0">
+                        <Combobox.GroupLabel className="px-2.5 py-1 text-xs font-semibold tracking-wide text-ink-muted uppercase">
+                          {group.label}
+                        </Combobox.GroupLabel>
+                        {group.options.map((opt) => {
+                          const itemObj: InternalOption = { ...opt, groupLabel: group.label };
+                          const isSelected = opt.value === value;
+                          return (
+                            <Combobox.Item
+                              key={opt.value}
+                              value={itemObj}
+                              data-testid={optionTestId?.(opt.value)}
+                              className={`flex min-h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-control px-2.5 py-1.5 text-left text-sm outline-none data-[highlighted]:bg-surface-subtle ${
+                                isSelected
+                                  ? 'bg-highlight font-semibold text-highlight-fg'
+                                  : 'text-ink'
+                              }`}
+                            >
+                              <span className="flex min-w-0 items-center gap-2">
+                                <Check
+                                  className={`h-3.5 w-3.5 shrink-0 ${
+                                    isSelected ? 'opacity-100' : 'opacity-0'
+                                  }`}
+                                  aria-hidden="true"
+                                />
+                                <span className="truncate">{opt.label}</span>
+                              </span>
+                              {opt.meta ? (
+                                <span className="shrink-0 font-mono text-xs tabular-nums text-ink-muted">
+                                  {opt.meta}
+                                </span>
+                              ) : null}
+                            </Combobox.Item>
+                          );
+                        })}
+                      </Combobox.Group>
+                    ))
+                  )}
+                </Combobox.List>
+              </motion.div>
+            </Combobox.Popup>
+          </Combobox.Positioner>
+        </Combobox.Portal>
+      </Combobox.Root>
     </div>
   );
 }

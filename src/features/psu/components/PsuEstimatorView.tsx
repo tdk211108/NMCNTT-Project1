@@ -49,7 +49,7 @@ export type PsuEstimatorViewProps = ReturnType<typeof usePsuController>;
 export function PsuEstimatorView({ state, actions }: PsuEstimatorViewProps) {
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.tools.psu.title}</h1>
+      <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.tools.psu.title}</h1>
 
       {state.prefillMissing ? (
         <Card
@@ -130,7 +130,7 @@ export function PsuEstimatorView({ state, actions }: PsuEstimatorViewProps) {
               <p className="text-sm text-ink-muted">{VI_MESSAGES.tools.psu.exactResultLabel}</p>
               <p
                 data-testid={TEST_IDS.psu.resultExact}
-                className="mt-1 text-2xl font-bold text-ink"
+                className="mt-1 font-mono text-2xl font-bold tabular-nums text-ink"
               >
                 {formatExactWatts(state.estimate.exactW)}
               </p>
@@ -140,7 +140,7 @@ export function PsuEstimatorView({ state, actions }: PsuEstimatorViewProps) {
               <p className="text-sm text-ink-muted">{VI_MESSAGES.tools.psu.recommendedTierLabel}</p>
               <p
                 data-testid={TEST_IDS.psu.resultTier}
-                className="mt-1 text-2xl font-bold text-accent"
+                className="mt-1 font-mono text-2xl font-bold tabular-nums text-accent-ink"
               >
                 {state.estimate.exceedsMaxTier || state.estimate.recommendedTierW === null
                   ? VI_MESSAGES.tools.psu.aboveMaxTierLabel

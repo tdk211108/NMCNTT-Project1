@@ -1,25 +1,34 @@
+'use client';
+
+import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
+import { getChromeContainerClass } from './layout-width';
 
 export function Footer() {
+  const containerClass = getChromeContainerClass();
   const githubUrl =
     process.env.NEXT_PUBLIC_GITHUB_REPO_URL || 'https://github.com/tdk211108/NMCNTT-Project1';
 
   return (
-    <footer className="mt-auto border-t border-border bg-surface pt-6 pb-20">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+    <footer className="relative z-10 mt-auto border-t-2 border-border-strong bg-surface pt-6 pb-20">
+      <div className={`${containerClass} flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between`}>
+        <div className="flex flex-wrap items-center gap-3">
           <a
             href={githubUrl}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={VI_MESSAGES.nav.githubLabel}
             data-testid={TEST_IDS.layout.footerGithubButton}
-            className="inline-flex min-h-10 items-center gap-2 rounded-control border border-border bg-surface-subtle px-3 py-1.5 text-sm text-ink hover:border-border-strong"
+            className="mtx-shadow-sm inline-flex min-h-10 items-center gap-2 rounded-control border-2 border-border-strong bg-surface-subtle px-3 py-1.5 text-sm font-semibold text-ink hover:border-signal active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
           >
-            <img src="/icons/github.svg" alt="" className="h-5 w-5" />
+            <span
+              aria-hidden="true"
+              className="inline-block h-5 w-5 shrink-0 bg-current [mask-image:url('/icons/github.svg')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
+            />
             <span>GitHub</span>
+            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
           </a>
           <span className="text-xs text-ink-muted">{VI_MESSAGES.brand.tagline}</span>
         </div>
