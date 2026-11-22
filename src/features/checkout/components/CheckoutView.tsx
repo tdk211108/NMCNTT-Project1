@@ -4,6 +4,7 @@ import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { formatVnd } from '@/lib/format';
+import { OrderStatusModal } from '@/features/orders/components/OrderStatusModal';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { paymentMethodSchema } from '@/shared/schemas';
 import { TEST_IDS } from '@/shared/testids';
@@ -206,6 +207,16 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
         isSubmitting={state.isSubmittingOrder}
         onCancel={actions.onCancelReview}
         onConfirmNow={actions.onConfirmReviewNow}
+      />
+
+      <OrderStatusModal
+        placedOrder={state.placedOrderModal.placedOrder}
+        isAdvancing={state.placedOrderModal.isAdvancing}
+        onCopyOrderId={actions.placedOrderActions.onCopyOrderId}
+        onAdvanceStage={actions.placedOrderActions.onAdvanceStage}
+        onContinueShopping={actions.placedOrderActions.onContinueShopping}
+        onViewMyOrders={actions.placedOrderActions.onViewMyOrders}
+        onClose={actions.placedOrderActions.onClose}
       />
     </div>
   );

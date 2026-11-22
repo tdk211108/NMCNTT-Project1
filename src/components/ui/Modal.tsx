@@ -10,6 +10,7 @@ export interface ModalProps {
   onClose?: () => void;
   dismissible?: boolean;
   testId?: string;
+  dialogClassName?: string;
   children: ReactNode;
 }
 
@@ -23,6 +24,7 @@ export function Modal({
   onClose,
   dismissible = true,
   testId,
+  dialogClassName = 'max-w-lg',
   children,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -63,7 +65,7 @@ export function Modal({
       onClick={(event) => {
         if (!dismissible) return;
         const dialog = dialogRef.current;
-        if (!dialog) return;
+        if (!dialog || event.target !== dialog || event.detail === 0) return;
         const rect = dialog.getBoundingClientRect();
         const outside =
           event.clientX < rect.left ||
@@ -74,7 +76,7 @@ export function Modal({
           onClose?.();
         }
       }}
-      className="mtx-shadow-accent m-auto w-[calc(100%-2rem)] max-w-lg rounded-modal border-2 border-border-strong bg-surface p-5 text-ink"
+      className={`mtx-shadow-accent m-auto w-[calc(100%-2rem)] rounded-modal border-2 border-border-strong bg-surface p-5 text-ink ${dialogClassName}`}
     >
       <div className="mb-4 flex items-start justify-between gap-3 border-b-2 border-border pb-3">
         <h2 id={titleId} className="font-display text-lg font-bold tracking-wide text-ink">

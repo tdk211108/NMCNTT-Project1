@@ -10,7 +10,7 @@ import { showToast } from '@/components/ui/toast-store';
 import { ApiClientError, apiFetch } from '@/lib/api-client';
 import { useAuthSession } from '@/features/auth/useAuthSession';
 import { useCartStore } from '@/features/cart/store';
-import { saveOrderToken } from '@/features/orders/order-tokens';
+import { usePlacedOrderPopup } from '@/features/orders/usePlacedOrderPopup';
 import {
   ADDRESS_DATASET_DATE,
   FULL_NAME_MAX_LEN,
@@ -86,15 +86,21 @@ export function useCheckoutController() {
   const hasHydrated = useCartStore((s) => s.hasHydrated);
   const clearCart = useCartStore((s) => s.clearCart);
   const applyServerQuote = useCartStore((s) => s.applyServerQuote);
+  const placedOrderPopup = usePlacedOrderPopup();
 
   const [reviewAttempt, setReviewAttempt] = useState<StoredCheckoutAttempt | null>(null);
   const [countdown, setCountdown] = useState(REVIEW_COUNTDOWN_SECONDS);
 
   useEffect(() => {
-    if (hasHydrated && items.length === 0 && !reviewAttempt) {
+    if (
+      hasHydrated &&
+      items.length === 0 &&
+      !reviewAttempt &&
+      !placedOrderPopup.state.hasCompletedOrder
+    ) {
       router.replace('/cart?notice=empty-cart');
     }
-  }, [hasHydrated, items.length, reviewAttempt, router]);
+  }, [hasHydrated, items.length, reviewAttempt, placedOrderPopup.state.hasCompletedOrder, router]);
 
   const quotePayload = items.map((i) => ({
     productId: i.productId,
@@ -193,9 +199,8 @@ export function useCheckoutController() {
     onSuccess: (res) => {
       clearCart();
       clearCheckoutAttempt();
-      saveOrderToken(res.order.orderId, res.accessToken);
       setReviewAttempt(null);
-      router.push(`/orders/${res.order.orderId}`);
+      placedOrderPopup.actions.openPlacedOrder(res);
     },
     onError: (err) => {
       if (err instanceof ApiClientError && err.code === 'PRODUCT_UNAVAILABLE') {
@@ -294,6 +299,7 @@ export function useCheckoutController() {
       reviewAttempt,
       countdown,
       isSubmittingOrder: createOrderMutation.isPending,
+      placedOrderModal: placedOrderPopup.state,
     },
     actions: {
       onProvinceChange: (provinceCode: string) => {
@@ -313,6 +319,7 @@ export function useCheckoutController() {
           notice: VI_MESSAGES.auth.checkoutLoginRequired,
           postLoginRedirect: '/checkout',
         }),
+      placedOrderActions: placedOrderPopup.actions,
     },
   };
 }

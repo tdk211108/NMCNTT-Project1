@@ -15,7 +15,7 @@ import type {
 } from '@/shared/types';
 import { signOrderAccessToken } from '../auth/order-token';
 import { getDb, type DbClient, type DbExecutor } from '../db/client';
-import { orderItems, orders, orderStatusEvents } from '../db/schema';
+import { orderItems, orders, orderStatusEvents, products } from '../db/schema';
 import { formatAddressLine } from '../domain/name';
 import { maskPhone } from '../domain/masking';
 import { generateOrderId } from '../domain/order-id';
@@ -48,9 +48,14 @@ export function computeCanonicalRequestHash(
   return createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
 }
 
+export interface OrderItemRowWithImage {
+  item: typeof orderItems.$inferSelect;
+  imageUrl: string | null;
+}
+
 export function buildOrderBoardFromRows(
   orderRow: typeof orders.$inferSelect,
-  itemRows: (typeof orderItems.$inferSelect)[],
+  itemRows: OrderItemRowWithImage[],
   eventRows: (typeof orderStatusEvents.$inferSelect)[],
   options: { maskCustomerPhone: boolean },
 ): OrderBoard {
@@ -83,10 +88,11 @@ export function buildOrderBoardFromRows(
     paymentReference: orderRow.paymentReference,
     items: itemRows
       .slice()
-      .sort((a, b) => a.lineNo - b.lineNo)
-      .map((item) => ({
+      .sort((a, b) => a.item.lineNo - b.item.lineNo)
+      .map(({ item, imageUrl }) => ({
         productName: item.productName,
         category: item.category,
+        imageUrl: imageUrl ?? null,
         unitPriceVnd: item.unitPriceVnd,
         quantity: item.quantity,
         lineTotalVnd: item.lineTotalVnd,
@@ -116,8 +122,12 @@ export async function loadOrderBoard(
 
   const [itemRows, eventRows] = await Promise.all([
     db
-      .select()
+      .select({
+        item: orderItems,
+        imageUrl: products.imageUrl,
+      })
       .from(orderItems)
+      .leftJoin(products, eq(orderItems.productId, products.id))
       .where(eq(orderItems.orderId, orderId))
       .orderBy(asc(orderItems.lineNo)),
     db

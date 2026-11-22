@@ -141,6 +141,7 @@ describe('services/cart, checkout, order & rate-limit (Postgres 16)', () => {
     expect(created.order.stage).toBe(0);
     expect(created.order.totalVnd).toBe(14_440_000);
     expect(created.order.customer.phoneMasked).toBe('0912***789');
+    expect(created.order.items[0].imageUrl).toBeTruthy();
 
     // Replay returns same order with replayed=true
     const replayed = await createOrder(request, key, db);
@@ -169,6 +170,7 @@ describe('services/cart, checkout, order & rate-limit (Postgres 16)', () => {
       db,
     );
     expect(fetched.order.items[0].unitPriceVnd).toBe(14_390_000);
+    expect(fetched.order.items[0].imageUrl).toBe(created.order.items[0].imageUrl);
 
     // Order ID collision triggers transaction retry on 23505 orders_pkey
     const key2 = randomUUID();

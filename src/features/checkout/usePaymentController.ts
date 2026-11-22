@@ -7,7 +7,7 @@ import { showToast } from '@/components/ui/toast-store';
 import { ApiClientError, apiFetch } from '@/lib/api-client';
 import { useAuthSession } from '@/features/auth/useAuthSession';
 import { useCartStore } from '@/features/cart/store';
-import { saveOrderToken } from '@/features/orders/order-tokens';
+import { usePlacedOrderPopup } from '@/features/orders/usePlacedOrderPopup';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type { CheckoutRequest, OrderWithToken } from '@/shared/types';
 import {
@@ -22,6 +22,7 @@ export function usePaymentController() {
   const { state: authState, actions: authActions } = useAuthSession();
   const clearCart = useCartStore((s) => s.clearCart);
   const removeCartItem = useCartStore((s) => s.removeItem);
+  const placedOrderPopup = usePlacedOrderPopup();
 
   const isClient = useSyncExternalStore(subscribeNoop, () => true, () => false);
   const attempt = isClient ? loadCheckoutAttempt() : null;
@@ -42,8 +43,7 @@ export function usePaymentController() {
     onSuccess: (res) => {
       clearCart();
       clearCheckoutAttempt();
-      saveOrderToken(res.order.orderId, res.accessToken);
-      router.push(`/orders/${res.order.orderId}`);
+      placedOrderPopup.actions.openPlacedOrder(res);
     },
     onError: (err) => {
       if (err instanceof ApiClientError && err.code === 'PRODUCT_UNAVAILABLE') {
@@ -78,6 +78,7 @@ export function usePaymentController() {
       cardExpiry,
       cardCvv,
       isSubmitting: createOrderMutation.isPending,
+      placedOrderModal: placedOrderPopup.state,
     },
     actions: {
       onChangeCardNumber: setCardNumber,
@@ -94,6 +95,7 @@ export function usePaymentController() {
           notice: VI_MESSAGES.auth.checkoutLoginRequired,
           postLoginRedirect: '/checkout/payment',
         }),
+      placedOrderActions: placedOrderPopup.actions,
     },
   };
 }

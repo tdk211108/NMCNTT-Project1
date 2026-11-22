@@ -75,6 +75,7 @@ export interface PrepareResponse {
 export interface OrderItemView {
   productName: string;
   category: Category;
+  imageUrl: string | null;
   unitPriceVnd: number;
   quantity: number;
   lineTotalVnd: number;

@@ -13,13 +13,23 @@ import { Badge, Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { Input } from '@/components/ui/Input';
+import { ProductImage } from '@/components/ui/ProductImage';
 import { ResponsiveTableWrapper } from '@/components/ui/Table';
 import { formatDateTimeVi, formatVnd } from '@/lib/format';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
+import type { OrderBoard } from '@/shared/types';
 import type { useOrderBoardController } from '../useOrderBoardController';
 
 export type OrderBoardViewProps = ReturnType<typeof useOrderBoardController>;
+
+export interface OrderBoardPanelProps {
+  board: OrderBoard;
+  isAdvancing: boolean;
+  onCopyOrderId: () => void | Promise<void>;
+  onAdvanceStage: () => void;
+  compactHeading?: boolean;
+}
 
 const STAGE_ICONS = [
   ClipboardCheck,
@@ -29,87 +39,22 @@ const STAGE_ICONS = [
   PackageCheck,
 ] as const;
 
-export function OrderBoardView({ state, actions }: OrderBoardViewProps) {
-  if (state.isLoading) {
-    return <Spinner />;
-  }
-
-  if (state.needsLookup) {
-    return (
-      <div className="mx-auto flex w-full max-w-md flex-col gap-6">
-        <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.orders.lookupTitle}</h1>
-        <Card>
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              try {
-                await actions.onSubmitLookup();
-              } catch {
-                // Error shown via state.lookupError.
-              }
-            }}
-            className="flex flex-col gap-4"
-          >
-            <p className="text-sm text-ink-muted">{VI_MESSAGES.orders.sessionExpiredLookupPrompt}</p>
-            <Input
-              label={VI_MESSAGES.orders.lookupOrderIdLabel}
-              value={state.orderId}
-              readOnly
-              data-testid={TEST_IDS.orders.lookupOrderId}
-            />
-            <Input
-              type="tel"
-              inputMode="tel"
-              label={VI_MESSAGES.orders.lookupPhoneLabel}
-              required
-              autoComplete="tel"
-              value={state.lookupPhone}
-              data-testid={TEST_IDS.orders.lookupPhone}
-              onChange={(e) => actions.onChangeLookupPhone(e.target.value)}
-            />
-            {state.lookupError ? (
-              <p
-                role="alert"
-                data-testid={TEST_IDS.orders.lookupError}
-                className="rounded-control border-2 border-danger bg-danger/10 px-3 py-2 text-sm text-danger"
-              >
-                {state.lookupError}
-              </p>
-            ) : null}
-            <Button
-              type="submit"
-              variant="primary"
-              isLoading={state.isLookingUp}
-              data-testid={TEST_IDS.orders.lookupSubmit}
-            >
-              {VI_MESSAGES.orders.lookupSubmit}
-            </Button>
-          </form>
-        </Card>
-      </div>
-    );
-  }
-
-  if (state.fetchError || !state.board) {
-    return (
-      <EmptyState
-        title={state.fetchError ?? VI_MESSAGES.orders.lookupGenericError}
-        action={
-          <Link href="/orders/lookup">
-            <Button variant="primary">{VI_MESSAGES.orders.lookupTitle}</Button>
-          </Link>
-        }
-      />
-    );
-  }
-
-  const { board } = state;
-
+export function OrderBoardPanel({
+  board,
+  isAdvancing,
+  onCopyOrderId,
+  onAdvanceStage,
+  compactHeading = false,
+}: OrderBoardPanelProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.orders.boardTitle}</h1>
+          {compactHeading ? (
+            <h3 className="font-display text-lg font-bold text-ink">{VI_MESSAGES.orders.boardTitle}</h3>
+          ) : (
+            <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.orders.boardTitle}</h1>
+          )}
           <p className="mt-1 text-sm text-ink-muted">{VI_MESSAGES.orders.saveIdReminder}</p>
         </div>
 
@@ -125,7 +70,7 @@ export function OrderBoardView({ state, actions }: OrderBoardViewProps) {
             label={VI_MESSAGES.orders.copyOrderId}
             copiedLabel={VI_MESSAGES.orders.copiedOrderId}
             testId={TEST_IDS.orders.idCopy}
-            onCopied={actions.onCopyOrderId}
+            onCopied={onCopyOrderId}
           />
         </div>
       </div>
@@ -215,9 +160,9 @@ export function OrderBoardView({ state, actions }: OrderBoardViewProps) {
           ) : (
             <Button
               variant="demo"
-              isLoading={state.isAdvancing}
+              isLoading={isAdvancing}
               data-testid={TEST_IDS.orders.demoAdvance}
-              onClick={actions.onAdvanceStage}
+              onClick={onAdvanceStage}
             >
               <span>{VI_MESSAGES.orders.demoAdvanceButton}</span>
               <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -272,7 +217,16 @@ export function OrderBoardView({ state, actions }: OrderBoardViewProps) {
               <tbody>
                 {board.items.map((item, idx) => (
                   <tr key={idx} className="border-b border-border last:border-b-0">
-                    <td className="px-3 py-2 font-medium text-ink">{item.productName}</td>
+                    <td className="px-3 py-2 font-medium text-ink">
+                      <div className="flex items-center gap-2.5">
+                        <ProductImage
+                          src={item.imageUrl}
+                          alt={item.productName}
+                          className="h-11 w-11 shrink-0 border border-border-strong object-contain p-0.5"
+                        />
+                        <span>{item.productName}</span>
+                      </div>
+                    </td>
                     <td className="px-3 py-2 font-mono tabular-nums text-ink-muted">
                       {formatVnd(item.unitPriceVnd)}
                     </td>
@@ -307,5 +261,89 @@ export function OrderBoardView({ state, actions }: OrderBoardViewProps) {
         </Card>
       </div>
     </div>
+  );
+}
+
+export function OrderBoardView({ state, actions }: OrderBoardViewProps) {
+  if (state.isLoading) {
+    return <Spinner />;
+  }
+
+  if (state.needsLookup) {
+    return (
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6">
+        <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.orders.lookupTitle}</h1>
+        <Card>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                await actions.onSubmitLookup();
+              } catch {
+                // Error shown via state.lookupError.
+              }
+            }}
+            className="flex flex-col gap-4"
+          >
+            <p className="text-sm text-ink-muted">{VI_MESSAGES.orders.sessionExpiredLookupPrompt}</p>
+            <Input
+              label={VI_MESSAGES.orders.lookupOrderIdLabel}
+              value={state.orderId}
+              readOnly
+              data-testid={TEST_IDS.orders.lookupOrderId}
+            />
+            <Input
+              type="tel"
+              inputMode="tel"
+              label={VI_MESSAGES.orders.lookupPhoneLabel}
+              required
+              autoComplete="tel"
+              value={state.lookupPhone}
+              data-testid={TEST_IDS.orders.lookupPhone}
+              onChange={(e) => actions.onChangeLookupPhone(e.target.value)}
+            />
+            {state.lookupError ? (
+              <p
+                role="alert"
+                data-testid={TEST_IDS.orders.lookupError}
+                className="rounded-control border-2 border-danger bg-danger/10 px-3 py-2 text-sm text-danger"
+              >
+                {state.lookupError}
+              </p>
+            ) : null}
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={state.isLookingUp}
+              data-testid={TEST_IDS.orders.lookupSubmit}
+            >
+              {VI_MESSAGES.orders.lookupSubmit}
+            </Button>
+          </form>
+        </Card>
+      </div>
+    );
+  }
+
+  if (state.fetchError || !state.board) {
+    return (
+      <EmptyState
+        title={state.fetchError ?? VI_MESSAGES.orders.lookupGenericError}
+        action={
+          <Link href="/orders/lookup">
+            <Button variant="primary">{VI_MESSAGES.orders.lookupTitle}</Button>
+          </Link>
+        }
+      />
+    );
+  }
+
+  return (
+    <OrderBoardPanel
+      board={state.board}
+      isAdvancing={state.isAdvancing}
+      onCopyOrderId={actions.onCopyOrderId}
+      onAdvanceStage={actions.onAdvanceStage}
+    />
   );
 }

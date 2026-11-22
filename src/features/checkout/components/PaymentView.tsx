@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { Input } from '@/components/ui/Input';
 import { formatVnd } from '@/lib/format';
+import { OrderStatusModal } from '@/features/orders/components/OrderStatusModal';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
 import type { usePaymentController } from '../usePaymentController';
@@ -36,6 +37,30 @@ export function PaymentView({ state, actions }: PaymentViewProps) {
   }
 
   if (!state.attempt) {
+    if (state.placedOrderModal.placedOrder || state.placedOrderModal.hasCompletedOrder) {
+      return (
+        <>
+          <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
+            <h1 className="font-display text-2xl font-bold text-ink">
+              {VI_MESSAGES.orders.placedModalTitle}
+            </h1>
+            <Card className="border-success bg-highlight text-sm font-medium text-highlight-fg">
+              {VI_MESSAGES.orders.placedModalSubtitle}
+            </Card>
+          </div>
+          <OrderStatusModal
+            placedOrder={state.placedOrderModal.placedOrder}
+            isAdvancing={state.placedOrderModal.isAdvancing}
+            onCopyOrderId={actions.placedOrderActions.onCopyOrderId}
+            onAdvanceStage={actions.placedOrderActions.onAdvanceStage}
+            onContinueShopping={actions.placedOrderActions.onContinueShopping}
+            onViewMyOrders={actions.placedOrderActions.onViewMyOrders}
+            onClose={actions.placedOrderActions.onClose}
+          />
+        </>
+      );
+    }
+
     return (
       <EmptyState
         title={VI_MESSAGES.checkout.missingAttemptNotice}
@@ -154,6 +179,16 @@ export function PaymentView({ state, actions }: PaymentViewProps) {
       >
         {VI_MESSAGES.checkout.paymentConfirmCompleted}
       </Button>
+
+      <OrderStatusModal
+        placedOrder={state.placedOrderModal.placedOrder}
+        isAdvancing={state.placedOrderModal.isAdvancing}
+        onCopyOrderId={actions.placedOrderActions.onCopyOrderId}
+        onAdvanceStage={actions.placedOrderActions.onAdvanceStage}
+        onContinueShopping={actions.placedOrderActions.onContinueShopping}
+        onViewMyOrders={actions.placedOrderActions.onViewMyOrders}
+        onClose={actions.placedOrderActions.onClose}
+      />
     </div>
   );
 }

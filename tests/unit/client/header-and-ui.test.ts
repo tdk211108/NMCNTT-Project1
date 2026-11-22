@@ -6,15 +6,27 @@ import { AnimatedCartButton } from '@/components/ui/AnimatedCartButton';
 import { AnimatedCopyButton } from '@/components/ui/AnimatedCopyButton';
 import { CatalogPagination, buildPaginationTokens } from '@/components/ui/CatalogPagination';
 import { ComboboxSelect } from '@/components/ui/ComboboxSelect';
-import { CoverflowSlider, findShortestLoopTarget } from '@/components/ui/CoverflowSlider';
 import { DecryptedText } from '@/components/ui/DecryptedText';
+import {
+  FocusPullCarousel,
+  computeFocusPullStyle,
+  computeLoopProgress,
+  computeNextStaggeredTickMs,
+  wrapCarouselIndex,
+} from '@/components/ui/FocusPullCarousel';
 import { CartPlusIcon } from '@/components/ui/Icons';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { DEFAULT_IGNORE_CASCADE_SELECTOR } from '@/components/ui/ShapeGrid';
 import { SpectrumLoader } from '@/components/ui/SpectrumLoader';
 import { CatalogView } from '@/features/catalog/components/CatalogView';
 import { paginateItems } from '@/features/catalog/useCatalogController';
 import { GooeyNav } from '@/features/layout/GooeyNav';
-import { MusicPlayerBar } from '@/features/layout/MusicPlayerBar';
+import {
+  DEFAULT_MUSIC_VOLUME,
+  MusicPlayerBar,
+  clampMusicVolume,
+  readSavedMusicVolume,
+} from '@/features/layout/MusicPlayerBar';
 import { ProductCard } from '@/features/catalog/components/ProductCard';
 import {
   CATALOG_PRICE_SLIDER_MAX,
@@ -35,6 +47,7 @@ import {
 } from '@/features/layout/layout-width';
 import { ZaloButton } from '@/features/layout/ZaloButton';
 import { OrderBoardView } from '@/features/orders/components/OrderBoardView';
+import { OrderStatusModal } from '@/features/orders/components/OrderStatusModal';
 import { ProductDetailView } from '@/features/product-detail/components/ProductDetailView';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type {
@@ -168,6 +181,9 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
     expect(bgHtml).toContain('fixed inset-0 z-0');
     expect(bgHtml).toContain('data-theme-variant="dark"');
     expect(bgHtml).toContain('<canvas');
+    expect(DEFAULT_IGNORE_CASCADE_SELECTOR).toContain('header');
+    expect(DEFAULT_IGNORE_CASCADE_SELECTOR).toContain('nav');
+    expect(DEFAULT_IGNORE_CASCADE_SELECTOR).toContain('header-floating-nav');
   });
 
   it('routes landing full-bleed first fold, 1760px catalog chrome/grids, and 1440px balanced sections', () => {
@@ -298,6 +314,7 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
         {
           productName: SAMPLE_CARD.name,
           category: 'cpu',
+          imageUrl: '/icons/order-thumb-test.png',
           unitPriceVnd: SAMPLE_CARD.priceVnd,
           quantity: 1,
           lineTotalVnd: SAMPLE_CARD.priceVnd,
@@ -347,7 +364,33 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
     expect(html).toContain('relative z-10 shrink-0 bg-surface p-1');
     expect(html).toContain('lucide');
     expect(html).toContain('tabular-nums');
+    expect(html).toContain('src="/icons/order-thumb-test.png"');
+    expect(html).toContain(`alt="${SAMPLE_CARD.name}"`);
     expect(html).not.toContain('opacity-60');
+
+    const modalHtml = renderToStaticMarkup(
+      createElement(OrderStatusModal, {
+        placedOrder: { order: board, accessToken: 'tok-test' },
+        isAdvancing: false,
+        onCopyOrderId: vi.fn(),
+        onAdvanceStage: vi.fn(),
+        onContinueShopping: vi.fn(),
+        onViewMyOrders: vi.fn(),
+        onClose: vi.fn(),
+      }),
+    );
+    expect(modalHtml).toContain('<dialog');
+    expect(modalHtml).toContain('data-testid="order-placed-modal"');
+    expect(modalHtml).toContain('data-testid="order-id-display"');
+    expect(modalHtml).toContain('data-testid="order-id-copy"');
+    expect(modalHtml).toContain('data-testid="order-stage-2"');
+    expect(modalHtml).toContain('data-testid="order-demo-advance"');
+    expect(modalHtml).toContain('data-testid="order-placed-continue-shopping"');
+    expect(modalHtml).toContain('data-testid="order-placed-my-orders"');
+    expect(modalHtml).toContain('data-testid="order-placed-close-view"');
+    expect(modalHtml).toContain('src="/icons/order-thumb-test.png"');
+    expect(modalHtml).not.toContain('<ul');
+    expect(modalHtml).not.toContain('<ol');
   });
 
   it('keeps compare top slot preview as thumbnail, enlarges criteria header image, and uses Hero CRT video without blur glows', () => {
@@ -629,12 +672,32 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
     expect(paginationHtml).not.toContain('<ul');
   });
 
-  it('renders new UI primitives (DecryptedText, CoverflowSlider, SpectrumLoader, Copy, Cart, AlertDialog, Combobox)', () => {
+  it('renders new UI primitives (DecryptedText, FocusPullCarousel, SpectrumLoader, Copy, Cart, AlertDialog, Combobox)', () => {
     const decryptHtml = renderToStaticMarkup(createElement(DecryptedText, { text: 'Raw Compute.' }));
     expect(decryptHtml).toContain('aria-label="Raw Compute."');
 
-    expect(findShortestLoopTarget(4, 0, 5, 10)).toBe(5);
-    expect(findShortestLoopTarget(5, 4, 5, 10)).toBe(4);
+    expect(computeFocusPullStyle(0, 6.5)).toEqual({
+      scale: 1,
+      blur: 0,
+      opacity: 1,
+      saturate: 1,
+    });
+    expect(computeFocusPullStyle(1, 6.5)).toEqual({
+      scale: 0.86,
+      blur: 6.5,
+      opacity: 0.5,
+      saturate: 0.55,
+    });
+    expect(wrapCarouselIndex(-1, 5)).toBe(4);
+    expect(wrapCarouselIndex(5, 5)).toBe(0);
+    expect(computeNextStaggeredTickMs(1000, 1000, 2000, 0)).toBe(3000);
+    expect(computeNextStaggeredTickMs(3002, 1000, 2000, 0)).toBe(5000);
+    expect(computeNextStaggeredTickMs(1000, 1000, 2000, 1000)).toBe(4000);
+    expect(computeNextStaggeredTickMs(4003, 1000, 2000, 1000)).toBe(6000);
+    expect(computeLoopProgress(100, [100, 500, 900, 1300, 1700], 5, true)).toBe(0);
+    expect(computeLoopProgress(900, [100, 500, 900, 1300, 1700], 5, true)).toBe(0.5);
+    expect(computeLoopProgress(1700, [100, 500, 900, 1300, 1700], 5, true)).toBe(1);
+    expect(computeLoopProgress(1900, [100, 500, 900, 1300, 1700], 5, true)).toBeCloseTo(0.5, 4);
 
     const fiveCards = Array.from({ length: 5 }, (_, idx) => ({
       ...SAMPLE_CARD,
@@ -642,24 +705,32 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
       name: `CPU Test ${idx + 1}`,
     }));
     const sliderHtml = renderToStaticMarkup(
-      createElement(CoverflowSlider, {
+      createElement(FocusPullCarousel, {
         category: 'cpu',
         items: fiveCards,
+        autoplayMs: 2000,
+        loop: true,
       }),
     );
     expect(sliderHtml).toContain('data-testid="home-slider-prev-cpu"');
     expect(sliderHtml).toContain('data-testid="home-slider-next-cpu"');
     expect(sliderHtml).toContain('data-testid="home-slider-play-cpu"');
-    expect(sliderHtml).toContain('data-testid="home-slider-dot-cpu-0"');
-    expect(sliderHtml).toContain('data-testid="home-slider-dot-cpu-4"');
-    expect(sliderHtml).not.toContain('data-testid="home-slider-dot-cpu-5"');
-    expect(sliderHtml).toContain('coreraster-coverflow');
+    expect((sliderHtml.match(/class="fp-card"/g) ?? []).length).toBe(15);
+    expect(
+      (sliderHtml.match(/data-testid="home-slider-card-cpu-cpu-test-1"/g) ?? []).length,
+    ).toBe(1);
+    expect(sliderHtml).toContain('fp-root');
+    expect(sliderHtml).toContain('fp-track');
+    expect(sliderHtml).toContain('fp-bar');
+    expect(sliderHtml).toContain('01');
+    expect(sliderHtml).toContain('05');
     expect(sliderHtml).toContain('<img');
     expect(sliderHtml).not.toContain('<ul');
     expect(sliderHtml).not.toContain('<ol');
 
     const loaderHtml = renderToStaticMarkup(createElement(SpectrumLoader));
     expect(loaderHtml).toContain('#D71920');
+    expect(loaderHtml).toContain('#FB7185');
     expect(loaderHtml).not.toContain('#00ff19');
 
     const copyHtml = renderToStaticMarkup(
@@ -712,8 +783,17 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
     expect(gooeyHtml).not.toContain('<ul');
     expect(gooeyHtml).not.toContain('<ol');
 
+    expect(DEFAULT_MUSIC_VOLUME).toBe(0.2);
+    expect(clampMusicVolume(1.5)).toBe(1);
+    expect(clampMusicVolume(-0.2)).toBe(0);
+    expect(clampMusicVolume(Number.NaN)).toBe(0.2);
+    expect(readSavedMusicVolume({ getItem: () => '0.65' })).toBe(0.65);
+    expect(readSavedMusicVolume({ getItem: () => null })).toBe(0.2);
+
     const playerHtml = renderToStaticMarkup(createElement(MusicPlayerBar));
     expect(playerHtml).toContain('data-testid="header-music-bar"');
+    expect(playerHtml).toContain('data-testid="header-music-volume-toggle"');
+    expect(playerHtml).toContain('mr-6');
     expect(playerHtml).toContain('animate-spin');
     expect(playerHtml).toContain('blur-xl');
   });
