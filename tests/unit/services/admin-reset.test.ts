@@ -12,6 +12,8 @@ import {
   listAdminProducts,
   softDeleteAdminGpuSeries,
   softDeleteAdminProduct,
+  updateAdminGpuSeries,
+  updateAdminLegacyCpu,
   updateAdminProduct,
 } from '@/server/services/admin-catalog.service';
 import { getAdminOrderDetail, listAdminOrders } from '@/server/services/admin-order.service';
@@ -285,5 +287,66 @@ describe('services/admin-catalog, admin-order, reset & DB triggers (Postgres 16)
     });
     expect(await listAdminOrders(db)).toEqual([]);
     expect(await db.select().from(authFailures)).toEqual([]);
+  });
+
+  it('supports optional PassMark scores on legacy CPUs and legacy GPU series while requiring them on retail GPU series', async () => {
+    const legacyCpu = await createAdminLegacyCpu(
+      {
+        name: 'Intel Legacy Bench CPU',
+        vendor: 'intel',
+        socket: 'LGA1200',
+        coresTotal: 8,
+        threadsTotal: 16,
+        psuPowerW: 190,
+        passmarkRaw: 22_500,
+        passmarkSource: null,
+      },
+      db,
+    );
+    expect(legacyCpu.passmarkRaw).toBe(22_500);
+    expect(legacyCpu.passmarkSource).toBe('PassMark');
+
+    const clearedCpu = await updateAdminLegacyCpu(
+      legacyCpu.id,
+      { passmarkRaw: null, passmarkSource: null },
+      db,
+    );
+    expect(clearedCpu.passmarkRaw).toBeNull();
+    expect(clearedCpu.passmarkSource).toBeNull();
+
+    const legacyGpu = await createAdminGpuSeries(
+      {
+        kind: 'legacy',
+        name: 'NVIDIA Legacy Bench GPU',
+        vendor: 'nvidia',
+        vramGb: 10,
+        tbpW: 320,
+        passmarkRaw: 24_800,
+        passmarkSource: 'PassMark G3D',
+      },
+      db,
+    );
+    expect(legacyGpu.passmarkRaw).toBe(24_800);
+    expect(legacyGpu.passmarkSource).toBe('PassMark G3D');
+
+    const updatedLegacyGpu = await updateAdminGpuSeries(
+      legacyGpu.id,
+      { passmarkRaw: 25_100 },
+      db,
+    );
+    expect(updatedLegacyGpu.passmarkRaw).toBe(25_100);
+    expect(updatedLegacyGpu.passmarkSource).toBe('PassMark G3D');
+
+    const clearedLegacyGpu = await updateAdminGpuSeries(
+      legacyGpu.id,
+      { passmarkRaw: null },
+      db,
+    );
+    expect(clearedLegacyGpu.passmarkRaw).toBeNull();
+    expect(clearedLegacyGpu.passmarkSource).toBeNull();
+
+    await expect(
+      updateAdminGpuSeries('gs-rtx-5090', { passmarkRaw: null }, db),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR', status: 400 });
   });
 });

@@ -16,8 +16,17 @@ import { listLocalMusicTracks, parseMusicTrackFilename } from '@/server/services
 import { compareProducts } from '@/server/services/compare.service';
 import { getPerfPerPriceRanking } from '@/server/services/perf-per-price.service';
 import { estimatePsu, getPsuOptions } from '@/server/services/psu.service';
+import { getComboRecommendations } from '@/server/services/combo-advisor.service';
+import {
+  getUpgradeOptions,
+  getUpgradeRecommendations,
+} from '@/server/services/upgrade-advisor.service';
 import { suggestProducts } from '@/server/services/search.service';
-import { createAdminGpuSeries } from '@/server/services/admin-catalog.service';
+import {
+  createAdminGpuSeries,
+  updateAdminGpuSeries,
+  updateAdminLegacyCpu,
+} from '@/server/services/admin-catalog.service';
 import { closeTestDb, getTestDb, resetAndSeedTestDb } from '../../helpers/test-db';
 
 let db: DbClient;
@@ -68,9 +77,12 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     expect(emptyCategory.items).toEqual([]);
     expect(emptyCategory.facets.priceRange).toBeNull();
 
-    // GPU listing supports filtering Limited Edition while keeping all 71 in the All tab
+    // GPU listing supports filtering Limited Edition and exact seriesId while keeping all 71 in the All tab
     const allGpus = await listProducts({ category: 'gpu' }, db);
     expect(allGpus.total).toBe(71);
+    const series5060 = await listProducts({ category: 'gpu', seriesId: 'gs-rtx-5060' }, db);
+    expect(series5060.total).toBeGreaterThan(0);
+    expect(series5060.items.every((g) => !g.name.toLowerCase().includes('5060 ti'))).toBe(true);
     const limitedGpus = await listProducts({ category: 'gpu', limitedEdition: true }, db);
     expect(limitedGpus.total).toBe(8);
     expect(limitedGpus.items.every((g) => g.isLimitedEdition)).toBe(true);
@@ -269,5 +281,98 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     } finally {
       await rm(tmpDir, { recursive: true, force: true });
     }
+  });
+
+  it('computes distinct smart combos, handles under-budget threshold, and respects vendor filters', async () => {
+    const comboResult = await getComboRecommendations(
+      { budgetVnd: 20_000_000, purpose: 'gaming_aaa' },
+      db,
+    );
+    expect(comboResult.combos.length).toBeGreaterThanOrEqual(2);
+    expect(comboResult.combos.length).toBeLessThanOrEqual(3);
+    const gpuSeriesSet = new Set(comboResult.combos.map((c) => c.gpu.seriesId));
+    expect(gpuSeriesSet.size).toBe(comboResult.combos.length);
+    expect(comboResult.notes.length).toBe(3);
+
+    const vendorFiltered = await getComboRecommendations(
+      {
+        budgetVnd: 25_000_000,
+        purpose: 'work_ai',
+        cpuVendor: 'amd',
+        gpuVendor: 'nvidia',
+      },
+      db,
+    );
+    expect(vendorFiltered.combos.length).toBeGreaterThan(0);
+    expect(
+      vendorFiltered.combos.every((c) => c.cpu.vendor === 'amd' && c.gpu.vendor === 'nvidia'),
+    ).toBe(true);
+
+    const tooLow = await getComboRecommendations(
+      { budgetVnd: 5_000_000, purpose: 'esport' },
+      db,
+    );
+    expect(tooLow.combos).toEqual([]);
+    expect(tooLow.minAvailableComboPriceVnd).toBeGreaterThan(5_000_000);
+    expect(tooLow.cheapestReferenceCombo).not.toBeNull();
+  });
+
+  it('lists upgrade options and computes CPU/GPU upgrades for both store and legacy hardware', async () => {
+    const options = await getUpgradeOptions(undefined, db);
+    expect(options.cpus.some((c) => c.id === 'store:cpu-intel-core-i5-12400f' && c.hasPassmark)).toBe(true);
+    expect(options.cpus.some((c) => c.id === 'legacy:C19')).toBe(true);
+    expect(options.gpus.some((g) => g.id === 'gs-rtx-5060')).toBe(true);
+    expect(options.gpus.some((g) => g.id === 'G13')).toBe(true);
+
+    // Store CPU LGA1700 -> same-socket + platform-swap separation
+    const storeCpuUpgrade = await getUpgradeRecommendations(
+      { category: 'cpu', current: 'store:cpu-intel-core-i5-12400f' },
+      db,
+    );
+    expect(storeCpuUpgrade.hasSameSocketInCatalog).toBe(true);
+    expect(storeCpuUpgrade.sameSocketCpus.length).toBeGreaterThan(0);
+    expect(storeCpuUpgrade.sameSocketCpus.length).toBeLessThanOrEqual(3);
+    expect(storeCpuUpgrade.sameSocketCpus.every((c) => c.sameSocket)).toBe(true);
+    expect(storeCpuUpgrade.platformSwapCpus.length).toBeLessThanOrEqual(3);
+    expect(storeCpuUpgrade.platformSwapCpus.every((c) => !c.sameSocket)).toBe(true);
+
+    // Legacy CPU without PassMark degrades cleanly -> notes include missingPassmarkNote & upliftPct null
+    const legacyNoScore = await getUpgradeRecommendations(
+      { category: 'cpu', current: 'legacy:C19' },
+      db,
+    );
+    expect(legacyNoScore.current.hasPassmark).toBe(false);
+    expect(legacyNoScore.platformSwapCpus.length).toBeGreaterThan(0);
+    expect(legacyNoScore.platformSwapCpus.length).toBeLessThanOrEqual(3);
+    expect(legacyNoScore.platformSwapCpus.every((c) => c.upliftPct === null)).toBe(true);
+    expect(legacyNoScore.notes[0]).toContain('PassMark');
+
+    // Populate legacy CPU & legacy GPU PassMark via admin service and verify real +10% uplift & warnings
+    await updateAdminLegacyCpu('C19', { passmarkRaw: 21500, passmarkSource: 'PassMark' }, db);
+    const legacyWithScore = await getUpgradeRecommendations(
+      { category: 'cpu', current: 'legacy:C19', sort: 'uplift_desc' },
+      db,
+    );
+    expect(legacyWithScore.current.hasPassmark).toBe(true);
+    expect(legacyWithScore.platformSwapCpus.length).toBeLessThanOrEqual(3);
+    expect(legacyWithScore.platformSwapCpus.every((c) => (c.upliftPct ?? 0) >= 10)).toBe(true);
+
+    await updateAdminGpuSeries('G13', { passmarkRaw: 17000, passmarkSource: 'PassMark' }, db);
+    const legacyGpuUpgrade = await getUpgradeRecommendations(
+      { category: 'gpu', current: 'G13', sort: 'price_asc' },
+      db,
+    );
+    expect(legacyGpuUpgrade.current.vramGb).toBe(12);
+    expect(legacyGpuUpgrade.gpus.length).toBe(3);
+    const rtx5060 = legacyGpuUpgrade.gpus.find((g) => g.seriesId === 'gs-rtx-5060');
+    expect(rtx5060?.warnings.some((w) => w.code === 'gpu_vram_decrease')).toBe(true);
+
+    // Unknown or invalid current throws NOT_FOUND 404
+    await expect(
+      getUpgradeRecommendations({ category: 'cpu', current: 'legacy:C9999' }, db),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+    await expect(
+      getUpgradeRecommendations({ category: 'gpu', current: 'gs-missing' }, db),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
   });
 });

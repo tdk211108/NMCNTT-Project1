@@ -142,6 +142,9 @@ describe('Seed datasets and Drizzle schema integrity', () => {
     for (const cpu of LEGACY_CPU_SEEDS) {
       expect(cpu.id).toMatch(LEGACY_CPU_ID_REGEX);
       expect(cpu.sourceUrl).toMatch(/^https?:\/\//);
+      if (cpu.passmarkRaw != null) {
+        expect(Number.isInteger(cpu.passmarkRaw) && cpu.passmarkRaw > 0).toBe(true);
+      }
       const parsed = adminLegacyCpuInputSchema.safeParse({
         name: cpu.name,
         vendor: cpu.vendor,
@@ -149,6 +152,8 @@ describe('Seed datasets and Drizzle schema integrity', () => {
         coresTotal: cpu.coresTotal,
         threadsTotal: cpu.threadsTotal,
         psuPowerW: cpu.psuPowerW,
+        passmarkRaw: cpu.passmarkRaw ?? null,
+        passmarkSource: cpu.passmarkSource ?? null,
       });
       expect(parsed.success, `Legacy CPU ${cpu.id} failed Zod validation`).toBe(true);
     }
@@ -156,12 +161,17 @@ describe('Seed datasets and Drizzle schema integrity', () => {
     for (const gpu of LEGACY_GPU_SERIES_SEEDS) {
       expect(gpu.id).toMatch(/^G[0-9]{2,4}$/);
       expect(gpu.sourceUrl).toMatch(/^https?:\/\//);
+      if (gpu.passmarkRaw != null) {
+        expect(Number.isInteger(gpu.passmarkRaw) && gpu.passmarkRaw > 0).toBe(true);
+      }
       const parsed = adminGpuSeriesInputSchema.safeParse({
         kind: 'legacy',
         name: gpu.name,
         vendor: gpu.vendor,
         vramGb: gpu.vramGb,
         tbpW: gpu.tbpW,
+        passmarkRaw: gpu.passmarkRaw ?? null,
+        passmarkSource: gpu.passmarkSource ?? null,
       });
       expect(parsed.success, `Legacy GPU ${gpu.id} failed Zod validation`).toBe(true);
     }

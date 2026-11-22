@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import toast from 'react-hot-toast';
+import { showToast } from '@/components/ui/toast-store';
 import { ApiClientError, apiFetch } from '@/lib/api-client';
 import { formatDateTimeVi, formatExactWatts, formatNumberVi, formatVnd } from '@/lib/format';
 import { buildPageMetadata } from '@/lib/metadata';
 import { matchesSearchTokens, normalizeSearchText } from '@/lib/search-filter';
-import {
-  createValidatedLocalPersistStorage,
-  safeLocalStorage,
-  safeSessionStorage,
-} from '@/lib/safe-storage';
+import { createValidatedLocalPersistStorage, safeLocalStorage, safeSessionStorage } from '@/lib/safe-storage';
 import {
   DEFAULT_THEME_MODE,
   THEME_STORAGE_KEY,
@@ -15,6 +13,16 @@ import {
   getThemeInitScript,
   parseStoredTheme,
 } from '@/lib/theme';
+import {
+  DEFAULT_UI_SFX_ENABLED,
+  UI_SFX_STORAGE_KEY,
+  getUiSfxServerSnapshot,
+  parseStoredUiSfx,
+  playUiSound,
+  readUiSfxEnabled,
+  setUiSfxEnabled,
+  warmUiAudio,
+} from '@/lib/ui-sound';
 import { useCartStore } from '@/features/cart/store';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { cartStoredStateSchema, compareStoredStateSchema } from '@/shared/schemas';
@@ -190,5 +198,47 @@ describe('client cart store', () => {
 
     expect(getThemeInitScript()).toContain(THEME_STORAGE_KEY);
     expect(getThemeInitScript()).toContain('meta[name="color-scheme"]');
+  });
+
+  it('defaults UI click SFX to ON, persists toggle state, and safely no-ops without AudioContext', () => {
+    expect(DEFAULT_UI_SFX_ENABLED).toBe(true);
+    expect(getUiSfxServerSnapshot()).toBe(true);
+    expect(parseStoredUiSfx(null)).toBe(true);
+    expect(parseStoredUiSfx('on')).toBe(true);
+    expect(parseStoredUiSfx('off')).toBe(false);
+    expect(parseStoredUiSfx('false')).toBe(false);
+
+    const backing = new Map<string, string>();
+    const fakeStorage = {
+      getItem: (k: string) => backing.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        backing.set(k, v);
+      },
+    };
+
+    expect(readUiSfxEnabled(fakeStorage)).toBe(true);
+    setUiSfxEnabled(false, { storage: fakeStorage });
+    expect(backing.get(UI_SFX_STORAGE_KEY)).toBe('off');
+    expect(readUiSfxEnabled(fakeStorage)).toBe(false);
+
+    setUiSfxEnabled(true, { storage: fakeStorage });
+    expect(backing.get(UI_SFX_STORAGE_KEY)).toBe('on');
+    expect(readUiSfxEnabled(fakeStorage)).toBe(true);
+
+    expect(() => warmUiAudio()).not.toThrow();
+    expect(() => playUiSound('click', { force: true })).not.toThrow();
+    expect(() => playUiSound('toggle', { force: true })).not.toThrow();
+    expect(() => playUiSound('success', { force: true })).not.toThrow();
+    expect(() => playUiSound('modal', { force: true })).not.toThrow();
+  });
+
+  it('dispatches all toast tones through react-hot-toast safely in Node', () => {
+    expect(() => {
+      showToast('Thông tin', 'info');
+      showToast('Thành công', 'success');
+      showToast('Cảnh báo', 'warning');
+      showToast('Lỗi', 'error');
+      toast.removeAll();
+    }).not.toThrow();
   });
 });
