@@ -41,7 +41,7 @@ function emptySeriesForm(kind: GpuSeriesKind): GpuSeriesFormState {
     memoryType: '',
     busWidthBit: '',
     passmarkRaw: '',
-    passmarkSource: 'PassMark',
+    passmarkSource: kind === 'retail' ? 'PassMark' : '',
   };
 }
 
@@ -60,7 +60,7 @@ function seriesFormFromItem(item: AdminGpuSeriesItem): GpuSeriesFormState {
     memoryType: item.memoryType ?? '',
     busWidthBit: item.busWidthBit !== null ? String(item.busWidthBit) : '',
     passmarkRaw: item.passmarkRaw !== null ? String(item.passmarkRaw) : '',
-    passmarkSource: item.passmarkSource ?? 'PassMark',
+    passmarkSource: item.passmarkSource ?? (item.kind === 'retail' ? 'PassMark' : ''),
   };
 }
 
@@ -85,7 +85,9 @@ export function useAdminGpuSeriesController() {
         vramGb: Number(current.vramGb),
         tbpW: Number(current.tbpW),
       };
-      const retailFields =
+      const legacyPassmarkTrimmed = current.passmarkRaw.trim();
+      const legacySourceTrimmed = current.passmarkSource.trim();
+      const kindSpecificFields =
         current.kind === 'retail'
           ? {
               cores: Number(current.cores),
@@ -96,12 +98,16 @@ export function useAdminGpuSeriesController() {
               passmarkRaw: Number(current.passmarkRaw),
               passmarkSource: current.passmarkSource || 'PassMark',
             }
-          : {};
+          : {
+              passmarkRaw: legacyPassmarkTrimmed === '' ? null : Number(legacyPassmarkTrimmed),
+              passmarkSource:
+                legacyPassmarkTrimmed === '' ? null : legacySourceTrimmed || 'PassMark',
+            };
 
       if (current.mode === 'create') {
         return apiFetch<AdminGpuSeriesItem>('/api/admin/gpu-series', {
           method: 'POST',
-          json: { kind: current.kind, ...common, ...retailFields },
+          json: { kind: current.kind, ...common, ...kindSpecificFields },
         });
       }
 
@@ -109,7 +115,7 @@ export function useAdminGpuSeriesController() {
         `/api/admin/gpu-series/${encodeURIComponent(current.editingId!)}`,
         {
           method: 'PATCH',
-          json: { ...common, ...retailFields },
+          json: { ...common, ...kindSpecificFields },
         },
       );
     },
@@ -119,6 +125,8 @@ export function useAdminGpuSeriesController() {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
       await queryClient.invalidateQueries({ queryKey: ['products'] });
       await queryClient.invalidateQueries({ queryKey: ['psu'] });
+      await queryClient.invalidateQueries({ queryKey: ['upgrade'] });
+      await queryClient.invalidateQueries({ queryKey: ['combo'] });
       showToast(VI_MESSAGES.admin.saveSuccessToast, 'success');
     },
     onError: (err) => handleAdminApiError(err, invalidateSession),
@@ -132,6 +140,8 @@ export function useAdminGpuSeriesController() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'gpu-series'] });
       await queryClient.invalidateQueries({ queryKey: ['psu'] });
+      await queryClient.invalidateQueries({ queryKey: ['upgrade'] });
+      await queryClient.invalidateQueries({ queryKey: ['combo'] });
       showToast(VI_MESSAGES.admin.deleteSuccessToast, 'success');
     },
     onError: (err) => handleAdminApiError(err, invalidateSession),

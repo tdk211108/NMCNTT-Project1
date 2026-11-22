@@ -95,6 +95,8 @@ export interface AdminLegacyCpuItem {
   coresTotal: number | null;
   threadsTotal: number | null;
   psuPowerW: number;
+  passmarkRaw: number | null;
+  passmarkSource: string | null;
   isSeed: boolean;
   updatedAt: string;
 }

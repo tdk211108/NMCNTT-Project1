@@ -8,6 +8,7 @@ import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { ResponsiveTableWrapper } from '@/components/ui/Table';
+import { formatNumberVi } from '@/lib/format';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
 import type { GpuVendor } from '@/shared/types';
@@ -21,10 +22,12 @@ export function AdminGpuSeriesView({ state, actions }: AdminGpuSeriesViewProps) 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.admin.navGpuSeries}</h1>
+        <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.admin.navGpuSeries}</h1>
         <div className="flex items-center gap-2">
           <Button
             size="sm"
+            cyber={false}
+            sfx="toggle"
             variant={state.kind === 'retail' ? 'primary' : 'outline'}
             data-testid={TEST_IDS.admin.seriesKindTab('retail')}
             onClick={() => actions.onChangeKind('retail')}
@@ -33,6 +36,8 @@ export function AdminGpuSeriesView({ state, actions }: AdminGpuSeriesViewProps) 
           </Button>
           <Button
             size="sm"
+            cyber={false}
+            sfx="toggle"
             variant={state.kind === 'legacy' ? 'primary' : 'outline'}
             data-testid={TEST_IDS.admin.seriesKindTab('legacy')}
             onClick={() => actions.onChangeKind('legacy')}
@@ -139,7 +144,25 @@ export function AdminGpuSeriesView({ state, actions }: AdminGpuSeriesViewProps) 
                     onChange={(e) => actions.onUpdateField('passmarkSource', e.target.value)}
                   />
                 </>
-              ) : null}
+              ) : (
+                <>
+                  <Input
+                    type="number"
+                    min={1}
+                    label="Điểm PassMark (tùy chọn)"
+                    value={state.form.passmarkRaw}
+                    data-testid={TEST_IDS.admin.seriesLegacyPassmarkInput}
+                    onChange={(e) => actions.onUpdateField('passmarkRaw', e.target.value)}
+                  />
+                  <Input
+                    label="Nguồn PassMark (tùy chọn)"
+                    placeholder="PassMark"
+                    value={state.form.passmarkSource}
+                    data-testid={TEST_IDS.admin.seriesLegacyPassmarkSourceInput}
+                    onChange={(e) => actions.onUpdateField('passmarkSource', e.target.value)}
+                  />
+                </>
+              )}
             </div>
 
             <div className="flex justify-end gap-2">
@@ -171,6 +194,7 @@ export function AdminGpuSeriesView({ state, actions }: AdminGpuSeriesViewProps) 
                 <th className="px-3 py-2.5 font-semibold text-ink-muted">ID</th>
                 <th className="px-3 py-2.5 font-semibold text-ink-muted">Tên dòng GPU</th>
                 <th className="px-3 py-2.5 font-semibold text-ink-muted">VRAM / TBP</th>
+                <th className="px-3 py-2.5 font-semibold text-ink-muted">PassMark</th>
                 <th className="px-3 py-2.5 font-semibold text-ink-muted">Biến thể active</th>
                 <th className="px-3 py-2.5 font-semibold text-ink-muted">Thao tác</th>
               </tr>
@@ -186,6 +210,9 @@ export function AdminGpuSeriesView({ state, actions }: AdminGpuSeriesViewProps) 
                   <td className="px-3 py-2.5 font-medium text-ink">{item.name}</td>
                   <td className="px-3 py-2.5 text-ink-muted">
                     {item.vramGb} GB | {item.tbpW} W
+                  </td>
+                  <td className="px-3 py-2.5 font-mono text-xs text-ink-muted">
+                    {item.passmarkRaw !== null ? formatNumberVi(item.passmarkRaw) : 'Chưa có'}
                   </td>
                   <td className="px-3 py-2.5 text-ink">{item.activeVariantCount}</td>
                   <td className="px-3 py-2.5">

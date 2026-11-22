@@ -33,6 +33,7 @@ export const LANDING_FEATURED_GPU_IDS = [
 ] as const;
 export const CPU_PER_BRAND_PAGE_SIZE = 16;
 export const GPU_PAGE_SIZE = 40;
+export const SEARCH_RESULTS_PAGE_SIZE = 12;
 export const MUSIC_ALLOWED_EXTENSIONS = ['.mp3', '.wav', '.ogg', '.m4a', '.flac', '.webm'] as const;
 export const SEARCH_SUGGEST_MAX_RESULTS = 8;
 export const SEARCH_SUGGEST_MIN_LEN = 2;
@@ -60,6 +61,39 @@ export const MAX_PRICE_VND = 1_000_000_000;
 export const PSU_BASE_SYSTEM_W = 100;
 export const PSU_HEADROOM_FACTOR = 1.25;
 export const PSU_TIERS_W = [450, 550, 650, 750, 850, 1000, 1200] as const;
+
+export const COMBO_MIN_BUDGET_VND = 5_000_000;
+export const COMBO_MAX_BUDGET_VND = 500_000_000;
+export const COMBO_STRETCH_MAX_RATIO = 0.05;
+export const COMBO_STRETCH_MIN_SCORE_GAIN_RATIO = 0.08;
+export const COMBO_MAX_RESULTS = 3;
+export const COMBO_BUDGET_PRESETS_VND = [
+  15_000_000,
+  20_000_000,
+  30_000_000,
+  45_000_000,
+  60_000_000,
+] as const;
+
+export const UPGRADE_MIN_UPLIFT_PCT = 10;
+export const UPGRADE_MAX_RESULTS_PER_GROUP = 3;
+export const UPGRADE_CPU_POWER_WARN_DELTA_W = 40;
+export const UPGRADE_GPU_TBP_HIGH_DELTA_W = 50;
+export const UPGRADE_GPU_TBP_LOW_DELTA_W = 20;
+export const UPGRADE_GPU_LARGE_LENGTH_MM = 300;
+export const UPGRADE_GPU_THICK_SLOT = 3.0;
+export const UPGRADE_CPU_BUDGET_PRESETS_VND = [
+  5_000_000,
+  8_000_000,
+  12_000_000,
+  16_000_000,
+] as const;
+export const UPGRADE_GPU_BUDGET_PRESETS_VND = [
+  10_000_000,
+  15_000_000,
+  25_000_000,
+  40_000_000,
+] as const;
 
 export const RATE_LIMIT_MAX_FAILURES = 5;
 export const RATE_LIMIT_WINDOW_MINUTES = 15;

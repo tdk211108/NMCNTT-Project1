@@ -11,7 +11,7 @@ export type AdminDashboardViewProps = ReturnType<typeof useAdminDashboardControl
 export function AdminDashboardView({ state, actions }: AdminDashboardViewProps) {
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.admin.dashboardTitle}</h1>
+      <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.admin.dashboardTitle}</h1>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link href="/admin/products">
@@ -38,7 +38,7 @@ export function AdminDashboardView({ state, actions }: AdminDashboardViewProps) 
 
       <Card className="flex flex-col gap-4 border-danger/40">
         <div>
-          <h2 className="text-lg font-semibold text-ink">{VI_MESSAGES.admin.resetSectionTitle}</h2>
+          <h2 className="font-display text-lg font-semibold text-ink">{VI_MESSAGES.admin.resetSectionTitle}</h2>
           <p className="mt-1 text-sm text-ink-muted">{VI_MESSAGES.admin.resetSectionDesc}</p>
         </div>
         <div>

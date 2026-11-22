@@ -67,6 +67,8 @@ export interface LegacyCpuSeed {
   coresTotal: number;
   threadsTotal: number;
   psuPowerW: number;
+  passmarkRaw?: number | null;
+  passmarkSource?: string | null;
   sourceUrl: string;
 }
 
@@ -77,5 +79,7 @@ export interface LegacyGpuSeriesSeed {
   vendor: GpuVendor;
   vramGb: number;
   tbpW: number;
+  passmarkRaw?: number | null;
+  passmarkSource?: string | null;
   sourceUrl: string;
 }

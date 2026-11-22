@@ -13,8 +13,15 @@ export const VI_MESSAGES = {
     cpu: 'CPU',
     gpu: 'GPU',
     compare: 'So sánh',
-    perfPerPrice: 'Hiệu năng trên giá',
-    psu: 'Tính công suất PSU',
+    perfPerPrice: 'Hiệu năng/Giá',
+    tools: 'Công cụ',
+    combo: 'Gợi ý Combo',
+    upgrade: 'Tư vấn nâng cấp',
+    psu: 'Tính PSU',
+    comboMenuDesc: 'Chia ngân sách cho cặp CPU và GPU tối ưu nhất.',
+    upgradeMenuDesc: 'Tính mức tăng hiệu năng và cảnh báo tương thích.',
+    psuMenuDesc: 'Ước tính công suất nguồn khuyến nghị an toàn.',
+    compareMenuDesc: 'Đặt tối đa 3 mẫu CPU hoặc GPU cạnh nhau để đối chiếu thông số.',
     cart: 'Giỏ hàng',
     orderLookup: 'Tra cứu đơn hàng',
     myOrders: 'Đơn hàng của tôi',
@@ -28,6 +35,11 @@ export const VI_MESSAGES = {
     githubLabel: 'Mã nguồn dự án trên GitHub',
     toggleThemeToLight: 'Chuyển sang giao diện sáng',
     toggleThemeToDark: 'Chuyển sang giao diện tối',
+    sfxShortLabel: 'SFX',
+    sfxOnAria: 'Tắt âm thanh nhấn nút (đang bật)',
+    sfxOffAria: 'Bật âm thanh nhấn nút (đang tắt)',
+    breadcrumbAria: 'Đường dẫn điều hướng',
+    policiesLabel: 'Chính sách cửa hàng',
     musicPlayerAria: 'Trình phát nhạc nền',
     musicPrevAria: 'Bài trước',
     musicPlayAria: 'Phát nhạc',
@@ -109,6 +121,10 @@ export const VI_MESSAGES = {
     compareShortcutDesc: 'Đặt tối đa 3 CPU hoặc 3 GPU cạnh nhau để đối chiếu thông số và hiệu năng.',
     pppShortcutDesc: 'Tìm mẫu linh kiện đạt điểm benchmark cao nhất trong mức ngân sách dự kiến.',
     psuShortcutDesc: 'Ước tính công suất nguồn an toàn cho cấu hình mới hoặc linh kiện đang sử dụng.',
+    comboShortcutDesc:
+      'Nhập tổng ngân sách và mục đích để tìm 3 cặp CPU và GPU cân bằng nhất kèm nguồn ước tính.',
+    upgradeShortcutDesc:
+      'Chọn CPU hoặc GPU đang dùng để xem mức tăng hiệu năng và cảnh báo mainboard, RAM, nguồn.',
   },
   catalog: {
     cpuPageTitle: 'Bộ vi xử lý (CPU)',
@@ -118,6 +134,9 @@ export const VI_MESSAGES = {
     limitedEditionBadge: 'Limited Edition',
     searchResultsTitle: 'Kết quả tìm kiếm',
     searchQueryLabel: 'Từ khóa tìm kiếm',
+    searchTabAll: 'Tất cả',
+    searchTabCpu: 'CPU',
+    searchTabGpu: 'GPU',
     searchEmptyPrompt: 'Nhập từ khóa tối thiểu 2 ký tự để tìm kiếm CPU hoặc GPU.',
     searchNoResults: 'Không tìm thấy sản phẩm nào khớp với từ khóa đã nhập.',
     buyNow: 'Mua ngay',
@@ -127,6 +146,8 @@ export const VI_MESSAGES = {
     compare: 'So sánh',
     compareThisModel: 'So sánh mẫu này',
     calculatePsu: 'Tính công suất PSU',
+    upgradeFromThisModel: 'Tư vấn nâng cấp từ mẫu này',
+    seriesFilterBadge: (seriesName: string) => `Đang lọc biến thể thuộc dòng ${seriesName}`,
     noProductsFound: 'Không tìm thấy sản phẩm phù hợp với bộ lọc hiện tại.',
     sortDefault: 'Mặc định theo hãng',
     sortPriceAsc: 'Giá tăng dần',
@@ -221,6 +242,140 @@ export const VI_MESSAGES = {
       formulaSummary: (cpuW: number, gpuW: number, baseW: number, factor: number) =>
         `Công thức áp dụng: (${cpuW} W CPU + ${gpuW} W GPU + ${baseW} W hệ thống nền) x ${factor}`,
     },
+    combo: {
+      title: 'Gợi ý Combo CPU và GPU theo ngân sách',
+      subtitle:
+        'Hệ thống tự phân bổ ngân sách giữa CPU và GPU theo nhu cầu sử dụng để đề xuất tối đa 3 cấu hình khác biệt.',
+      budgetLabel: 'Tổng ngân sách CPU và GPU (VND)',
+      budgetPresetsLabel: 'Mức ngân sách gợi ý nhanh',
+      purposeLabel: 'Mục đích sử dụng chính',
+      cpuVendorLabel: 'Hãng CPU (tùy chọn)',
+      gpuVendorLabel: 'Hãng GPU (tùy chọn)',
+      allVendorsOption: 'Tất cả',
+      submitLabel: 'Tìm combo tối ưu',
+      invalidBudgetError: 'Ngân sách phải là số nguyên từ 5.000.000 đến 500.000.000 VND.',
+      purposes: {
+        gaming_aaa: {
+          label: 'Gaming AAA',
+          splitHint: 'Ưu tiên khoảng 65% ngân sách cho GPU và VRAM lớn, 35% cho CPU.',
+        },
+        esport: {
+          label: 'Esport',
+          splitHint: 'Chia cân bằng khoảng 50% CPU và 50% GPU cho tốc độ khung hình cao.',
+        },
+        work_ai: {
+          label: 'Làm việc và AI',
+          splitHint: 'Phân bổ khoảng 55% GPU và 45% CPU, ưu tiên VRAM cao cùng GPU NVIDIA CUDA.',
+        },
+      },
+      roleTitle: {
+        best_overall: 'Tối ưu nhất',
+        gpu_focused: 'Thiên về GPU',
+        performance_stretch: 'Nâng tầm hiệu năng',
+        best_value: 'Tiết kiệm hiệu năng cao',
+      },
+      optionLabel: (rank: number, title: string) => `Lựa chọn ${rank}: ${title}`,
+      stretchBadge: (pct: number) => `Vượt nhẹ +${pct}%`,
+      totalPriceLabel: 'Tổng giá cặp linh kiện',
+      withinBudgetDelta: (amountFormatted: string) => `Còn dư ${amountFormatted}`,
+      overBudgetDelta: (amountFormatted: string) => `Vượt ${amountFormatted}`,
+      allocationLabel: (gpuPct: number, cpuPct: number) =>
+        `Tỷ lệ phân bổ thực tế: ${gpuPct}% GPU / ${cpuPct}% CPU`,
+      addBothToCart: 'Thêm cả cặp vào giỏ',
+      calculatePsuAction: 'Tính công suất PSU',
+      viewDetailAction: 'Xem chi tiết',
+      minBudgetTitle: 'Ngân sách hiện tại thấp hơn cặp linh kiện rẻ nhất phù hợp',
+      minBudgetDesc: (minPriceFormatted: string, cpuName: string, gpuName: string) =>
+        `Cặp CPU và GPU rẻ nhất khớp bộ lọc hiện có giá ${minPriceFormatted} (${cpuName} đi kèm ${gpuName}).`,
+      applyMinBudgetButton: 'Đặt ngân sách theo mức tối thiểu này',
+      budgetScopeNote:
+        'Ngân sách và tổng giá trên chỉ tính riêng CPU và GPU bán lẻ tại CoreRaster, chưa bao gồm bo mạch chủ, RAM, nguồn, tản nhiệt và vỏ máy.',
+    },
+    upgrade: {
+      title: 'Tư vấn nâng cấp CPU và GPU',
+      subtitle:
+        'Chọn linh kiện đang sử dụng để đo mức tăng hiệu năng thực tế và kiểm tra cảnh báo tương thích trước khi nâng cấp.',
+      categoryLabel: 'Loại linh kiện cần nâng cấp',
+      currentLabel: 'Linh kiện bạn đang sử dụng',
+      currentCpuPlaceholder: 'Chọn CPU đang dùng (đang bán hoặc đời cũ)',
+      currentGpuPlaceholder: 'Chọn GPU đang dùng (đang bán hoặc đời cũ)',
+      budgetLabel: 'Ngân sách dự kiến (VND, tùy chọn)',
+      budgetPresetsLabel: 'Mức ngân sách gợi ý nhanh',
+      sameSocketLabel: 'Chỉ hiện mẫu cùng socket (không cần đổi mainboard)',
+      sameSocketUnavailableHint:
+        'Socket của CPU đang chọn hiện không còn hàng bán lẻ, nên mọi phương án nâng cấp đều cần đổi nền tảng.',
+      vendorLabel: 'Lọc hãng đề xuất (tùy chọn)',
+      sortLabel: 'Sắp xếp kết quả',
+      submitLabel: 'Tìm phương án nâng cấp',
+      invalidBudgetError: 'Ngân sách dự kiến phải là số nguyên dương.',
+      promptPickCurrent: 'Chọn CPU hoặc GPU bạn đang sử dụng ở trên để xem lộ trình nâng cấp phù hợp.',
+      sortOptions: {
+        recommended: 'Ưu tiên tương thích và hiệu năng',
+        uplift_desc: 'Tăng hiệu năng cao nhất',
+        perf_per_price_desc: 'Hiệu năng trên giá tốt nhất',
+        price_asc: 'Giá từ thấp đến cao',
+      },
+      currentSummaryHeading: 'Cấu hình gốc đang đối chiếu',
+      sourceStoreBadge: 'Đang bán tại cửa hàng',
+      sourceLegacyBadge: 'Linh kiện đời cũ',
+      missingPassmarkBadge: 'Chưa có điểm PassMark đối chiếu',
+      missingPassmarkNote:
+        'Linh kiện gốc chưa có điểm PassMark trong dữ liệu tham khảo nên hệ thống hiển thị theo tương thích và ngân sách, tạm ẩn chỉ số phần trăm tăng hiệu năng.',
+      topTierTitle: 'Linh kiện của bạn đã đạt ngưỡng phân khúc cao nhất',
+      topTierDesc:
+        'Hiện không có mẫu linh kiện bán lẻ nào tại CoreRaster mạnh hơn mẫu đang dùng tối thiểu 10% theo điểm chuẩn PassMark.',
+      budgetTooLowTitle: 'Chưa có mẫu nâng cấp đạt ngưỡng trong mức ngân sách này',
+      budgetTooLowDesc: (minPriceFormatted: string) =>
+        `Mức giá tối thiểu để nâng cấp hiệu năng từ 10% trở lên theo bộ lọc hiện tại là ${minPriceFormatted}.`,
+      clearBudgetButton: 'Xóa giới hạn ngân sách để xem tất cả',
+      emptyFilteredDesc: 'Không tìm thấy mẫu nâng cấp phù hợp với bộ lọc hiện tại.',
+      sameSocketGroupTitle: 'Nâng cấp thẳng cùng socket',
+      sameSocketGroupDesc: 'Giữ nguyên bo mạch chủ hiện tại, không cần thay nền tảng.',
+      sameSocketSectionTag: 'PATH // 01',
+      sameSocketStatusBadge: 'Không cần đổi mainboard',
+      sameSocketChipLabel: 'Cùng socket (Không cần đổi mainboard)',
+      biosUpdateHint: 'Lưu ý kỹ thuật: Nên cập nhật BIOS bo mạch chủ lên phiên bản mới nhất trước khi lắp CPU thế hệ cao hơn.',
+      platformSwapGroupTitle: 'Nâng cấp cần đổi nền tảng',
+      platformSwapGroupDesc: 'Yêu cầu thay bo mạch chủ mới và có thể cần nâng cấp RAM tùy thế hệ.',
+      platformSwapSectionTag: 'PATH // 02',
+      platformSwapStatusBadge: 'Cần đổi mainboard',
+      gpuGroupTitle: 'Các dòng GPU nâng cấp phù hợp',
+      gpuGroupDesc:
+        'Mỗi dòng GPU hiển thị phiên bản AIB có giá tốt nhất làm đại diện kèm đường dẫn xem toàn bộ biến thể.',
+      gpuSectionTag: 'PATH // GPU',
+      gpuStatusBadge: 'Gom nhóm theo dòng GPU',
+      topResultsBadge: (count: number) => `Top ${count} tốt nhất`,
+      upliftBadge: (pct: number) => `+${pct}% hiệu năng`,
+      aibVariantsSummary: (count: number, minPriceFormatted: string) =>
+        `Có ${count} phiên bản AIB từ ${minPriceFormatted}`,
+      viewAibVariantsAction: 'Xem các biến thể AIB',
+      checkPsuAction: 'Kiểm tra PSU',
+      compareDirectAction: 'So sánh trực tiếp',
+      viewDetailAction: 'Xem chi tiết',
+      compatibilityHeading: 'Cảnh báo tương thích và lưu ý kỹ thuật',
+      warnings: {
+        socket_change: (fromSocket: string, toSocket: string) =>
+          fromSocket
+            ? `Cần đổi mainboard từ socket ${fromSocket} sang socket ${toSocket}.`
+            : `Cần sử dụng mainboard tương thích socket ${toSocket}.`,
+        ram_ddr5_required:
+          'Cần nâng cấp sang RAM DDR5 (không tái sử dụng được RAM DDR4 từ nền tảng cũ).',
+        ram_ddr4_or_ddr5:
+          'Có thể tận dụng lại RAM DDR4 nếu chọn mainboard LGA1700 bản DDR4, hoặc nâng cấp lên DDR5.',
+        cpu_power_increase: (deltaW: number, fromW: number, toW: number) =>
+          `Điện năng đỉnh tăng thêm +${deltaW} W (từ ${fromW} W lên ${toW} W), nên kiểm tra lại PSU và tản nhiệt CPU.`,
+        gpu_tbp_high: (deltaW: number, fromW: number, toW: number) =>
+          `Công suất GPU tăng thêm +${deltaW} W (từ ${fromW} W lên ${toW} W), cần kiểm tra lại công suất nguồn PSU.`,
+        gpu_tbp_moderate: (deltaW: number) =>
+          `Công suất tiêu thụ tăng nhẹ +${deltaW} W, nên đối chiếu lại mức dự phòng nguồn.`,
+        gpu_large_size: (lengthMm: number, slotThickness: string) =>
+          `Card kích thước lớn (${lengthMm} mm, dày ${slotThickness} slot), cần kiểm tra không gian vỏ case.`,
+        gpu_vram_decrease: (fromGb: number, toGb: number) =>
+          `Dung lượng VRAM giảm từ ${fromGb} GB xuống ${toGb} GB dù hiệu năng xử lý tăng, cần cân nhắc nếu làm việc AI hoặc chơi game độ phân giải cao.`,
+        gpu_vram_increase: (fromGb: number, toGb: number, deltaGb: number) =>
+          `Tăng dung lượng VRAM từ ${fromGb} GB lên ${toGb} GB (+${deltaGb} GB).`,
+      },
+    },
   },
   cart: {
     title: 'Giỏ hàng của bạn',
@@ -258,6 +413,9 @@ export const VI_MESSAGES = {
     note: 'Ghi chú giao hàng (không bắt buộc)',
     selectProvincePlaceholder: 'Chọn Tỉnh / Thành phố',
     selectWardPlaceholder: 'Chọn Phường / Xã / Đặc khu',
+    searchProvincePlaceholder: 'Tìm Tỉnh / Thành phố...',
+    searchWardPlaceholder: 'Tìm Phường / Xã / Đặc khu...',
+    loadingWardsPlaceholder: 'Đang tải danh sách Phường / Xã...',
     paymentMethod: 'Phương thức thanh toán',
     paymentMethods: {
       cod: 'Thanh toán khi nhận hàng (COD)',

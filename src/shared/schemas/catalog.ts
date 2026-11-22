@@ -1,9 +1,13 @@
 import { z } from 'zod';
 import {
+  COMBO_MAX_BUDGET_VND,
+  COMBO_MIN_BUDGET_VND,
+  MAX_PRICE_VND,
   PRODUCT_ID_MAX_LEN,
   PRODUCT_ID_REGEX,
   SEARCH_SUGGEST_MAX_LEN,
   SEARCH_SUGGEST_MIN_LEN,
+  SERIES_ID_REGEX,
 } from '../constants';
 
 export const productIdSchema = z
@@ -52,6 +56,7 @@ export const productListQuerySchema = z
     vramGb: z.array(z.number().int().positive()).optional(),
     aibBrand: z.array(z.string().trim().min(1).max(40)).optional(),
     socket: z.array(z.string().trim().min(1).max(20)).optional(),
+    seriesId: z.string().trim().regex(SERIES_ID_REGEX).optional(),
     limitedEdition: z.boolean().optional(),
     sort: productSortSchema.optional(),
     q: z.string().trim().max(SEARCH_SUGGEST_MAX_LEN).optional(),
@@ -65,10 +70,19 @@ export const productListQuerySchema = z
         message: 'priceMin must be less than or equal to priceMax',
       });
     }
-    if (val.category === 'cpu' && (val.vramGb?.length || val.aibBrand?.length || val.limitedEdition)) {
+    if (
+      val.category === 'cpu' &&
+      (val.vramGb?.length || val.aibBrand?.length || val.seriesId || val.limitedEdition)
+    ) {
       ctx.addIssue({
         code: 'custom',
-        path: val.vramGb?.length ? ['vramGb'] : val.aibBrand?.length ? ['aibBrand'] : ['limitedEdition'],
+        path: val.vramGb?.length
+          ? ['vramGb']
+          : val.aibBrand?.length
+            ? ['aibBrand']
+            : val.seriesId
+              ? ['seriesId']
+              : ['limitedEdition'],
         message: 'GPU filters are not allowed for CPU category',
       });
     }
@@ -95,3 +109,32 @@ export const psuEstimateQuerySchema = z.object({
   cpu: z.string().trim().min(1),
   gpu: z.string().trim().min(1),
 });
+
+export const comboPurposeSchema = z.enum(['gaming_aaa', 'esport', 'work_ai']);
+
+export const comboQuerySchema = z.object({
+  budgetVnd: z.number().int().min(COMBO_MIN_BUDGET_VND).max(COMBO_MAX_BUDGET_VND),
+  purpose: comboPurposeSchema.default('gaming_aaa'),
+  cpuVendor: z.enum(['intel', 'amd']).optional(),
+  gpuVendor: z.enum(['nvidia', 'amd']).optional(),
+});
+
+export const upgradeSortSchema = z.enum([
+  'recommended',
+  'uplift_desc',
+  'perf_per_price_desc',
+  'price_asc',
+]);
+
+export const upgradeQuerySchema = z
+  .object({
+    category: categorySchema,
+    current: z.string().trim().min(1).max(120),
+    budgetVnd: z.number().int().positive().max(MAX_PRICE_VND).optional(),
+    sameSocketOnly: z.boolean().optional(),
+    vendor: z.array(chipVendorSchema).optional(),
+    sort: upgradeSortSchema.optional(),
+  })
+  .superRefine((val, ctx) => {
+    addInvalidVendorIssues(val.category, val.vendor, ctx);
+  });

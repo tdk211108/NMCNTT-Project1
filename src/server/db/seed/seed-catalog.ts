@@ -82,6 +82,8 @@ export async function seedCatalog(
       vendor: s.vendor,
       vramGb: s.vramGb,
       tbpW: s.tbpW,
+      passmarkRaw: s.passmarkRaw ?? null,
+      passmarkSource: s.passmarkRaw != null ? (s.passmarkSource ?? 'PassMark') : null,
       isSeed: true,
     })),
   ]);
@@ -155,6 +157,8 @@ export async function seedCatalog(
       coresTotal: c.coresTotal,
       threadsTotal: c.threadsTotal,
       psuPowerW: c.psuPowerW,
+      passmarkRaw: c.passmarkRaw ?? null,
+      passmarkSource: c.passmarkRaw != null ? (c.passmarkSource ?? 'PassMark') : null,
       isSeed: true,
     })),
   );

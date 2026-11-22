@@ -303,6 +303,9 @@ export async function listProducts(
   if (query.socket?.length) {
     conditions.push(inArray(storefrontProductsV.socket, query.socket));
   }
+  if (query.seriesId) {
+    conditions.push(eq(storefrontProductsV.seriesId, query.seriesId));
+  }
   if (query.limitedEdition === true) {
     conditions.push(eq(storefrontProductsV.isLimitedEdition, true));
   }

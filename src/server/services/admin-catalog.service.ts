@@ -168,6 +168,21 @@ async function assertRetailGpuSeriesExists(tx: DbExecutor, seriesId: string): Pr
   }
 }
 
+function resolveOptionalPassmark(
+  nextRaw: number | null,
+  patchSource: string | null | undefined,
+  existingSource: string | null,
+): { passmarkRaw: number | null; passmarkSource: string | null } {
+  if (nextRaw === null) {
+    return { passmarkRaw: null, passmarkSource: null };
+  }
+  const candidateSource = patchSource !== undefined ? patchSource : existingSource;
+  return {
+    passmarkRaw: nextRaw,
+    passmarkSource: candidateSource && candidateSource.length > 0 ? candidateSource : 'PassMark',
+  };
+}
+
 function buildCpuItemFromRow(
   product: typeof products.$inferSelect,
   spec: typeof cpuSpecs.$inferSelect,
@@ -677,6 +692,11 @@ export async function createAdminGpuSeries(
         throw new AppError('VALIDATION_ERROR');
       }
 
+      const legacyPassmark =
+        input.kind === 'legacy'
+          ? resolveOptionalPassmark(input.passmarkRaw ?? null, input.passmarkSource, null)
+          : null;
+
       const [created] = await tx
         .insert(gpuSeries)
         .values(
@@ -704,6 +724,8 @@ export async function createAdminGpuSeries(
                 vendor: input.vendor,
                 vramGb: input.vramGb,
                 tbpW: input.tbpW,
+                passmarkRaw: legacyPassmark?.passmarkRaw ?? null,
+                passmarkSource: legacyPassmark?.passmarkSource ?? null,
                 isSeed: false,
               },
         )
@@ -756,12 +778,19 @@ export async function updateAdminGpuSeries(
           patch.baseClockMhz !== undefined ||
           patch.boostClockMhz !== undefined ||
           patch.memoryType !== undefined ||
-          patch.busWidthBit !== undefined ||
-          patch.passmarkRaw !== undefined ||
-          patch.passmarkSource !== undefined)
+          patch.busWidthBit !== undefined)
       ) {
         throw new AppError('VALIDATION_ERROR', {
           message: 'Dòng GPU tham khảo không sử dụng thông số bán lẻ.',
+        });
+      }
+
+      if (
+        existing.kind === 'retail' &&
+        (patch.passmarkRaw === null || patch.passmarkSource === null)
+      ) {
+        throw new AppError('VALIDATION_ERROR', {
+          details: { fieldErrors: { passmarkRaw: ['passmarkRaw is required for retail series'] } },
         });
       }
 
@@ -783,6 +812,18 @@ export async function updateAdminGpuSeries(
         });
       }
 
+      const nextPassmark =
+        existing.kind === 'retail'
+          ? {
+              passmarkRaw: patch.passmarkRaw ?? existing.passmarkRaw,
+              passmarkSource: patch.passmarkSource ?? existing.passmarkSource,
+            }
+          : resolveOptionalPassmark(
+              patch.passmarkRaw !== undefined ? patch.passmarkRaw : existing.passmarkRaw,
+              patch.passmarkSource,
+              existing.passmarkSource,
+            );
+
       const [updated] = await tx
         .update(gpuSeries)
         .set({
@@ -803,14 +844,8 @@ export async function updateAdminGpuSeries(
             existing.kind === 'retail'
               ? (patch.busWidthBit ?? existing.busWidthBit)
               : existing.busWidthBit,
-          passmarkRaw:
-            existing.kind === 'retail'
-              ? (patch.passmarkRaw ?? existing.passmarkRaw)
-              : existing.passmarkRaw,
-          passmarkSource:
-            existing.kind === 'retail'
-              ? (patch.passmarkSource ?? existing.passmarkSource)
-              : existing.passmarkSource,
+          passmarkRaw: nextPassmark.passmarkRaw,
+          passmarkSource: nextPassmark.passmarkSource,
           updatedAt: sql`now()`,
         })
         .where(eq(gpuSeries.id, seriesId))
@@ -879,14 +914,8 @@ export async function softDeleteAdminGpuSeries(
   });
 }
 
-export async function listAdminLegacyCpus(db: DbClient = getDb()): Promise<AdminLegacyCpuItem[]> {
-  const rows = await db
-    .select()
-    .from(legacyCpus)
-    .where(isNull(legacyCpus.deletedAt))
-    .orderBy(asc(legacyCpus.vendor), asc(legacyCpus.name));
-
-  return rows.map((r) => ({
+function buildLegacyCpuItemFromRow(r: typeof legacyCpus.$inferSelect): AdminLegacyCpuItem {
+  return {
     id: r.id,
     name: r.name,
     vendor: r.vendor,
@@ -894,9 +923,21 @@ export async function listAdminLegacyCpus(db: DbClient = getDb()): Promise<Admin
     coresTotal: r.coresTotal,
     threadsTotal: r.threadsTotal,
     psuPowerW: r.psuPowerW,
+    passmarkRaw: r.passmarkRaw,
+    passmarkSource: r.passmarkSource,
     isSeed: r.isSeed,
     updatedAt: r.updatedAt.toISOString(),
-  }));
+  };
+}
+
+export async function listAdminLegacyCpus(db: DbClient = getDb()): Promise<AdminLegacyCpuItem[]> {
+  const rows = await db
+    .select()
+    .from(legacyCpus)
+    .where(isNull(legacyCpus.deletedAt))
+    .orderBy(asc(legacyCpus.vendor), asc(legacyCpus.name));
+
+  return rows.map(buildLegacyCpuItemFromRow);
 }
 
 export async function createAdminLegacyCpu(
@@ -913,6 +954,12 @@ export async function createAdminLegacyCpu(
         throw new AppError('VALIDATION_ERROR');
       }
 
+      const passmark = resolveOptionalPassmark(
+        input.passmarkRaw ?? null,
+        input.passmarkSource,
+        null,
+      );
+
       const [created] = await tx
         .insert(legacyCpus)
         .values({
@@ -923,21 +970,13 @@ export async function createAdminLegacyCpu(
           coresTotal: input.coresTotal ?? null,
           threadsTotal: input.threadsTotal ?? null,
           psuPowerW: input.psuPowerW,
+          passmarkRaw: passmark.passmarkRaw,
+          passmarkSource: passmark.passmarkSource,
           isSeed: false,
         })
         .returning();
 
-      return {
-        id: created.id,
-        name: created.name,
-        vendor: created.vendor,
-        socket: created.socket,
-        coresTotal: created.coresTotal,
-        threadsTotal: created.threadsTotal,
-        psuPowerW: created.psuPowerW,
-        isSeed: created.isSeed,
-        updatedAt: created.updatedAt.toISOString(),
-      };
+      return buildLegacyCpuItemFromRow(created);
     });
   } catch (error) {
     throwIfUniqueViolation(error);
@@ -976,6 +1015,12 @@ export async function updateAdminLegacyCpu(
         });
       }
 
+      const nextPassmark = resolveOptionalPassmark(
+        patch.passmarkRaw !== undefined ? patch.passmarkRaw : existing.passmarkRaw,
+        patch.passmarkSource,
+        existing.passmarkSource,
+      );
+
       const [updated] = await tx
         .update(legacyCpus)
         .set({
@@ -985,22 +1030,14 @@ export async function updateAdminLegacyCpu(
           coresTotal: nextCores,
           threadsTotal: nextThreads,
           psuPowerW: patch.psuPowerW ?? existing.psuPowerW,
+          passmarkRaw: nextPassmark.passmarkRaw,
+          passmarkSource: nextPassmark.passmarkSource,
           updatedAt: sql`now()`,
         })
         .where(eq(legacyCpus.id, legacyId))
         .returning();
 
-      return {
-        id: updated.id,
-        name: updated.name,
-        vendor: updated.vendor,
-        socket: updated.socket,
-        coresTotal: updated.coresTotal,
-        threadsTotal: updated.threadsTotal,
-        psuPowerW: updated.psuPowerW,
-        isSeed: updated.isSeed,
-        updatedAt: updated.updatedAt.toISOString(),
-      };
+      return buildLegacyCpuItemFromRow(updated);
     });
   } catch (error) {
     throwIfUniqueViolation(error);

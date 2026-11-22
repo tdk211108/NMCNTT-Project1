@@ -23,6 +23,7 @@ export interface ProductListQuery {
   vramGb?: number[];
   aibBrand?: string[];
   socket?: string[];
+  seriesId?: string;
   limitedEdition?: boolean;
   sort?: ProductSort;
   q?: string;

@@ -23,10 +23,12 @@ export function AdminProductsView({ state, actions }: AdminProductsViewProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.admin.navProducts}</h1>
+        <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.admin.navProducts}</h1>
         <div className="flex items-center gap-2">
           <Button
             size="sm"
+            cyber={false}
+            sfx="toggle"
             variant={state.category === 'cpu' ? 'primary' : 'outline'}
             data-testid={TEST_IDS.admin.productCategoryTab('cpu')}
             onClick={() => actions.onChangeCategory('cpu')}
@@ -35,6 +37,8 @@ export function AdminProductsView({ state, actions }: AdminProductsViewProps) {
           </Button>
           <Button
             size="sm"
+            cyber={false}
+            sfx="toggle"
             variant={state.category === 'gpu' ? 'primary' : 'outline'}
             data-testid={TEST_IDS.admin.productCategoryTab('gpu')}
             onClick={() => actions.onChangeCategory('gpu')}

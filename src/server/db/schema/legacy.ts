@@ -4,6 +4,7 @@ import { isNull, sql } from 'drizzle-orm';
 import {
   boolean,
   check,
+  integer,
   pgTable,
   smallint,
   text,
@@ -22,6 +23,8 @@ export const legacyCpus = pgTable(
     coresTotal: smallint('cores_total'),
     threadsTotal: smallint('threads_total'),
     psuPowerW: smallint('psu_power_w').notNull(),
+    passmarkRaw: integer('passmark_raw'),
+    passmarkSource: text('passmark_source'),
     isSeed: boolean('is_seed').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -33,6 +36,7 @@ export const legacyCpus = pgTable(
     check('legacy_cpus_cores_chk', sql`${t.coresTotal} > 0`),
     check('legacy_cpus_threads_chk', sql`${t.threadsTotal} > 0`),
     check('legacy_cpus_psu_power_chk', sql`${t.psuPowerW} > 0`),
+    check('legacy_cpus_passmark_chk', sql`${t.passmarkRaw} > 0`),
     uniqueIndex('legacy_cpus_active_name_uq').on(sql`lower(${t.name})`).where(isNull(t.deletedAt)),
   ],
 );

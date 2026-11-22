@@ -62,7 +62,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             const active = pathname === item.href;
             return (
               <Link key={item.href} href={item.href} data-testid={item.testId}>
-                <Button size="sm" variant={active ? 'primary' : 'outline'}>
+                <Button size="sm" cyber={false} sfx="toggle" variant={active ? 'primary' : 'outline'}>
                   {item.label}
                 </Button>
               </Link>

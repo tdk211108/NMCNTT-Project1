@@ -18,6 +18,8 @@ export interface LegacyCpuFormState {
   coresTotal: string;
   threadsTotal: string;
   psuPowerW: string;
+  passmarkRaw: string;
+  passmarkSource: string;
 }
 
 function emptyLegacyCpuForm(): LegacyCpuFormState {
@@ -30,6 +32,8 @@ function emptyLegacyCpuForm(): LegacyCpuFormState {
     coresTotal: '',
     threadsTotal: '',
     psuPowerW: '',
+    passmarkRaw: '',
+    passmarkSource: '',
   };
 }
 
@@ -43,6 +47,8 @@ function legacyFormFromItem(item: AdminLegacyCpuItem): LegacyCpuFormState {
     coresTotal: item.coresTotal !== null ? String(item.coresTotal) : '',
     threadsTotal: item.threadsTotal !== null ? String(item.threadsTotal) : '',
     psuPowerW: String(item.psuPowerW),
+    passmarkRaw: item.passmarkRaw !== null ? String(item.passmarkRaw) : '',
+    passmarkSource: item.passmarkSource ?? '',
   };
 }
 
@@ -60,6 +66,8 @@ export function useAdminLegacyCpusController() {
 
   const saveMutation = useMutation({
     mutationFn: async (current: LegacyCpuFormState) => {
+      const passmarkTrimmed = current.passmarkRaw.trim();
+      const sourceTrimmed = current.passmarkSource.trim();
       const payload = {
         name: current.name,
         vendor: current.vendor,
@@ -67,6 +75,8 @@ export function useAdminLegacyCpusController() {
         coresTotal: current.coresTotal.trim() === '' ? null : Number(current.coresTotal),
         threadsTotal: current.threadsTotal.trim() === '' ? null : Number(current.threadsTotal),
         psuPowerW: Number(current.psuPowerW),
+        passmarkRaw: passmarkTrimmed === '' ? null : Number(passmarkTrimmed),
+        passmarkSource: passmarkTrimmed === '' ? null : sourceTrimmed || 'PassMark',
       };
       if (current.mode === 'create') {
         return apiFetch<AdminLegacyCpuItem>('/api/admin/legacy-cpus', {
@@ -86,6 +96,7 @@ export function useAdminLegacyCpusController() {
       setForm(null);
       await queryClient.invalidateQueries({ queryKey: ['admin', 'legacy-cpus'] });
       await queryClient.invalidateQueries({ queryKey: ['psu'] });
+      await queryClient.invalidateQueries({ queryKey: ['upgrade'] });
       showToast(VI_MESSAGES.admin.saveSuccessToast, 'success');
     },
     onError: (err) => handleAdminApiError(err, invalidateSession),
@@ -99,6 +110,7 @@ export function useAdminLegacyCpusController() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'legacy-cpus'] });
       await queryClient.invalidateQueries({ queryKey: ['psu'] });
+      await queryClient.invalidateQueries({ queryKey: ['upgrade'] });
       showToast(VI_MESSAGES.admin.deleteSuccessToast, 'success');
     },
     onError: (err) => handleAdminApiError(err, invalidateSession),

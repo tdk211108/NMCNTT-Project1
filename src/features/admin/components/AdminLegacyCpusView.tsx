@@ -8,6 +8,7 @@ import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { ResponsiveTableWrapper } from '@/components/ui/Table';
+import { formatNumberVi } from '@/lib/format';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
 import type { CpuVendor } from '@/shared/types';
@@ -21,7 +22,7 @@ export function AdminLegacyCpusView({ state, actions }: AdminLegacyCpusViewProps
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.admin.navLegacyCpus}</h1>
+        <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.admin.navLegacyCpus}</h1>
         <Button
           size="sm"
           variant="secondary"
@@ -80,6 +81,21 @@ export function AdminLegacyCpusView({ state, actions }: AdminLegacyCpusViewProps
                 value={state.form.threadsTotal}
                 onChange={(e) => actions.onUpdateField('threadsTotal', e.target.value)}
               />
+              <Input
+                type="number"
+                min={1}
+                label="Điểm PassMark (tùy chọn)"
+                value={state.form.passmarkRaw}
+                data-testid={TEST_IDS.admin.legacyCpuPassmarkInput}
+                onChange={(e) => actions.onUpdateField('passmarkRaw', e.target.value)}
+              />
+              <Input
+                label="Nguồn PassMark (tùy chọn)"
+                placeholder="PassMark"
+                value={state.form.passmarkSource}
+                data-testid={TEST_IDS.admin.legacyCpuPassmarkSourceInput}
+                onChange={(e) => actions.onUpdateField('passmarkSource', e.target.value)}
+              />
             </div>
 
             <div className="flex justify-end gap-2">
@@ -112,6 +128,7 @@ export function AdminLegacyCpusView({ state, actions }: AdminLegacyCpusViewProps
                 <th className="px-3 py-2.5 font-semibold text-ink-muted">Tên CPU</th>
                 <th className="px-3 py-2.5 font-semibold text-ink-muted">Socket / Nhân / Luồng</th>
                 <th className="px-3 py-2.5 font-semibold text-ink-muted">PSU Power</th>
+                <th className="px-3 py-2.5 font-semibold text-ink-muted">PassMark</th>
                 <th className="px-3 py-2.5 font-semibold text-ink-muted">Thao tác</th>
               </tr>
             </thead>
@@ -128,6 +145,9 @@ export function AdminLegacyCpusView({ state, actions }: AdminLegacyCpusViewProps
                     {item.socket ?? ''} | {item.coresTotal ?? '-'}/{item.threadsTotal ?? '-'}
                   </td>
                   <td className="px-3 py-2.5 text-ink">{item.psuPowerW} W</td>
+                  <td className="px-3 py-2.5 font-mono text-xs text-ink-muted">
+                    {item.passmarkRaw !== null ? formatNumberVi(item.passmarkRaw) : 'Chưa có'}
+                  </td>
                   <td className="px-3 py-2.5">
                     <div className="flex gap-2">
                       <Button

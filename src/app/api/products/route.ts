@@ -13,6 +13,7 @@ export const dynamic = 'force-dynamic';
 export const GET = withHandler({}, async (request) => {
   const sp = request.nextUrl.searchParams;
   const rawQ = sp.get('q')?.trim();
+  const rawSeriesId = sp.get('seriesId')?.trim();
   const rawLimited = sp.get('limitedEdition');
   const limitedEdition =
     rawLimited === null
@@ -31,6 +32,7 @@ export const GET = withHandler({}, async (request) => {
     vramGb: parseStrictIntListParam(sp.get('vramGb')),
     aibBrand: parseCommaListParam(sp.get('aibBrand')),
     socket: parseCommaListParam(sp.get('socket')),
+    seriesId: rawSeriesId && rawSeriesId.length > 0 ? rawSeriesId : undefined,
     limitedEdition,
     sort: sp.get('sort') ?? undefined,
     q: rawQ && rawQ.length > 0 ? rawQ : undefined,

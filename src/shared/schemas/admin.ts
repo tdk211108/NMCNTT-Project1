@@ -145,6 +145,14 @@ const gpuSeriesRetailOnlyShape = {
   passmarkSource: z.string().transform(normalizeWhitespaceNfc).default('PassMark'),
 };
 
+const optionalPassmarkRaw = z.number().int().positive().nullable().optional();
+const optionalPassmarkSource = z
+  .string()
+  .transform(normalizeWhitespaceNfc)
+  .pipe(z.string().min(1).max(100))
+  .nullable()
+  .optional();
+
 export const adminGpuSeriesInputSchema = z.discriminatedUnion('kind', [
   z
     .object({
@@ -164,6 +172,8 @@ export const adminGpuSeriesInputSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('legacy'),
     ...gpuSeriesCommonShape,
+    passmarkRaw: optionalPassmarkRaw,
+    passmarkSource: optionalPassmarkSource,
   }),
 ]);
 
@@ -171,7 +181,12 @@ export const adminGpuSeriesPatchSchema = z
   .object({
     ...gpuSeriesCommonShape,
     ...gpuSeriesRetailOnlyShape,
-    passmarkSource: z.string().transform(normalizeWhitespaceNfc).pipe(z.string().min(1)),
+    passmarkRaw: z.number().int().positive().nullable(),
+    passmarkSource: z
+      .string()
+      .transform(normalizeWhitespaceNfc)
+      .pipe(z.string().min(1).max(100))
+      .nullable(),
   })
   .partial()
   .strict();
@@ -183,6 +198,8 @@ const legacyCpuFieldsShape = {
   coresTotal: z.number().int().positive().nullable().optional(),
   threadsTotal: z.number().int().positive().nullable().optional(),
   psuPowerW: z.number().int().positive(),
+  passmarkRaw: optionalPassmarkRaw,
+  passmarkSource: optionalPassmarkSource,
 };
 
 export const adminLegacyCpuInputSchema = z
