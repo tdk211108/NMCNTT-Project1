@@ -5,6 +5,7 @@ import type { DbExecutor } from '../client';
 import { cpuSpecs, gpuSeries, gpuVariants, legacyCpus, products } from '../schema';
 import { RETAIL_GPU_SERIES_SEEDS } from './data/gpu-series';
 import { GPU_VARIANT_SEEDS } from './data/gpu-variants';
+import { SEED_IMAGE_HASHES } from './data/image-versions';
 import { LEGACY_CPU_SEEDS } from './data/legacy-cpus';
 import { LEGACY_GPU_SERIES_SEEDS } from './data/legacy-gpus';
 import { RETAIL_CPU_SEEDS } from './data/retail-cpus';
@@ -37,9 +38,14 @@ export function resolveSeedStorageConfig(override?: Partial<SeedStorageConfig>):
   return { supabaseUrl, bucket };
 }
 
-export function buildSeedImageUrl(imageFile: string, storage: SeedStorageConfig): string {
+export function buildSeedImageUrl(
+  imageFile: string,
+  storage: SeedStorageConfig,
+  versionHash: string | undefined = SEED_IMAGE_HASHES[imageFile],
+): string {
   const baseUrl = storage.supabaseUrl.trim().replace(/\/+$/, '');
-  return `${baseUrl}/storage/v1/object/public/${storage.bucket}/${SEED_IMAGE_PREFIX}${imageFile}`;
+  const rawUrl = `${baseUrl}/storage/v1/object/public/${storage.bucket}/${SEED_IMAGE_PREFIX}${imageFile}`;
+  return versionHash ? `${rawUrl}?v=${versionHash}` : rawUrl;
 }
 
 /**

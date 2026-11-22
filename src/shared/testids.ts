@@ -18,6 +18,9 @@ export const TEST_IDS = {
     musicPrev: 'header-music-prev',
     musicToggle: 'header-music-toggle',
     musicNext: 'header-music-next',
+    musicVolumeToggle: 'header-music-volume-toggle',
+    musicVolumePopover: 'header-music-volume-popover',
+    musicVolumeSlider: 'header-music-volume-slider',
   },
   auth: {
     headerLoginButton: 'auth-header-login',
@@ -172,6 +175,10 @@ export const TEST_IDS = {
   orders: {
     idDisplay: 'order-id-display',
     idCopy: 'order-id-copy',
+    placedModal: 'order-placed-modal',
+    placedContinueShopping: 'order-placed-continue-shopping',
+    placedMyOrders: 'order-placed-my-orders',
+    placedCloseView: 'order-placed-close-view',
     stage: (stage: number) => `order-stage-${stage}`,
     demoAdvance: 'order-demo-advance',
     completedMessage: 'order-completed-message',

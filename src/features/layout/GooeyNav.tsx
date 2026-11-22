@@ -184,12 +184,63 @@ const bezier = (a: number, b: number, c: number, d: number, t: number) => {
 
 const travelEase = (t: number) => 1 - (1 - t) ** 3;
 
-const pillPath = (x: number, y: number, w: number, h: number) => {
-  const r = Math.min(w, h) / 2;
-  return `M${x + r},${y}H${x + w - r}A${r},${r} 0 0 1 ${x + w},${y + r}V${y + h - r}A${r},${r} 0 0 1 ${
-    x + w - r
-  },${y + h}H${x + r}A${r},${r} 0 0 1 ${x},${y + h - r}V${y + r}A${r},${r} 0 0 1 ${x + r},${y}Z`;
-};
+function traceOverlayPath(boxes: Box[], blobs: Blob[], smooth: number, width: number, height: number): string {
+  if (width <= 0 || height <= 0 || (boxes.length === 0 && blobs.length === 0)) {
+    return '';
+  }
+
+  const field = (x: number, y: number) => {
+    let d = 1e5;
+    const merge = (value: number) => {
+      const h = clamp01(0.5 + (0.5 * (value - d)) / smooth);
+      d = value + (d - value) * h - smooth * h * (1 - h);
+    };
+    for (const box of boxes) {
+      const r = Math.min(box.hw, box.hh);
+      const qx = Math.abs(x - box.cx) - box.hw + r;
+      const qy = Math.abs(y - box.cy) - box.hh + r;
+      merge(Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - r);
+    }
+    for (const blob of blobs) {
+      const px = x - blob.x;
+      const py = y - blob.y;
+      const bx = -blob.tx;
+      const by = -blob.ty;
+      const span = bx * bx + by * by;
+      const h = span > 0.0001 ? clamp01((px * bx + py * by) / span) : 0;
+      const value = Math.hypot(px - bx * h, py - by * h) - blob.r;
+      if (value > d + smooth) continue;
+      merge(value);
+    }
+    return d;
+  };
+
+  const step = 2;
+  const parts: string[] = [];
+  const maxY = Math.ceil(height);
+  for (let y = 0; y < maxY; y += 1) {
+    const cy = y + 0.5;
+    let previous = field(0, cy);
+    let start: number | null = previous < 0 ? 0 : null;
+    for (let x = step; x <= width + step; x += step) {
+      const sampleX = Math.min(x, width);
+      const value = field(sampleX, cy);
+      if ((previous < 0) !== (value < 0)) {
+        const cross = x - step + (step * previous) / (previous - value);
+        if (value < 0) start = cross;
+        else if (start !== null) {
+          parts.push(`M${start.toFixed(1)},${y}H${cross.toFixed(1)}V${y + 1}H${start.toFixed(1)}Z`);
+          start = null;
+        }
+      }
+      previous = value;
+    }
+    if (start !== null) {
+      parts.push(`M${start.toFixed(1)},${y}H${width.toFixed(1)}V${y + 1}H${start.toFixed(1)}Z`);
+    }
+  }
+  return parts.join('');
+}
 
 const parseColor = (value: string): number[] => {
   const hexMatch = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(value.trim());
@@ -323,7 +374,8 @@ export function GooeyNav({
   useEffect(() => {
     settingsRef.current = settings;
     engineRef.current?.refresh();
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pillColor, isDark, animationTime, particleCount, gooeyness, wobble, size]);
 
   useIsomorphicLayoutEffect(() => {
     const stage = stageRef.current;
@@ -490,13 +542,12 @@ export function GooeyNav({
         });
       }
 
-      if (activeBox) {
-        overlay.style.clipPath = `path('${pillPath(
-          activeBox.x,
-          activeBox.y,
-          activeBox.w,
-          activeBox.h,
-        )}')`;
+      const traced =
+        boxes.length > 0 || blobs.length > 0
+          ? traceOverlayPath(boxes, blobs, smooth, view.width, view.height)
+          : '';
+      if (traced) {
+        overlay.style.clipPath = `path('${traced}')`;
         overlay.style.visibility = 'visible';
       } else {
         overlay.style.clipPath = 'inset(100%)';
@@ -702,12 +753,50 @@ export function GooeyNav({
 
     const go = (index: number, shouldAnimate: boolean) => {
       if (index === target) return;
-      if (index < 0 || !rects[index] || !shouldAnimate || reduced || target < 0) {
+      if (index < 0 || !rects[index] || !shouldAnimate || reduced) {
         settle(index);
         return;
       }
       const now = performance.now();
+      const hadPrevious = target >= 0;
       target = index;
+
+      if (!hadPrevious) {
+        // Animate entrance from "/" with an inward splash + spring settle onto the clicked nav item.
+        const dest = rects[index];
+        const s = settingsRef.current;
+        const p = pill(index);
+        p.mass = 0.25;
+        p.scale = 0.25;
+        p.velocity = 0;
+
+        const burstCount = Math.min(MAX_DROPS - drops.length, Math.max(6, Math.round(s.particleCount * 0.6)));
+        const win = Math.max(0.12, s.animationTime / 1000) * 0.14;
+        for (let i = 0; i < burstCount; i += 1) {
+          const angle = (Math.PI * 2 * i) / Math.max(1, burstCount) + (Math.random() - 0.5) * 0.4;
+          const dist = Math.max(18, s.spread * 0.72);
+          const drop: Drop = {
+            x: dest.x + dest.w / 2 + Math.cos(angle) * dist,
+            y: dest.y + dest.h / 2 + Math.sin(angle) * Math.min(22, dist * 0.45),
+            vx: 0,
+            vy: 0,
+            mass: 0.75 / Math.max(1, burstCount),
+            size: 0.75 + Math.random() * 0.35,
+            given: 0,
+            source: -1,
+            index,
+            leave: now + Math.random() * win * 1000,
+            emerged: 0,
+            absorbed: 0,
+            state: 'waiting',
+            tint: s.tints.length ? s.tints[Math.floor(Math.random() * s.tints.length)] : null,
+          };
+          drops.push(drop);
+        }
+        wake();
+        return;
+      }
+
       pill(index);
       for (const drop of drops) {
         drop.index = index;
@@ -850,12 +939,13 @@ export function GooeyNav({
           className="pointer-events-none invisible absolute inset-0 z-20 flex flex-wrap items-center gap-0.5 text-primary-fg [clip-path:inset(100%)]"
         >
           {items.map((item) => (
-            <span
-              key={item.href}
-              className={`inline-flex items-center whitespace-nowrap rounded-full font-semibold ${itemPad}`}
-            >
-              {item.label}
-            </span>
+            <div key={item.href} className="flex">
+              <span
+                className={`inline-flex items-center whitespace-nowrap rounded-full font-semibold ${itemPad}`}
+              >
+                {item.label}
+              </span>
+            </div>
           ))}
         </div>
       </div>

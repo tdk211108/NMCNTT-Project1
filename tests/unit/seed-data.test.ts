@@ -1,9 +1,11 @@
-import { readdirSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import * as schema from '@/server/db/schema';
 import { RETAIL_GPU_SERIES_SEEDS } from '@/server/db/seed/data/gpu-series';
 import { GPU_VARIANT_SEEDS } from '@/server/db/seed/data/gpu-variants';
+import { SEED_IMAGE_HASHES } from '@/server/db/seed/data/image-versions';
 import { LEGACY_CPU_SEEDS } from '@/server/db/seed/data/legacy-cpus';
 import { LEGACY_GPU_SERIES_SEEDS } from '@/server/db/seed/data/legacy-gpus';
 import { RETAIL_CPU_SEEDS } from '@/server/db/seed/data/retail-cpus';
@@ -196,10 +198,18 @@ describe('Seed datasets and Drizzle schema integrity', () => {
     ].sort();
 
     expect(diskImages).toEqual(expectedImages);
+    expect(Object.keys(SEED_IMAGE_HASHES).sort()).toEqual(diskImages);
     for (const fileName of diskImages) {
-      const size = statSync(path.join(seedImagesDir, fileName)).size;
+      const filePath = path.join(seedImagesDir, fileName);
+      const size = statSync(filePath).size;
       expect(size).toBeGreaterThan(0);
       expect(size).toBeLessThanOrEqual(MAX_IMAGE_BYTES);
+
+      const expectedHash = createHash('sha256')
+        .update(readFileSync(filePath))
+        .digest('hex')
+        .slice(0, 8);
+      expect(SEED_IMAGE_HASHES[fileName]).toBe(expectedHash);
     }
 
     expect(
@@ -207,6 +217,8 @@ describe('Seed datasets and Drizzle schema integrity', () => {
         supabaseUrl: 'https://demo.supabase.co/',
         bucket: 'product-images',
       }),
-    ).toBe('https://demo.supabase.co/storage/v1/object/public/product-images/seed/cpu-amd-ryzen-7-9800x3d.webp');
+    ).toBe(
+      `https://demo.supabase.co/storage/v1/object/public/product-images/seed/cpu-amd-ryzen-7-9800x3d.webp?v=${SEED_IMAGE_HASHES['cpu-amd-ryzen-7-9800x3d.webp']}`,
+    );
   });
 });

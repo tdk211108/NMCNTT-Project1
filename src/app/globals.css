@@ -532,32 +532,125 @@ dialog::backdrop {
   }
 }
 
-/* Swiper Effect Coverflow stage & fixed-basis slides matching https://swiperjs.com/demos#effect-coverflow */
-.coreraster-coverflow.swiper {
+/* 21st.dev @kedhareswer/focus-pull-carousel layout & motion primitives */
+.fp-root {
+  position: relative;
   width: 100%;
-  padding-top: 2.25rem;
-  padding-bottom: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.15rem;
+  overflow: hidden;
+  outline: none;
 }
 
-.coreraster-coverflow .swiper-wrapper {
-  align-items: stretch;
+.fp-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 24px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  padding-inline: calc(50% - var(--fp-w) / 2);
+  padding-block: 0.75rem;
+  scrollbar-width: none;
+  cursor: grab;
+  touch-action: pan-x pan-y;
 }
 
-.coreraster-coverflow .swiper-slide {
-  width: 244px;
-  height: auto;
+.fp-track::-webkit-scrollbar {
+  display: none;
 }
 
-@media (min-width: 640px) {
-  .coreraster-coverflow .swiper-slide {
-    width: 300px;
+.fp-track[data-drag="1"] {
+  scroll-snap-type: none;
+  cursor: grabbing;
+}
+
+.fp-track[data-anim="1"] {
+  scroll-snap-type: none;
+}
+
+.fp-card {
+  flex: 0 0 var(--fp-w);
+  scroll-snap-align: center;
+  position: relative;
+  will-change: transform, filter, opacity;
+  transform-origin: center;
+}
+
+.fp-meta {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: 1rem;
+  padding-inline: clamp(1rem, 3vw, 2.25rem);
+}
+
+.fp-cap {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.fp-cap > * {
+  display: block;
+  animation: fp-in 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.fp-count {
+  text-align: center;
+}
+
+.fp-nav {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.fp-bar {
+  height: 2px;
+  margin-inline: clamp(1rem, 3vw, 2.25rem);
+  background: var(--color-border);
+  position: relative;
+}
+
+.fp-bar > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 100%;
+  background: var(--color-primary);
+  transform-origin: left;
+  transform: scaleX(var(--fp-p, 0));
+}
+
+@keyframes fp-in {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
   }
 }
 
-:root[data-theme="light"] .coreraster-coverflow .swiper-slide-shadow-left {
-  background-image: linear-gradient(to left, rgba(17, 18, 21, 0.28), rgba(17, 18, 21, 0));
+@media (max-width: 640px) {
+  .fp-meta {
+    grid-template-columns: 1fr auto;
+  }
+
+  .fp-count {
+    display: none;
+  }
 }
 
-:root[data-theme="light"] .coreraster-coverflow .swiper-slide-shadow-right {
-  background-image: linear-gradient(to right, rgba(17, 18, 21, 0.28), rgba(17, 18, 21, 0));
+@media (prefers-reduced-motion: reduce) {
+  .fp-cap > * {
+    animation: none;
+  }
+
+  .fp-track {
+    scroll-behavior: auto;
+  }
 }

@@ -2,6 +2,9 @@
 
 import { useEffect, useLayoutEffect, useRef } from 'react';
 
+export const DEFAULT_IGNORE_CASCADE_SELECTOR =
+  'header, nav, footer, [data-testid="header-floating-nav"], dialog, [role="dialog"], [role="listbox"], [data-no-grid-cascade]';
+
 export interface ShapeGridProps {
   cellSize?: number;
   lineWidth?: number;
@@ -15,6 +18,7 @@ export interface ShapeGridProps {
   trail?: number;
   glow?: number;
   clickCascade?: boolean;
+  ignoreCascadeSelector?: string;
   className?: string;
 }
 
@@ -31,6 +35,7 @@ interface Settings {
   trail: number;
   glow: number;
   clickCascade: boolean;
+  ignoreCascadeSelector: string;
 }
 
 interface Cascade {
@@ -78,6 +83,7 @@ export function ShapeGrid({
   trail = 0.55,
   glow = 0.35,
   clickCascade = true,
+  ignoreCascadeSelector = DEFAULT_IGNORE_CASCADE_SELECTOR,
   className = '',
 }: ShapeGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -97,6 +103,7 @@ export function ShapeGrid({
     trail: Math.max(0.05, trail),
     glow: clamp(glow, 0, 1),
     clickCascade,
+    ignoreCascadeSelector,
   };
   const settingsRef = useRef<Settings>(nextSettings);
 
@@ -114,6 +121,7 @@ export function ShapeGrid({
       trail: Math.max(0.05, trail),
       glow: clamp(glow, 0, 1),
       clickCascade,
+      ignoreCascadeSelector,
     };
     engineRef.current?.redraw();
   });
@@ -360,8 +368,17 @@ export function ShapeGrid({
       return [x, y];
     };
 
+    const isIgnoredTarget = (target: EventTarget | null, selector: string): boolean => {
+      if (!selector || !(target instanceof Element)) return false;
+      return Boolean(target.closest(selector));
+    };
+
     const onMove = (event: PointerEvent) => {
       if (reducedMotion) return;
+      if (isIgnoredTarget(event.target, 'header, [data-testid="header-floating-nav"], dialog, [role="dialog"]')) {
+        state.inside = false;
+        return;
+      }
       const point = pointFrom(event);
       if (point && !state.inside && state.spotPower < 0.02) {
         state.spotX = point[0];
@@ -384,6 +401,7 @@ export function ShapeGrid({
     const onDown = (event: PointerEvent) => {
       const s = settingsRef.current;
       if (reducedMotion || !s.clickCascade) return;
+      if (isIgnoredTarget(event.target, s.ignoreCascadeSelector)) return;
       const point = pointFrom(event);
       if (!point) return;
       state.cascades.push({

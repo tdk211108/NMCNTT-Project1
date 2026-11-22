@@ -2,7 +2,7 @@
 
 import { Combobox } from '@base-ui/react/combobox';
 import { Check, ChevronDown, Search } from 'lucide-react';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useId, useMemo, useState } from 'react';
 import { matchesSearchTokens } from '@/lib/search-filter';
 import { VI_MESSAGES } from '@/shared/messages/vi';
@@ -59,6 +59,7 @@ export function SearchableSelect({
   const triggerId = useId();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const prefersReduced = useReducedMotion();
 
   const { allOptions, selectedOption } = useMemo(() => {
     const flat: InternalOption[] = [];
@@ -138,75 +139,84 @@ export function SearchableSelect({
           />
         </Combobox.Trigger>
 
-        <Combobox.Portal>
+        <Combobox.Portal keepMounted>
           <Combobox.Positioner side="bottom" sideOffset={6} align="start" className="z-50 w-[var(--anchor-width)]">
-            <Combobox.Popup className="mtx-shadow overflow-hidden rounded-card border-2 border-border-strong bg-surface-elevated text-ink outline-none">
-              <motion.div
-                initial={{ opacity: 0, y: -4, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.14, ease: [0.22, 1, 0.36, 1] }}
-                className="flex flex-col"
-              >
-                <div className="flex items-center gap-2 border-b border-border bg-surface p-2">
-                  <Search className="h-4 w-4 shrink-0 text-ink-muted" aria-hidden="true" />
-                  <Combobox.Input
-                    placeholder={searchPlaceholder}
-                    aria-label={searchPlaceholder}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="none"
-                    spellCheck={false}
-                    data-testid={searchTestId}
-                    className="min-h-9 w-full bg-transparent text-sm text-ink placeholder:text-ink-muted focus:outline-none"
-                  />
-                </div>
+            <AnimatePresence>
+              {open ? (
+                <Combobox.Popup
+                  key="combobox-popup"
+                  className="outline-none"
+                  render={
+                    <motion.div
+                      initial={prefersReduced ? false : { opacity: 0, y: -4, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={prefersReduced ? undefined : { opacity: 0, y: -4, scale: 0.97 }}
+                      transition={{ duration: prefersReduced ? 0 : 0.14, ease: [0.22, 1, 0.36, 1] }}
+                      className="mtx-shadow flex flex-col overflow-hidden rounded-card border-2 border-border-strong bg-surface-elevated text-ink"
+                    />
+                  }
+                >
+                  <div className="flex items-center gap-2 border-b border-border bg-surface p-2">
+                    <Search className="h-4 w-4 shrink-0 text-ink-muted" aria-hidden="true" />
+                    <Combobox.Input
+                      placeholder={searchPlaceholder}
+                      aria-label={searchPlaceholder}
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      data-testid={searchTestId}
+                      className="min-h-9 w-full bg-transparent text-sm text-ink placeholder:text-ink-muted focus:outline-none"
+                    />
+                  </div>
 
-                <Combobox.List className="max-h-72 overflow-y-auto p-1">
-                  {filteredGroups.length === 0 ? (
-                    <p className="px-3 py-4 text-center text-sm text-ink-muted">{emptyMessage}</p>
-                  ) : (
-                    filteredGroups.map((group) => (
-                      <Combobox.Group key={group.id} className="mb-1 last:mb-0">
-                        <Combobox.GroupLabel className="px-2.5 py-1 text-xs font-semibold tracking-wide text-ink-muted uppercase">
-                          {group.label}
-                        </Combobox.GroupLabel>
-                        {group.options.map((opt) => {
-                          const itemObj: InternalOption = { ...opt, groupLabel: group.label };
-                          const isSelected = opt.value === value;
-                          return (
-                            <Combobox.Item
-                              key={opt.value}
-                              value={itemObj}
-                              data-testid={optionTestId?.(opt.value)}
-                              className={`flex min-h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-control px-2.5 py-1.5 text-left text-sm outline-none data-[highlighted]:bg-surface-subtle ${
-                                isSelected
-                                  ? 'bg-highlight font-semibold text-highlight-fg'
-                                  : 'text-ink'
-                              }`}
-                            >
-                              <span className="flex min-w-0 items-center gap-2">
-                                <Check
-                                  className={`h-3.5 w-3.5 shrink-0 ${
-                                    isSelected ? 'opacity-100' : 'opacity-0'
-                                  }`}
-                                  aria-hidden="true"
-                                />
-                                <span className="truncate">{opt.label}</span>
-                              </span>
-                              {opt.meta ? (
-                                <span className="shrink-0 font-mono text-xs tabular-nums text-ink-muted">
-                                  {opt.meta}
+                  <Combobox.List className="max-h-72 overflow-y-auto p-1">
+                    {filteredGroups.length === 0 ? (
+                      <p className="px-3 py-4 text-center text-sm text-ink-muted">{emptyMessage}</p>
+                    ) : (
+                      filteredGroups.map((group) => (
+                        <Combobox.Group key={group.id} className="mb-1 last:mb-0">
+                          <Combobox.GroupLabel className="px-2.5 py-1 text-xs font-semibold tracking-wide text-ink-muted uppercase">
+                            {group.label}
+                          </Combobox.GroupLabel>
+                          {group.options.map((opt) => {
+                            const itemObj: InternalOption = { ...opt, groupLabel: group.label };
+                            const isSelected = opt.value === value;
+                            return (
+                              <Combobox.Item
+                                key={opt.value}
+                                value={itemObj}
+                                data-testid={optionTestId?.(opt.value)}
+                                className={`flex min-h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-control px-2.5 py-1.5 text-left text-sm outline-none data-[highlighted]:bg-surface-subtle ${
+                                  isSelected
+                                    ? 'bg-highlight font-semibold text-highlight-fg'
+                                    : 'text-ink'
+                                }`}
+                              >
+                                <span className="flex min-w-0 items-center gap-2">
+                                  <Check
+                                    className={`h-3.5 w-3.5 shrink-0 motion-safe:transition-transform ${
+                                      isSelected ? 'scale-100 opacity-100' : 'scale-50 opacity-0'
+                                    }`}
+                                    aria-hidden="true"
+                                  />
+                                  <span className="truncate">{opt.label}</span>
                                 </span>
-                              ) : null}
-                            </Combobox.Item>
-                          );
-                        })}
-                      </Combobox.Group>
-                    ))
-                  )}
-                </Combobox.List>
-              </motion.div>
-            </Combobox.Popup>
+                                {opt.meta ? (
+                                  <span className="shrink-0 font-mono text-xs tabular-nums text-ink-muted">
+                                    {opt.meta}
+                                  </span>
+                                ) : null}
+                              </Combobox.Item>
+                            );
+                          })}
+                        </Combobox.Group>
+                      ))
+                    )}
+                  </Combobox.List>
+                </Combobox.Popup>
+              ) : null}
+            </AnimatePresence>
           </Combobox.Positioner>
         </Combobox.Portal>
       </Combobox.Root>

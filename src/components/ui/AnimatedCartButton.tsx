@@ -1,7 +1,7 @@
 'use client';
 
 import { Check } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { CartPlusIcon } from '@/components/ui/Icons';
 
@@ -32,6 +32,7 @@ export function AnimatedCartButton({
   const [dropSeq, setDropSeq] = useState(0);
   const dropTimerRef = useRef<number | null>(null);
   const resetTimerRef = useRef<number | null>(null);
+  const prefersReduced = useReducedMotion();
 
   useEffect(() => {
     return () => {
@@ -49,6 +50,15 @@ export function AnimatedCartButton({
     onAdd();
     clearTimers();
     setDropSeq((prev) => prev + 1);
+
+    if (prefersReduced) {
+      setPhase('added');
+      resetTimerRef.current = window.setTimeout(() => {
+        setPhase('idle');
+      }, 900);
+      return;
+    }
+
     setPhase('dropping');
 
     dropTimerRef.current = window.setTimeout(() => {
@@ -76,7 +86,7 @@ export function AnimatedCartButton({
       whileTap={{ scale: 0.91 }}
       onClick={handleClick}
       className={`mtx-shadow-sm relative inline-flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-control border-2 p-0 font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal ${sizeClass} ${
-        phase === 'added' ? 'border-success bg-success/15 text-success' : baseTone
+        phase === 'added' ? 'border-success bg-highlight text-highlight-fg' : baseTone
       } ${className}`}
     >
       {phase === 'dropping' ? (
@@ -90,37 +100,39 @@ export function AnimatedCartButton({
         />
       ) : null}
 
-      <AnimatePresence mode="wait" initial={false}>
-        {phase === 'added' ? (
-          <motion.span
-            key="added"
-            initial={{ opacity: 0, scale: 0.5, rotate: -25 }}
-            animate={{ opacity: 1, scale: 1.05, rotate: 0 }}
-            exit={{ opacity: 0, scale: 0.65 }}
-            transition={{ type: 'spring', stiffness: 460, damping: 20 }}
-            className="inline-flex items-center justify-center"
-          >
-            <Check className={size === 'detail' ? 'h-5 w-5' : 'h-4 w-4'} aria-hidden="true" />
-          </motion.span>
-        ) : (
-          <motion.span
-            key={`cart-${dropSeq}`}
-            animate={
-              phase === 'dropping'
-                ? {
-                    rotate: [0, -14, 8, 0],
-                    y: [0, 3, -1, 0],
-                    scale: [1, 1.15, 0.95, 1],
-                  }
-                : { rotate: 0, y: 0, scale: 1 }
-            }
-            transition={{ duration: 0.36, ease: 'easeOut' }}
-            className="inline-flex items-center justify-center"
-          >
-            <CartPlusIcon className={size === 'detail' ? 'h-5 w-5' : 'h-4 w-4'} />
-          </motion.span>
-        )}
-      </AnimatePresence>
+      <span className="relative z-10 inline-flex items-center justify-center">
+        <AnimatePresence mode="wait" initial={false}>
+          {phase === 'added' ? (
+            <motion.span
+              key="added"
+              initial={{ opacity: 0, scale: 0.5, rotate: -25 }}
+              animate={{ opacity: 1, scale: 1.05, rotate: 0 }}
+              exit={{ opacity: 0, scale: 0.65 }}
+              transition={{ type: 'spring', stiffness: 460, damping: 20 }}
+              className="inline-flex items-center justify-center"
+            >
+              <Check className={size === 'detail' ? 'h-5 w-5' : 'h-4 w-4'} aria-hidden="true" />
+            </motion.span>
+          ) : (
+            <motion.span
+              key={`cart-${dropSeq}`}
+              animate={
+                phase === 'dropping'
+                  ? {
+                      rotate: [0, -14, 8, 0],
+                      y: [0, 3, -1, 0],
+                      scale: [1, 1.15, 0.95, 1],
+                    }
+                  : { rotate: 0, y: 0, scale: 1 }
+              }
+              transition={{ duration: 0.36, ease: 'easeOut' }}
+              className="inline-flex items-center justify-center"
+            >
+              <CartPlusIcon className={size === 'detail' ? 'h-5 w-5' : 'h-4 w-4'} />
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </span>
     </motion.button>
   );
 }

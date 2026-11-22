@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { useId } from 'react';
 
 export interface SpectrumLoaderProps {
@@ -18,7 +18,7 @@ const CORERASTER_SPECTRUM_COLORS = [
   '#E11D48',
   '#F59E0B',
   '#B91C1C',
-  '#F8FAFC',
+  '#FB7185',
 ] as const;
 
 /**
@@ -36,6 +36,7 @@ export function SpectrumLoader({
   const uid = useId().replace(/:/g, '');
   const maskId = `cr-mask-${uid}`;
   const glowId = `cr-glow-${uid}`;
+  const prefersReduced = useReducedMotion();
 
   return (
     <span
@@ -86,8 +87,12 @@ export function SpectrumLoader({
               stroke="white"
               strokeWidth={strokeWidth}
               pathLength="1.025"
-              animate={{ strokeDashoffset: [1.05, 2.1, 3.15] }}
-              transition={{ duration, repeat: Infinity, ease: 'easeInOut', times: [0, 0.5, 1] }}
+              animate={prefersReduced ? undefined : { strokeDashoffset: [1.05, 2.1, 3.15] }}
+              transition={
+                prefersReduced
+                  ? undefined
+                  : { duration, repeat: Infinity, ease: 'easeInOut', times: [0, 0.5, 1] }
+              }
               style={{ strokeDasharray: '1.05' }}
             />
           </mask>
@@ -104,8 +109,12 @@ export function SpectrumLoader({
         />
 
         <motion.g
-          animate={{ rotate: -360 }}
-          transition={{ duration: duration * 1.5, repeat: Infinity, ease: 'linear' }}
+          animate={prefersReduced ? undefined : { rotate: -360 }}
+          transition={
+            prefersReduced
+              ? undefined
+              : { duration: duration * 1.5, repeat: Infinity, ease: 'linear' }
+          }
           style={{ transformOrigin: 'center', transformBox: 'fill-box' }}
           filter={glow ? `url(#${glowId})` : undefined}
         >

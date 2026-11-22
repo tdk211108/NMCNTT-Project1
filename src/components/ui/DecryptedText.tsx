@@ -22,7 +22,12 @@ export interface DecryptedTextProps {
   speed?: number;
   maxIterations?: number;
   sequential?: boolean;
-  revealDirection?: 'start' | 'end' | 'center';
+  revealDirection?: 'start' | 'end' | 'center' | 'random';
+  useOriginalCharsOnly?: boolean;
+  animateOn?: 'mount' | 'view' | 'hover' | 'inViewHover' | 'click';
+  effect?: 'scramble' | 'fade' | 'flip';
+  loop?: boolean;
+  loopDelay?: number;
   characters?: string;
   className?: string;
   encryptedClassName?: string;
@@ -78,16 +83,41 @@ function advance(font: string, glyph: string): number {
   return width;
 }
 
+function buildRevealOrder(
+  chars: readonly string[],
+  revealDirection: 'start' | 'end' | 'center' | 'random',
+): number[] {
+  const order = chars.map((c, idx) => (isSpace(c) ? -1 : idx)).filter((idx) => idx >= 0);
+  if (revealDirection === 'end') return order.reverse();
+  if (revealDirection === 'center') {
+    const mid = Math.floor(chars.length / 2);
+    return order.sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid));
+  }
+  if (revealDirection === 'random') {
+    for (let i = order.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+  }
+  return order;
+}
+
 /**
- * React Bits DecryptedText with Canvas glyph-advance stabilization, sequential fade sweep,
- * ROG Crimson scramble tinting, and local pointer `hoverRadius` decryption ripples.
+ * React Bits DecryptedText with synchronous pre-paint mask initialization (zero SSR flash),
+ * Canvas glyph-advance stabilization, sequential fade/scramble sweep, ROG Crimson tinting,
+ * IntersectionObserver view trigger, and local pointer `hoverRadius` decryption ripples.
  */
 export function DecryptedText({
   text,
-  speed = 40,
+  speed = 50,
   maxIterations = 12,
   sequential = true,
   revealDirection = 'start',
+  useOriginalCharsOnly = false,
+  animateOn = 'view',
+  effect = 'fade',
+  loop = false,
+  loopDelay = 2000,
   characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/_#%',
   className = '',
   encryptedClassName = 'text-accent-ink',
@@ -95,7 +125,11 @@ export function DecryptedText({
   hoverRadius = 56,
 }: DecryptedTextProps) {
   const chars = useMemo(() => Array.from(String(text ?? '')), [text]);
-  const pool = useMemo(() => Array.from(characters), [characters]);
+  const pool = useMemo(() => {
+    const letters = chars.filter((c) => !isSpace(c));
+    const source = useOriginalCharsOnly ? Array.from(new Set(letters)) : Array.from(characters);
+    return source.length > 0 ? source : letters;
+  }, [chars, characters, useOriginalCharsOnly]);
   const step = Math.max(16, speed);
 
   const [frame, setFrame] = useState<Frame>(() => ({
@@ -114,12 +148,18 @@ export function DecryptedText({
   const pointerRef = useRef<Point | null>(null);
   const queueRef = useRef<number[] | null>(null);
   const timerRef = useRef<number | null>(null);
+  const loopTimerRef = useRef<number | null>(null);
   const fontRef = useRef<FontMetrics | null>(null);
+  const playedRef = useRef(false);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const node = containerRef.current;
-    if (!node || typeof window === 'undefined') return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!node || typeof window === 'undefined') return undefined;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+
+    const startsHidden = animateOn === 'mount' || animateOn === 'view' || animateOn === 'inViewHover' || animateOn === 'click';
+    const hoverable = animateOn === 'hover' || animateOn === 'inViewHover' || hoverRadius > 0;
+    const isFading = effect === 'fade';
 
     const fit = (index: number, glyph: string): number => {
       if (!fontRef.current) fontRef.current = readFont(node);
@@ -153,12 +193,12 @@ export function DecryptedText({
         } else if (!hidden) {
           const level = Math.min(1, hot * 1.5);
           next.tint.push(level);
-          next.dim.push(1 - (1 - FADE_FLOOR) * level);
+          next.dim.push(isFading ? 1 - (1 - FADE_FLOOR) * level : 1);
         } else {
           const rank = ranks?.get(idx);
           const lift = rank === undefined ? ramp : Math.max(0, 1 - rank / FADE_LEAD);
           next.tint.push(1);
-          next.dim.push(FADE_FLOOR + (FADE_PEAK - FADE_FLOOR) * lift);
+          next.dim.push(isFading ? FADE_FLOOR + (FADE_PEAK - FADE_FLOOR) * lift : 1);
         }
       });
 
@@ -170,6 +210,16 @@ export function DecryptedText({
         window.clearInterval(timerRef.current);
         timerRef.current = null;
       }
+    };
+
+    const measure = () => {
+      const box = node.getBoundingClientRect();
+      centersRef.current = chars.map((char, idx) => {
+        const cell = cellsRef.current[idx];
+        if (isSpace(char) || !cell) return null;
+        const rect = cell.getBoundingClientRect();
+        return { x: rect.left - box.left + rect.width / 2, y: rect.top - box.top + rect.height / 2 };
+      });
     };
 
     let iter = 0;
@@ -198,6 +248,16 @@ export function DecryptedText({
       return active;
     };
 
+    const startReveal = () => {
+      iter = 0;
+      maskRef.current = chars.map((c) => isSpace(c));
+      queueRef.current = buildRevealOrder(chars, revealDirection);
+      paint(0);
+      if (timerRef.current === null) {
+        timerRef.current = window.setInterval(tick, step);
+      }
+    };
+
     const tick = () => {
       iter += 1;
       if (queueRef.current) {
@@ -207,49 +267,62 @@ export function DecryptedText({
             maskRef.current = maskRef.current.slice();
             maskRef.current[idx] = true;
           }
-          if (queueRef.current.length === 0) queueRef.current = null;
+          if (queueRef.current.length === 0) {
+            queueRef.current = null;
+          }
         } else if (!sequential && iter >= maxIterations) {
           maskRef.current = chars.map(() => true);
           queueRef.current = null;
         }
       }
+
       const warmActive = hoverRadius > 0 ? warm() : false;
       paint(iter);
+
       if (!queueRef.current && !warmActive) {
         stopTicker();
+        if (loop) {
+          if (loopTimerRef.current !== null) window.clearTimeout(loopTimerRef.current);
+          loopTimerRef.current = window.setTimeout(() => {
+            startReveal();
+          }, Math.max(200, loopDelay));
+        }
       }
     };
 
-    const measure = () => {
-      const box = node.getBoundingClientRect();
-      centersRef.current = chars.map((char, idx) => {
-        const cell = cellsRef.current[idx];
-        if (isSpace(char) || !cell) return null;
-        const rect = cell.getBoundingClientRect();
-        return { x: rect.left - box.left + rect.width / 2, y: rect.top - box.top + rect.height / 2 };
-      });
-    };
-
-    // Start initial sequential entrance reveal smoothly on next frame.
-    const order = chars.map((c, idx) => (isSpace(c) ? -1 : idx)).filter((idx) => idx >= 0);
-    if (revealDirection === 'end') order.reverse();
-    if (revealDirection === 'center') {
-      const mid = Math.floor(chars.length / 2);
-      order.sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid));
-    }
-    maskRef.current = chars.map((c) => isSpace(c));
-    queueRef.current = order;
-
-    const kick = window.requestAnimationFrame(() => {
-      measure();
+    if (startsHidden) {
+      maskRef.current = chars.map((c) => isSpace(c));
       paint(0);
-      if (timerRef.current === null) {
-        timerRef.current = window.setInterval(tick, step);
+    }
+
+    let observer: IntersectionObserver | null = null;
+    if (animateOn === 'view' || animateOn === 'inViewHover') {
+      if (typeof IntersectionObserver !== 'undefined') {
+        observer = new IntersectionObserver(
+          (entries) => {
+            if (!playedRef.current && entries.some((entry) => entry.isIntersecting)) {
+              playedRef.current = true;
+              measure();
+              startReveal();
+              observer?.disconnect();
+            }
+          },
+          { threshold: 0.1 },
+        );
+        observer.observe(node);
+      } else {
+        playedRef.current = true;
+        measure();
+        startReveal();
       }
-    });
+    } else if (animateOn === 'mount') {
+      playedRef.current = true;
+      measure();
+      startReveal();
+    }
 
     const onMove = (e: MouseEvent) => {
-      if (hoverRadius <= 0) return;
+      if (!hoverable || hoverRadius <= 0) return;
       if (!pointerRef.current) measure();
       pointerRef.current = { x: e.clientX, y: e.clientY };
       if (timerRef.current === null) {
@@ -261,20 +334,43 @@ export function DecryptedText({
       pointerRef.current = null;
     };
 
+    const onClick = () => {
+      if (animateOn !== 'click') return;
+      measure();
+      startReveal();
+    };
+
     node.addEventListener('mousemove', onMove);
     node.addEventListener('mouseleave', onLeave);
+    if (animateOn === 'click') {
+      node.addEventListener('click', onClick);
+    }
 
     return () => {
-      window.cancelAnimationFrame(kick);
+      observer?.disconnect();
+      if (loopTimerRef.current !== null) window.clearTimeout(loopTimerRef.current);
       stopTicker();
       node.removeEventListener('mousemove', onMove);
       node.removeEventListener('mouseleave', onLeave);
+      node.removeEventListener('click', onClick);
     };
-  }, [chars, pool, step, maxIterations, sequential, revealDirection, hoverRadius]);
+  }, [
+    chars,
+    pool,
+    step,
+    maxIterations,
+    sequential,
+    revealDirection,
+    animateOn,
+    effect,
+    loop,
+    loopDelay,
+    hoverRadius,
+  ]);
 
   useIsomorphicLayoutEffect(() => {
     const node = containerRef.current;
-    if (!node || typeof ResizeObserver === 'undefined') return;
+    if (!node || typeof ResizeObserver === 'undefined') return undefined;
     const observer = new ResizeObserver(() => {
       fontRef.current = readFont(node);
     });

@@ -11,12 +11,12 @@ import {
   Zap,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { CoverflowSlider } from '@/components/ui/CoverflowSlider';
 import { DecryptedText } from '@/components/ui/DecryptedText';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
+import { FocusPullCarousel } from '@/components/ui/FocusPullCarousel';
 import { WIDE_CONTAINER_CLASS } from '@/features/layout/layout-width';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
@@ -51,6 +51,11 @@ export function HomeView({ state, actions }: HomeViewProps) {
   );
   const [videoPlayOverride, setVideoPlayOverride] = useState<boolean | null>(null);
   const [tickerPauseOverride, setTickerPauseOverride] = useState<boolean | null>(null);
+  const [carouselOriginMs, setCarouselOriginMs] = useState<number | null>(null);
+
+  const handleCarouselClockStart = useCallback((originMs: number) => {
+    setCarouselOriginMs((prev) => prev ?? originMs);
+  }, []);
 
   const isVideoPlaying = videoPlayOverride ?? !prefersReduced;
   const isTickerPaused = tickerPauseOverride ?? prefersReduced;
@@ -200,15 +205,19 @@ export function HomeView({ state, actions }: HomeViewProps) {
               <h1 className="font-display text-[clamp(2.35rem,1.4rem+3.8vw,4.85rem)] leading-[1.02] font-bold tracking-tight text-ink uppercase text-balance">
                 <DecryptedText
                   text={VI_MESSAGES.home.heroTitleLine1}
-                  speed={36}
-                  maxIterations={10}
+                  speed={65}
+                  maxIterations={12}
+                  animateOn="view"
+                  effect="fade"
                   hoverRadius={56}
                   className="block"
                 />
                 <DecryptedText
                   text={VI_MESSAGES.home.heroTitleLine2}
-                  speed={40}
-                  maxIterations={12}
+                  speed={105}
+                  maxIterations={16}
+                  animateOn="view"
+                  effect="fade"
                   hoverRadius={56}
                   className="block text-accent-ink"
                 />
@@ -352,7 +361,15 @@ export function HomeView({ state, actions }: HomeViewProps) {
                 </Link>
               </div>
 
-              <CoverflowSlider category="cpu" items={state.cpus} />
+              <FocusPullCarousel
+                category="cpu"
+                items={state.cpus}
+                autoplayMs={2000}
+                phaseOffsetMs={0}
+                clockOriginMs={carouselOriginMs}
+                onClockStart={handleCarouselClockStart}
+                loop
+              />
             </section>
 
             <section
@@ -365,7 +382,7 @@ export function HomeView({ state, actions }: HomeViewProps) {
                   <p className="font-mono text-xs font-bold tracking-widest text-accent-ink">
                     02 // GRAPHICS PROCESSORS
                   </p>
-                  <h2 className="font-display text-2xl font-bold text-ink uppercase">
+                  <h2 className="font-display font-bold text-2xl text-ink uppercase">
                     {VI_MESSAGES.home.featuredGpuTitle}
                   </h2>
                   <p className="text-sm text-ink-muted">{VI_MESSAGES.home.browseGpuDesc}</p>
@@ -378,7 +395,15 @@ export function HomeView({ state, actions }: HomeViewProps) {
                 </Link>
               </div>
 
-              <CoverflowSlider category="gpu" items={state.gpus} />
+              <FocusPullCarousel
+                category="gpu"
+                items={state.gpus}
+                autoplayMs={2000}
+                phaseOffsetMs={1000}
+                clockOriginMs={carouselOriginMs}
+                onClockStart={handleCarouselClockStart}
+                loop
+              />
             </section>
           </div>
         )}

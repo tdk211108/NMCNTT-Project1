@@ -32,6 +32,7 @@ const SORT_OPTIONS: readonly ComboboxSelectOption<ProductSort>[] = [
 export function CatalogView({ state, actions }: CatalogViewProps) {
   const [activeThumb, setActiveThumb] = useState<'min' | 'max'>('max');
   const resultsRef = useRef<HTMLElement>(null);
+  const vendorSectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const title =
     state.category === 'cpu' ? VI_MESSAGES.catalog.cpuPageTitle : VI_MESSAGES.catalog.gpuPageTitle;
@@ -42,8 +43,9 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
   const pageByVendor = state.pageByVendor ?? {};
   const flatPage = state.flatPage ?? 1;
 
-  function scrollResultsIntoView() {
-    resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  function scrollResultsIntoView(target?: HTMLElement | null) {
+    const el = target ?? resultsRef.current;
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   return (
@@ -309,7 +311,13 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
                   pageSize,
                 );
                 return (
-                  <section key={group.vendor} className="flex flex-col gap-3">
+                  <section
+                    key={group.vendor}
+                    ref={(el) => {
+                      vendorSectionRefs.current[group.vendor] = el;
+                    }}
+                    className="flex scroll-mt-24 flex-col gap-3"
+                  >
                     <h2 className="font-display border-b-2 border-border-strong pb-2 text-lg font-bold text-ink">
                       {group.vendor.toUpperCase()} ({group.items.length})
                     </h2>
@@ -330,7 +338,10 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
                       currentPage={pagedGroup.page}
                       totalItems={group.items.length}
                       pageSize={pageSize}
-                      onPageChange={(nextPage) => actions.onChangeVendorPage?.(group.vendor, nextPage)}
+                      onPageChange={(nextPage) => {
+                        actions.onChangeVendorPage?.(group.vendor, nextPage);
+                        scrollResultsIntoView(vendorSectionRefs.current[group.vendor]);
+                      }}
                     />
                   </section>
                 );

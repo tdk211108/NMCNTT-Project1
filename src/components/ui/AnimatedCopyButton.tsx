@@ -1,9 +1,27 @@
 'use client';
 
 import { Check, Copy } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { VI_MESSAGES } from '@/shared/messages/vi';
+
+function copyWithLegacyFallback(text: string): boolean {
+  if (typeof document === 'undefined' || !document.body) return false;
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  let ok = false;
+  try {
+    ok = document.execCommand('copy');
+  } finally {
+    document.body.removeChild(textarea);
+  }
+  return ok;
+}
 
 export interface AnimatedCopyButtonProps {
   textToCopy: string;
@@ -28,6 +46,7 @@ export function AnimatedCopyButton({
 }: AnimatedCopyButtonProps) {
   const [isCopied, setIsCopied] = useState(false);
   const timerRef = useRef<number | null>(null);
+  const prefersReduced = useReducedMotion();
 
   useEffect(() => {
     return () => {
@@ -39,9 +58,14 @@ export function AnimatedCopyButton({
 
   async function handleCopy() {
     try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      let copied = false;
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(textToCopy);
+        copied = true;
+      } else {
+        copied = copyWithLegacyFallback(textToCopy);
       }
+      if (!copied) return;
       setIsCopied(true);
       onCopied?.();
       if (timerRef.current !== null) {
@@ -50,9 +74,12 @@ export function AnimatedCopyButton({
       timerRef.current = window.setTimeout(() => {
         setIsCopied(false);
         timerRef.current = null;
-      }, 1800);
+      }, 2000);
     } catch {
-      // Clipboard write may be denied cleanly in restricted contexts.
+      if (copyWithLegacyFallback(textToCopy)) {
+        setIsCopied(true);
+        onCopied?.();
+      }
     }
   }
 
@@ -75,11 +102,11 @@ export function AnimatedCopyButton({
       aria-label={label ? undefined : isCopied ? copiedLabel : ariaLabel}
       className={`mtx-shadow-sm relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-control border-2 font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal active:translate-x-[1px] active:translate-y-[1px] active:shadow-none ${
         isCopied
-          ? 'border-success bg-success/15 text-success'
+          ? 'border-success bg-highlight text-highlight-fg'
           : 'border-border-strong bg-surface-elevated text-ink hover:border-signal hover:text-accent-ink'
       } ${paddingClasses} ${className}`}
     >
-      <span className="relative flex h-4 w-4 shrink-0 items-center justify-center">
+      <span className="relative z-10 flex h-4 w-4 shrink-0 items-center justify-center">
         <AnimatePresence mode="wait" initial={false}>
           {isCopied ? (
             <motion.span
@@ -107,15 +134,15 @@ export function AnimatedCopyButton({
         </AnimatePresence>
       </span>
 
-      {label ? <span>{isCopied ? copiedLabel : label}</span> : null}
+      {label ? <span className="relative z-10">{isCopied ? copiedLabel : label}</span> : null}
 
-      {isCopied ? (
+      {isCopied && !prefersReduced ? (
         <motion.span
           aria-hidden="true"
-          initial={{ opacity: 0.45, scale: 0.7 }}
-          animate={{ opacity: 0, scale: 1.8 }}
-          transition={{ duration: 0.45, ease: 'easeOut' }}
-          className="pointer-events-none absolute inset-0 rounded-control bg-success/25"
+          initial={{ opacity: 0.5, scale: 1 }}
+          animate={{ opacity: 0, scale: 2 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="pointer-events-none absolute inset-0 z-0 rounded-control bg-success/20"
         />
       ) : null}
     </button>

@@ -51,6 +51,7 @@ export function ProductDetailView({ state, actions }: ProductDetailViewProps) {
           <ProductImage
             src={detail.imageUrl}
             alt={detail.name}
+            loading="eager"
             className="h-full max-h-[460px] w-full object-contain p-2"
           />
         </ZoomableImageFrame>

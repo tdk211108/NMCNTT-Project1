@@ -243,10 +243,10 @@ export function Header() {
     <>
       <header
         ref={staticHeaderRef}
-        className="relative z-20 overflow-x-clip border-b-2 border-border-strong bg-surface"
+        className="relative z-20 border-b-2 border-border-strong bg-surface"
       >
         <div className={`${containerClass} flex flex-col gap-2 py-2.5`}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="relative z-30 flex flex-wrap items-center justify-between gap-2">
             <BrandMark />
             <HeaderActions
               totalCartCount={totalCartCount}
@@ -256,7 +256,7 @@ export function Header() {
             />
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2">
+          <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2">
             <PrimaryNavLinks pathname={pathname} isAdmin={isAdmin} />
             <SearchBar />
           </div>
@@ -268,7 +268,7 @@ export function Header() {
           role="region"
           aria-label="Điều hướng cố định"
           data-testid={TEST_IDS.header.floatingNav}
-          className="mtx-floating-nav hidden overflow-x-clip border-b-2 border-border-strong bg-surface/95 backdrop-blur-sm md:fixed md:inset-x-0 md:top-0 md:z-40 md:block"
+          className="mtx-floating-nav hidden border-b-2 border-border-strong bg-surface/95 backdrop-blur-sm md:fixed md:inset-x-0 md:top-0 md:z-40 md:block"
         >
           <div className={`${containerClass} flex min-h-14 items-center justify-between gap-3 py-1.5`}>
             <BrandMark compact />

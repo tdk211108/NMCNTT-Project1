@@ -232,6 +232,7 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                             <ProductImage
                               src={product.imageUrl}
                               alt={product.name}
+                              loading="eager"
                               testId={TEST_IDS.compare.headerImage(product.id)}
                               className="h-full w-full object-contain p-2"
                             />

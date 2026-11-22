@@ -4,6 +4,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
@@ -63,7 +64,7 @@ function canUseInteractiveZoom(event: ReactPointerEvent<HTMLDivElement>): boolea
 
 /**
  * Lightswind Lens magnifying zoom overlay for large non-thumbnail hardware images.
- * Tracks mouse pointer coordinates over the container without zooming thumbnails.
+ * Drives pointer coordinates via CSS custom properties in rAF to eliminate 60fps re-renders.
  */
 export function ZoomableImageFrame({
   children,
@@ -73,7 +74,6 @@ export function ZoomableImageFrame({
 }: ZoomableImageFrameProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const [isHovering, setIsHovering] = useState(false);
-  const [pointer, setPointer] = useState({ x: 0, y: 0 });
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -84,19 +84,20 @@ export function ZoomableImageFrame({
     };
   }, []);
 
-  function updateCoords(clientX: number, clientY: number) {
+  function writeCssCoords(clientX: number, clientY: number) {
     const frame = frameRef.current;
     if (!frame) return;
     const rect = frame.getBoundingClientRect();
     const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
     const y = Math.max(0, Math.min(rect.height, clientY - rect.top));
-    setPointer({ x, y });
+    frame.style.setProperty('--zoom-x', `${x.toFixed(1)}px`);
+    frame.style.setProperty('--zoom-y', `${y.toFixed(1)}px`);
   }
 
   function handlePointerEnter(event: ReactPointerEvent<HTMLDivElement>) {
     if (!canUseInteractiveZoom(event)) return;
+    writeCssCoords(event.clientX, event.clientY);
     setIsHovering(true);
-    updateCoords(event.clientX, event.clientY);
   }
 
   function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
@@ -107,7 +108,7 @@ export function ZoomableImageFrame({
     }
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = null;
-      updateCoords(clientX, clientY);
+      writeCssCoords(clientX, clientY);
     });
   }
 
@@ -128,6 +129,12 @@ export function ZoomableImageFrame({
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       onPointerCancel={handlePointerLeave}
+      style={
+        {
+          '--zoom-x': '50%',
+          '--zoom-y': '50%',
+        } as CSSProperties
+      }
       className={`zoom-frame-cursor relative overflow-hidden ${className}`}
     >
       <div className="flex h-full w-full items-center justify-center">{children}</div>
@@ -137,15 +144,15 @@ export function ZoomableImageFrame({
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 z-20"
           style={{
-            maskImage: `radial-gradient(circle ${radius}px at ${pointer.x}px ${pointer.y}px, black 98%, transparent 100%)`,
-            WebkitMaskImage: `radial-gradient(circle ${radius}px at ${pointer.x}px ${pointer.y}px, black 98%, transparent 100%)`,
+            maskImage: `radial-gradient(circle ${radius}px at var(--zoom-x) var(--zoom-y), black 98%, transparent 100%)`,
+            WebkitMaskImage: `radial-gradient(circle ${radius}px at var(--zoom-x) var(--zoom-y), black 98%, transparent 100%)`,
           }}
         >
           <div
             className="flex h-full w-full items-center justify-center bg-white"
             style={{
               transform: `scale(${zoomScale})`,
-              transformOrigin: `${pointer.x}px ${pointer.y}px`,
+              transformOrigin: 'var(--zoom-x) var(--zoom-y)',
             }}
           >
             {children}
@@ -160,8 +167,8 @@ export function ZoomableImageFrame({
           style={{
             width: lensSize,
             height: lensSize,
-            left: pointer.x - radius,
-            top: pointer.y - radius,
+            left: `calc(var(--zoom-x) - ${radius}px)`,
+            top: `calc(var(--zoom-y) - ${radius}px)`,
           }}
         />
       ) : null}
