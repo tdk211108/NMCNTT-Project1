@@ -1,5 +1,7 @@
 'use client';
 
+import { Menu } from '@base-ui/react/menu';
+import { ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import {
   useEffect,
@@ -12,10 +14,19 @@ import { useThemeMode } from './useThemeMode';
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
+export interface GooeyNavSubItem {
+  href: string;
+  label: string;
+  description: string;
+  testId?: string;
+}
+
 export interface GooeyNavItem {
   href: string;
   label: string;
   testId?: string;
+  menuTestId?: string;
+  subItems?: readonly GooeyNavSubItem[];
 }
 
 export interface GooeyNavProps {
@@ -323,6 +334,17 @@ function buildPipeline(gl: WebGL2RenderingContext): Pipeline | null {
  * React Bits WebGL2 Gooey Nav adapted with Next.js Links, ROG Crimson dual-theme palette,
  * and semantic <div> markup (zero <ul>/<li> elements). Width hugs content naturally.
  */
+function matchesGooeyItem(item: GooeyNavItem, activeHref: string): boolean {
+  if (item.subItems?.length) {
+    return item.subItems.some(
+      (sub) => activeHref === sub.href || activeHref.startsWith(`${sub.href}/`),
+    );
+  }
+  return item.href === '/'
+    ? activeHref === '/'
+    : activeHref === item.href || activeHref.startsWith(`${item.href}/`);
+}
+
 export function GooeyNav({
   items,
   activeHref,
@@ -334,13 +356,18 @@ export function GooeyNav({
   className = '',
 }: GooeyNavProps) {
   const theme = useThemeMode();
-  const matchedIndex = items.findIndex((item) =>
-    item.href === '/'
-      ? activeHref === '/'
-      : activeHref === item.href || activeHref.startsWith(`${item.href}/`),
-  );
+  const matchedIndex = items.findIndex((item) => matchesGooeyItem(item, activeHref));
   const [optimistic, setOptimistic] = useState<{ href: string; idx: number } | null>(null);
-  const current = optimistic?.href === activeHref ? optimistic.idx : matchedIndex;
+  const [openMenuHref, setOpenMenuHref] = useState<string | null>(null);
+  const openMenuIndex = openMenuHref
+    ? items.findIndex((item) => item.href === openMenuHref)
+    : -1;
+  const current =
+    optimistic?.href === activeHref
+      ? optimistic.idx
+      : openMenuIndex >= 0
+        ? openMenuIndex
+        : matchedIndex;
 
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -909,6 +936,8 @@ export function GooeyNav({
         <div ref={listRef} role="list" className="relative z-10 flex flex-wrap items-center gap-0.5">
           {items.map((item, idx) => {
             const isActive = idx === current;
+            const menuOpen = openMenuHref === item.href;
+
             return (
               <div
                 key={item.href}
@@ -917,17 +946,85 @@ export function GooeyNav({
                 data-active={isActive ? '' : undefined}
                 className="flex"
               >
-                <Link
-                  href={item.href}
-                  data-testid={item.testId}
-                  aria-current={isActive ? 'page' : undefined}
-                  onClick={() => setOptimistic({ href: activeHref, idx })}
-                  className={`inline-flex items-center whitespace-nowrap rounded-full font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-signal ${itemPad} ${
-                    isActive ? 'text-primary-fg' : 'text-ink-muted hover:text-ink'
-                  }`}
-                >
-                  {item.label}
-                </Link>
+                {item.subItems?.length ? (
+                  <Menu.Root
+                    open={menuOpen}
+                    onOpenChange={(nextOpen) => setOpenMenuHref(nextOpen ? item.href : null)}
+                  >
+                    <Menu.Trigger
+                      data-testid={item.testId}
+                      data-sfx="toggle"
+                      className={`inline-flex cursor-pointer items-center gap-1 whitespace-nowrap rounded-full font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-signal ${itemPad} ${
+                        isActive ? 'text-primary-fg' : 'text-ink-muted hover:text-ink'
+                      }`}
+                    >
+                      <span>{item.label}</span>
+                      <ChevronDown
+                        aria-hidden="true"
+                        className={`h-3.5 w-3.5 shrink-0 motion-safe:transition-transform ${
+                          menuOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </Menu.Trigger>
+
+                    <Menu.Portal>
+                      <Menu.Positioner
+                        side="bottom"
+                        sideOffset={8}
+                        align="start"
+                        collisionPadding={12}
+                        className="z-50"
+                      >
+                        <Menu.Popup
+                          data-testid={item.menuTestId}
+                          data-no-grid-cascade=""
+                          className="mtx-shadow w-72 max-w-[calc(100vw-1.5rem)] rounded-card border-2 border-border-strong bg-surface-elevated p-1.5 text-ink outline-none transition-[transform,opacity] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] data-[starting-style]:-translate-y-1 data-[starting-style]:scale-[0.97] data-[starting-style]:opacity-0 data-[ending-style]:-translate-y-1 data-[ending-style]:scale-[0.97] data-[ending-style]:opacity-0 motion-reduce:transition-none"
+                        >
+                          {item.subItems.map((sub) => {
+                            const subActive =
+                              activeHref === sub.href || activeHref.startsWith(`${sub.href}/`);
+                            return (
+                              <Menu.LinkItem
+                                key={sub.href}
+                                closeOnClick
+                                data-testid={sub.testId}
+                                data-sfx="click"
+                                onClick={() => setOptimistic({ href: activeHref, idx })}
+                                render={<Link href={sub.href} />}
+                                className={`flex flex-col gap-0.5 rounded-control border-2 px-3 py-2 text-left transition-colors outline-none data-[highlighted]:border-signal data-[highlighted]:bg-surface-subtle ${
+                                  subActive
+                                    ? 'border-primary bg-highlight text-highlight-fg'
+                                    : 'border-transparent text-ink hover:bg-surface-subtle'
+                                }`}
+                              >
+                                <span className="text-sm font-semibold">{sub.label}</span>
+                                <span
+                                  className={`text-xs ${
+                                    subActive ? 'text-highlight-fg/90' : 'text-ink-muted'
+                                  }`}
+                                >
+                                  {sub.description}
+                                </span>
+                              </Menu.LinkItem>
+                            );
+                          })}
+                        </Menu.Popup>
+                      </Menu.Positioner>
+                    </Menu.Portal>
+                  </Menu.Root>
+                ) : (
+                  <Link
+                    href={item.href}
+                    data-testid={item.testId}
+                    aria-current={isActive ? 'page' : undefined}
+                    onClick={() => setOptimistic({ href: activeHref, idx })}
+                    className={`inline-flex items-center whitespace-nowrap rounded-full font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-signal ${itemPad} ${
+                      isActive ? 'text-primary-fg' : 'text-ink-muted hover:text-ink'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                )}
               </div>
             );
           })}
@@ -941,9 +1038,14 @@ export function GooeyNav({
           {items.map((item) => (
             <div key={item.href} className="flex">
               <span
-                className={`inline-flex items-center whitespace-nowrap rounded-full font-semibold ${itemPad}`}
+                className={`inline-flex items-center whitespace-nowrap rounded-full font-semibold ${
+                  item.subItems?.length ? 'gap-1' : ''
+                } ${itemPad}`}
               >
-                {item.label}
+                <span>{item.label}</span>
+                {item.subItems?.length ? (
+                  <ChevronDown aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                ) : null}
               </span>
             </div>
           ))}

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Card } from '@/components/ui/Card';
+import { PolicyLayout } from '@/features/policies/PolicyLayout';
 import { formatVnd } from '@/lib/format';
 import { buildPageMetadata } from '@/lib/metadata';
 import { FREE_SHIPPING_MIN_QTY, STANDARD_SHIPPING_FEE_VND } from '@/shared/constants';
@@ -12,8 +13,10 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default function PaymentShippingPolicyPage() {
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4">
-      <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.policies.paymentShippingTitle}</h1>
+    <PolicyLayout
+      activePath="/policies/payment-shipping"
+      title={VI_MESSAGES.policies.paymentShippingTitle}
+    >
       <Card className="flex flex-col gap-4 text-sm leading-relaxed text-ink">
         <p>{VI_MESSAGES.policies.paymentShippingBody}</p>
         <table className="w-full border-collapse text-left text-sm">
@@ -22,7 +25,9 @@ export default function PaymentShippingPolicyPage() {
               <th className="bg-surface-subtle px-3 py-2 font-medium text-ink-muted">
                 Đơn có dưới {FREE_SHIPPING_MIN_QTY} sản phẩm
               </th>
-              <td className="px-3 py-2 text-ink">{formatVnd(STANDARD_SHIPPING_FEE_VND)}</td>
+              <td className="px-3 py-2 font-mono tabular-nums text-ink">
+                {formatVnd(STANDARD_SHIPPING_FEE_VND)}
+              </td>
             </tr>
             <tr>
               <th className="bg-surface-subtle px-3 py-2 font-medium text-ink-muted">
@@ -36,6 +41,6 @@ export default function PaymentShippingPolicyPage() {
         </table>
         <p className="text-ink-muted">{VI_MESSAGES.policies.paymentShippingDetails}</p>
       </Card>
-    </div>
+    </PolicyLayout>
   );
 }

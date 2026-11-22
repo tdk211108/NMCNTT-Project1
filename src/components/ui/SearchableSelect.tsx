@@ -29,6 +29,8 @@ export interface SearchableSelectProps {
   emptyMessage?: string;
   disabled?: boolean;
   required?: boolean;
+  error?: string;
+  className?: string;
   triggerTestId?: string;
   searchTestId?: string;
   optionTestId?: (value: string) => string;
@@ -51,12 +53,15 @@ export function SearchableSelect({
   emptyMessage = VI_MESSAGES.common.dropdownEmptySearch,
   disabled = false,
   required = false,
+  error,
+  className = '',
   triggerTestId,
   searchTestId,
   optionTestId,
   onChange,
 }: SearchableSelectProps) {
   const triggerId = useId();
+  const errorId = `${triggerId}-error`;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const prefersReduced = useReducedMotion();
@@ -105,6 +110,7 @@ export function SearchableSelect({
         value={selectedOption}
         open={open}
         onOpenChange={(nextOpen) => {
+          if (disabled && nextOpen) return;
           setOpen(nextOpen);
           if (!nextOpen) {
             setQuery('');
@@ -125,8 +131,12 @@ export function SearchableSelect({
       >
         <Combobox.Trigger
           id={triggerId}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           data-testid={triggerTestId}
-          className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-control border-2 border-border-strong bg-surface px-3 py-2 text-left text-base text-ink transition-colors hover:border-signal focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-signal disabled:cursor-not-allowed disabled:opacity-50"
+          className={`flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-control border-2 bg-surface px-3 py-2 text-left text-base text-ink transition-colors hover:border-signal focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-signal disabled:cursor-not-allowed disabled:opacity-50 ${
+            error ? 'border-danger' : 'border-border-strong'
+          } ${className}`}
         >
           <span className={selectedOption ? 'truncate font-medium text-ink' : 'truncate text-ink-muted'}>
             {selectedOption ? selectedOption.label : placeholder}
@@ -220,6 +230,12 @@ export function SearchableSelect({
           </Combobox.Positioner>
         </Combobox.Portal>
       </Combobox.Root>
+
+      {error ? (
+        <p id={errorId} role="alert" className="text-xs text-danger">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

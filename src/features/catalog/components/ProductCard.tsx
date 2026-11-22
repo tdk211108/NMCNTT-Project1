@@ -105,8 +105,8 @@ export function ProductCard({
         </dl>
       </div>
 
-      <div className="flex flex-col gap-1.5 pt-1">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 pt-2">
+        <div className="flex items-center gap-3">
           <Button
             variant="primary"
             size="sm"

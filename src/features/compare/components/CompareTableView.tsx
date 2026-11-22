@@ -1,5 +1,7 @@
 import { Plus, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
+import { AnimatedCartButton } from '@/components/ui/AnimatedCartButton';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Badge, Card, vendorBadgeVariant } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
@@ -19,15 +21,22 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
 
   return (
     <div className="flex flex-col gap-6">
+      <Breadcrumb
+        items={[
+          { label: VI_MESSAGES.nav.home, href: '/' },
+          { label: VI_MESSAGES.tools.compare.title, href: '/compare' },
+        ]}
+      />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.tools.compare.title}</h1>
           {state.lockedCategory ? (
             <Badge variant="accent">{state.lockedCategory.toUpperCase()}</Badge>
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           {!state.showThirdColumn ? (
             <Button
               variant="outline"
@@ -241,6 +250,27 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
                         <Link href={`/products/${product.id}`} className="hover:text-accent-ink">
                           {product.name}
                         </Link>
+                        <p className="font-mono text-sm font-bold tabular-nums text-accent-ink">
+                          {formatVnd(product.priceVnd)}
+                        </p>
+                        <div className="flex w-full max-w-60 items-center gap-3">
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="min-h-11 flex-1"
+                            data-testid={TEST_IDS.compare.buyNow(product.id)}
+                            onClick={() => actions.onBuyNowProduct(product)}
+                          >
+                            {VI_MESSAGES.catalog.buyNow}
+                          </Button>
+                          <AnimatedCartButton
+                            ariaLabel={VI_MESSAGES.catalog.addToCartAria(product.name)}
+                            title={VI_MESSAGES.catalog.addToCart}
+                            size="card"
+                            testId={TEST_IDS.compare.addToCart(product.id)}
+                            onAdd={() => actions.onAddToCartProduct(product)}
+                          />
+                        </div>
                       </div>
                     </th>
                   ))}

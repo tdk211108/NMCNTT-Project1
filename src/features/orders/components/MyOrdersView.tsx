@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Badge, Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
@@ -54,6 +55,12 @@ export function MyOrdersView({ state, actions }: MyOrdersViewProps) {
 
   return (
     <div className="flex flex-col gap-6">
+      <Breadcrumb
+        items={[
+          { label: VI_MESSAGES.nav.home, href: '/' },
+          { label: VI_MESSAGES.orders.myOrdersTitle, href: '/orders' },
+        ]}
+      />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.orders.myOrdersTitle}</h1>
         <Link href="/orders/lookup">

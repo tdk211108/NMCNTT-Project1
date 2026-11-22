@@ -8,6 +8,7 @@ import { Footer } from './Footer';
 import { Header } from './Header';
 import { InteractiveBackground } from './InteractiveBackground';
 import { getMainContainerClass } from './layout-width';
+import { UiSoundEffects } from './UiSoundEffects';
 import { ZaloButton } from './ZaloButton';
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -16,6 +17,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="relative flex min-h-screen flex-col text-ink">
+      <UiSoundEffects />
       <InteractiveBackground />
       <Header />
       <main className={`${mainClass} relative z-10`}>{children}</main>

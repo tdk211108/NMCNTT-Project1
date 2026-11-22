@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { AnimatedCopyButton } from '@/components/ui/AnimatedCopyButton';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Badge, Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
@@ -339,11 +340,20 @@ export function OrderBoardView({ state, actions }: OrderBoardViewProps) {
   }
 
   return (
-    <OrderBoardPanel
-      board={state.board}
-      isAdvancing={state.isAdvancing}
-      onCopyOrderId={actions.onCopyOrderId}
-      onAdvanceStage={actions.onAdvanceStage}
-    />
+    <div className="flex flex-col gap-6">
+      <Breadcrumb
+        items={[
+          { label: VI_MESSAGES.nav.home, href: '/' },
+          { label: VI_MESSAGES.orders.lookupTitle, href: '/orders/lookup' },
+          { label: state.board.orderId, href: `/orders/${state.board.orderId}` },
+        ]}
+      />
+      <OrderBoardPanel
+        board={state.board}
+        isAdvancing={state.isAdvancing}
+        onCopyOrderId={actions.onCopyOrderId}
+        onAdvanceStage={actions.onAdvanceStage}
+      />
+    </div>
   );
 }

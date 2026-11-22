@@ -94,6 +94,7 @@ export function AnimatedCopyButton({
   return (
     <button
       type="button"
+      data-sfx="success"
       onClick={() => {
         void handleCopy();
       }}

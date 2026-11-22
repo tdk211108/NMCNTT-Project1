@@ -73,7 +73,7 @@ export function ReviewModal({
           </div>
         </div>
 
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button
             variant="secondary"
             disabled={isSubmitting}

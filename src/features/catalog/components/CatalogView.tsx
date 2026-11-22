@@ -2,6 +2,7 @@
 
 import { RotateCcw } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { CatalogPagination } from '@/components/ui/CatalogPagination';
@@ -50,6 +51,13 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
 
   return (
     <div className="flex flex-col gap-6">
+      <Breadcrumb
+        items={[
+          { label: VI_MESSAGES.nav.home, href: '/' },
+          { label: title, href: `/${state.category}` },
+        ]}
+      />
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-ink">{title}</h1>
@@ -73,12 +81,14 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
         <div
           role="tablist"
           aria-label={VI_MESSAGES.catalog.gpuPageTitle}
-          className="flex flex-wrap gap-2 border-b border-border pb-3"
+          className="flex flex-wrap gap-2.5 border-b border-border pb-3"
         >
           <Button
             role="tab"
             aria-selected={!state.limitedOnly}
             size="sm"
+            cyber={false}
+            sfx="toggle"
             variant={!state.limitedOnly ? 'primary' : 'outline'}
             data-testid={TEST_IDS.listing.gpuTabAll}
             onClick={() => actions.onChangeLimitedOnly(false)}
@@ -89,12 +99,25 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
             role="tab"
             aria-selected={state.limitedOnly}
             size="sm"
+            cyber={false}
+            sfx="toggle"
             variant={state.limitedOnly ? 'primary' : 'outline'}
             data-testid={TEST_IDS.listing.gpuTabLimited}
             onClick={() => actions.onChangeLimitedOnly(true)}
           >
             {VI_MESSAGES.catalog.gpuTabLimited}
           </Button>
+          {state.activeSeriesId ? (
+            <Button
+              size="sm"
+              cyber={false}
+              variant="secondary"
+              onClick={actions.onClearFilters}
+            >
+              <span>{VI_MESSAGES.catalog.seriesFilterBadge(state.activeSeriesId)}</span>
+              <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            </Button>
+          ) : null}
         </div>
       ) : null}
 
@@ -108,13 +131,15 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
               <p className="mb-2 text-sm font-semibold text-ink">
                 {VI_MESSAGES.catalog.filterVendorLabel}
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2.5">
                 {state.facets.vendors.map((vendor) => {
                   const active = state.selectedVendors.includes(vendor);
                   return (
                     <Button
                       key={vendor}
                       size="sm"
+                      cyber={false}
+                      sfx="toggle"
                       variant={active ? 'primary' : 'outline'}
                       data-testid={TEST_IDS.listing.filterVendor(vendor)}
                       onClick={() => actions.onToggleVendor(vendor as ChipVendor)}
@@ -209,13 +234,15 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
                 <p className="mb-2 text-sm font-semibold text-ink">
                   {VI_MESSAGES.catalog.filterSocketLabel}
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
                   {state.facets.sockets.map((socket) => {
                     const active = state.selectedSockets.includes(socket);
                     return (
                       <Button
                         key={socket}
                         size="sm"
+                        cyber={false}
+                        sfx="toggle"
                         variant={active ? 'primary' : 'outline'}
                         data-testid={TEST_IDS.listing.filterSocket(socket)}
                         onClick={() => actions.onToggleSocket(socket)}
@@ -233,13 +260,15 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
                 <p className="mb-2 text-sm font-semibold text-ink">
                   {VI_MESSAGES.catalog.filterVramLabel}
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
                   {state.facets.vramGb.map((gb) => {
                     const active = state.selectedVramGb.includes(gb);
                     return (
                       <Button
                         key={gb}
                         size="sm"
+                        cyber={false}
+                        sfx="toggle"
                         variant={active ? 'primary' : 'outline'}
                         data-testid={TEST_IDS.listing.filterVram(gb)}
                         onClick={() => actions.onToggleVram(gb)}
@@ -257,13 +286,15 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
                 <p className="mb-2 text-sm font-semibold text-ink">
                   {VI_MESSAGES.catalog.filterAibLabel}
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
                   {state.facets.aibBrands.map((brand) => {
                     const active = state.selectedAibBrands.includes(brand);
                     return (
                       <Button
                         key={brand}
                         size="sm"
+                        cyber={false}
+                        sfx="toggle"
                         variant={active ? 'primary' : 'outline'}
                         data-testid={TEST_IDS.listing.filterAib(brand)}
                         onClick={() => actions.onToggleAibBrand(brand)}

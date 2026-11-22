@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { AnimatedCopyButton } from '@/components/ui/AnimatedCopyButton';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
@@ -77,6 +78,14 @@ export function PaymentView({ state, actions }: PaymentViewProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
+      <Breadcrumb
+        items={[
+          { label: VI_MESSAGES.nav.home, href: '/' },
+          { label: VI_MESSAGES.cart.title, href: '/cart' },
+          { label: VI_MESSAGES.checkout.title, href: '/checkout' },
+          { label: VI_MESSAGES.checkout.paymentTitle, href: '/checkout/payment' },
+        ]}
+      />
       <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.checkout.paymentTitle}</h1>
 
       <Card className="border-warning bg-surface-subtle text-sm text-warning">

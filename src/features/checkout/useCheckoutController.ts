@@ -146,6 +146,7 @@ export function useCheckoutController() {
   }, [authState.user, form]);
 
   const selectedProvinceCode = useWatch({ control: form.control, name: 'provinceCode' });
+  const selectedWardCode = useWatch({ control: form.control, name: 'wardCode' });
 
   const provincesQuery = useQuery({
     queryKey: ['address', 'provinces', ADDRESS_DATASET_DATE],
@@ -294,6 +295,7 @@ export function useCheckoutController() {
       wards: wardsQuery.data ?? [],
       isLoadingWards: wardsQuery.isLoading,
       selectedProvinceCode,
+      selectedWardCode,
       form,
       isPreparing: prepareMutation.isPending,
       reviewAttempt,
@@ -305,6 +307,9 @@ export function useCheckoutController() {
       onProvinceChange: (provinceCode: string) => {
         form.setValue('provinceCode', provinceCode, { shouldValidate: true });
         form.setValue('wardCode', '', { shouldValidate: false });
+      },
+      onWardChange: (wardCode: string) => {
+        form.setValue('wardCode', wardCode, { shouldValidate: true });
       },
       onSubmitForm: form.handleSubmit(onSubmitForm),
       onCancelReview: () => {

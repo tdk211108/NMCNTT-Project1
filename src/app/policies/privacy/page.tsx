@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Card } from '@/components/ui/Card';
+import { PolicyLayout } from '@/features/policies/PolicyLayout';
 import { buildPageMetadata } from '@/lib/metadata';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 
@@ -10,8 +11,7 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4">
-      <h1 className="text-2xl font-bold text-ink">{VI_MESSAGES.policies.privacyTitle}</h1>
+    <PolicyLayout activePath="/policies/privacy" title={VI_MESSAGES.policies.privacyTitle}>
       <Card className="flex flex-col gap-4 text-sm leading-relaxed text-ink">
         <p>{VI_MESSAGES.policies.privacyIntro}</p>
 
@@ -44,6 +44,6 @@ export default function PrivacyPolicyPage() {
           </tbody>
         </table>
       </Card>
-    </div>
+    </PolicyLayout>
   );
 }

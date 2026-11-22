@@ -224,6 +224,7 @@ export function MusicPlayerBar() {
       {/* Album cover tile + sliding grooved black vinyl record with mr-6 so vinyl never collides with text */}
       <button
         type="button"
+        data-sfx="none"
         disabled={!hasTracks}
         onClick={togglePlayPause}
         aria-label={
@@ -297,6 +298,7 @@ export function MusicPlayerBar() {
       <div className="relative z-10 flex shrink-0 items-center gap-0.5">
         <button
           type="button"
+          data-sfx="none"
           disabled={!hasTracks}
           onClick={() => stepTrack(-1)}
           aria-label={VI_MESSAGES.nav.musicPrevAria}
@@ -308,6 +310,7 @@ export function MusicPlayerBar() {
 
         <button
           type="button"
+          data-sfx="none"
           disabled={!hasTracks}
           onClick={togglePlayPause}
           aria-label={
@@ -326,6 +329,7 @@ export function MusicPlayerBar() {
 
         <button
           type="button"
+          data-sfx="none"
           disabled={!hasTracks}
           onClick={() => stepTrack(1)}
           aria-label={VI_MESSAGES.nav.musicNextAria}
@@ -357,6 +361,7 @@ export function MusicPlayerBar() {
         >
           <button
             type="button"
+            data-sfx="none"
             disabled={!hasTracks}
             onClick={(event) => {
               const isTouchTap =
@@ -392,6 +397,7 @@ export function MusicPlayerBar() {
               >
                 <button
                   type="button"
+                  data-sfx="none"
                   onClick={toggleMute}
                   aria-label={
                     effectiveVolume === 0

@@ -1,6 +1,7 @@
-import { Gauge, Scale } from 'lucide-react';
+import { Gauge, Scale, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { AnimatedCartButton } from '@/components/ui/AnimatedCartButton';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Badge, Card, vendorBadgeVariant } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
@@ -32,16 +33,25 @@ export function ProductDetailView({ state, actions }: ProductDetailViewProps) {
   }
 
   const { detail } = state;
+  const upgradeHref =
+    detail.category === 'cpu'
+      ? `/tools/upgrade?category=cpu&current=${encodeURIComponent(`store:${detail.id}`)}`
+      : detail.series
+        ? `/tools/upgrade?category=gpu&current=${encodeURIComponent(detail.series.id)}`
+        : null;
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="font-mono text-xs text-ink-muted">
-        <Link href={`/${detail.category}`} className="hover:text-ink">
-          {detail.category === 'cpu' ? VI_MESSAGES.nav.cpu : VI_MESSAGES.nav.gpu}
-        </Link>
-        <span className="mx-2">/</span>
-        <span className="text-ink">{detail.name}</span>
-      </div>
+      <Breadcrumb
+        items={[
+          { label: VI_MESSAGES.nav.home, href: '/' },
+          {
+            label: detail.category === 'cpu' ? VI_MESSAGES.nav.cpu : VI_MESSAGES.nav.gpu,
+            href: `/${detail.category}`,
+          },
+          { label: detail.name, href: `/products/${detail.id}` },
+        ]}
+      />
 
       <Card className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <ZoomableImageFrame
@@ -96,8 +106,8 @@ export function ProductDetailView({ state, actions }: ProductDetailViewProps) {
             </dl>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
               <Button
                 variant="primary"
                 size="lg"
@@ -116,7 +126,7 @@ export function ProductDetailView({ state, actions }: ProductDetailViewProps) {
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Button
                 variant="outline"
                 data-testid={TEST_IDS.detail.compareThis}
@@ -134,6 +144,15 @@ export function ProductDetailView({ state, actions }: ProductDetailViewProps) {
                 <span>{VI_MESSAGES.catalog.calculatePsu}</span>
               </Button>
             </div>
+
+            {upgradeHref ? (
+              <Link href={upgradeHref} data-testid={TEST_IDS.detail.upgradeAdvisorLink}>
+                <Button variant="outline" className="w-full">
+                  <TrendingUp className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span>{VI_MESSAGES.catalog.upgradeFromThisModel}</span>
+                </Button>
+              </Link>
+            ) : null}
           </div>
         </div>
       </Card>

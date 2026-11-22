@@ -654,3 +654,310 @@ dialog::backdrop {
     scroll-behavior: auto;
   }
 }
+
+/* Crimson Cyber Cut Buttons (adapted from Uiverse rubyreapergaming/yellow-pug-88) */
+.mtx-cyber-btn {
+  --cyber-offset-x: 4px;
+  --cyber-offset-y: 3px;
+  --cyber-shimmy: 4;
+  --cyber-clip: polygon(
+    10px 0,
+    calc(100% - 8px) 0,
+    100% 10px,
+    calc(100% - 6px) calc(100% - 4px),
+    calc(100% - 18px) calc(100% - 4px),
+    calc(100% - 18px) 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+  --cyber-clip-one: polygon(
+    0 2%,
+    100% 2%,
+    100% 95%,
+    95% 95%,
+    95% 90%,
+    85% 90%,
+    85% 95%,
+    8% 95%,
+    0 70%
+  );
+  --cyber-clip-two: polygon(
+    0 78%,
+    100% 78%,
+    100% 100%,
+    95% 100%,
+    95% 90%,
+    85% 90%,
+    85% 100%,
+    8% 100%,
+    0 78%
+  );
+  --cyber-clip-three: polygon(0 44%, 100% 44%, 100% 54%, 0 54%);
+  --cyber-clip-four: polygon(0 0, 100% 0, 100% 0, 0 0);
+  --cyber-clip-five: polygon(0 0, 100% 0, 100% 0, 0 0);
+  --cyber-clip-six: polygon(0 40%, 100% 40%, 100% 85%, 8% 85%, 0 70%);
+  --cyber-clip-seven: polygon(0 63%, 100% 63%, 100% 80%, 8% 80%, 0 70%);
+  position: relative;
+  isolation: isolate;
+  border-color: transparent;
+  background: transparent;
+}
+
+.mtx-cyber-primary {
+  --cyber-face: var(--color-primary);
+  --cyber-face-hover: var(--color-primary-hover);
+  --cyber-border: var(--color-border-strong);
+  --cyber-plate: #631e29;
+  --cyber-glitch-1: #ff5c66;
+  --cyber-glitch-2: #111215;
+  color: var(--color-primary-fg);
+}
+
+.mtx-cyber-secondary {
+  --cyber-face: var(--color-surface-elevated);
+  --cyber-face-hover: var(--color-surface-subtle);
+  --cyber-border: var(--color-border-strong);
+  --cyber-plate: var(--color-shadow);
+  --cyber-glitch-1: var(--color-signal);
+  --cyber-glitch-2: var(--color-gunmetal);
+  color: var(--color-ink);
+}
+
+.mtx-cyber-outline {
+  --cyber-face: var(--color-surface);
+  --cyber-face-hover: var(--color-surface-subtle);
+  --cyber-border: var(--color-border-strong);
+  --cyber-plate: var(--color-shadow);
+  --cyber-glitch-1: var(--color-signal);
+  --cyber-glitch-2: var(--color-ink-muted);
+  color: var(--color-ink);
+}
+
+:root[data-theme="light"] .mtx-cyber-primary {
+  --cyber-plate: #111215;
+  --cyber-border: #111215;
+  --cyber-glitch-1: #ffe4e6;
+  --cyber-glitch-2: #111215;
+}
+
+.mtx-cyber-btn::before,
+.mtx-cyber-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: var(--cyber-clip);
+  pointer-events: none;
+  transition: transform 100ms var(--ease-out-ui), background-color 140ms var(--ease-out-ui);
+}
+
+.mtx-cyber-btn::before {
+  z-index: -3;
+  background: var(--cyber-plate);
+  transform: translate3d(var(--cyber-offset-x), var(--cyber-offset-y), 0);
+}
+
+.mtx-cyber-btn::after {
+  z-index: -2;
+  background: var(--cyber-border);
+}
+
+.mtx-cyber-face {
+  position: absolute;
+  inset: 2px;
+  clip-path: var(--cyber-clip);
+  background: var(--cyber-face);
+  pointer-events: none;
+  z-index: -1;
+  transition: background-color 140ms var(--ease-out-ui);
+}
+
+.mtx-cyber-btn:hover:not(:disabled) .mtx-cyber-face,
+.mtx-cyber-btn:focus-visible:not(:disabled) .mtx-cyber-face {
+  background: var(--cyber-face-hover);
+}
+
+.mtx-cyber-outline:hover:not(:disabled),
+.mtx-cyber-outline:focus-visible:not(:disabled) {
+  --cyber-border: var(--color-signal);
+  --cyber-plate: var(--color-primary);
+  color: var(--color-accent-ink);
+}
+
+.mtx-cyber-secondary:hover:not(:disabled),
+.mtx-cyber-secondary:focus-visible:not(:disabled) {
+  --cyber-border: var(--color-signal);
+}
+
+.mtx-cyber-primary:hover:not(:disabled),
+.mtx-cyber-primary:focus-visible:not(:disabled) {
+  --cyber-border: var(--color-ink);
+}
+
+.mtx-cyber-btn:active:not(:disabled) {
+  transform: translate3d(var(--cyber-offset-x), var(--cyber-offset-y), 0);
+}
+
+.mtx-cyber-btn:active:not(:disabled)::before {
+  transform: translate3d(0, 0, 0);
+}
+
+.mtx-cyber-tag {
+  position: absolute;
+  top: -2px;
+  right: 12px;
+  z-index: 20;
+  padding: 0 4px;
+  border: 1px solid var(--cyber-border);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.mtx-cyber-glitch {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  user-select: none;
+  text-shadow: 2px 0 var(--cyber-glitch-1), -2px 0 var(--cyber-glitch-2);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mtx-cyber-btn:hover:not(:disabled) .mtx-cyber-glitch,
+  .mtx-cyber-btn:focus-visible:not(:disabled) .mtx-cyber-glitch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    animation: mtx-cyber-glitch 1.8s infinite;
+  }
+}
+
+@keyframes mtx-cyber-glitch {
+  0% {
+    clip-path: var(--cyber-clip-one);
+  }
+  4%,
+  10% {
+    clip-path: var(--cyber-clip-two);
+    transform: translate3d(calc(var(--cyber-shimmy) * -1%), 0, 0);
+  }
+  8% {
+    clip-path: var(--cyber-clip-two);
+    transform: translate3d(calc(var(--cyber-shimmy) * 1%), 0, 0);
+  }
+  12% {
+    clip-path: var(--cyber-clip-three);
+    transform: translate3d(calc(var(--cyber-shimmy) * 1%), 0, 0);
+  }
+  16% {
+    clip-path: var(--cyber-clip-three);
+    transform: translate3d(0, 0, 0);
+  }
+  20%,
+  28% {
+    clip-path: var(--cyber-clip-four);
+    transform: translate3d(calc(var(--cyber-shimmy) * 1%), 0, 0);
+  }
+  34% {
+    clip-path: var(--cyber-clip-five);
+    transform: translate3d(calc(var(--cyber-shimmy) * -1%), 0, 0);
+  }
+  42% {
+    clip-path: var(--cyber-clip-six);
+    transform: translate3d(calc(var(--cyber-shimmy) * 1%), 0, 0);
+  }
+  50% {
+    clip-path: var(--cyber-clip-six);
+    transform: translate3d(0, 0, 0);
+  }
+  58% {
+    clip-path: var(--cyber-clip-seven);
+    transform: translate3d(calc(var(--cyber-shimmy) * 1%), 0, 0);
+  }
+  64%,
+  100% {
+    clip-path: var(--cyber-clip-four);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (forced-colors: active) {
+  .mtx-cyber-btn {
+    border: 2px solid ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+
+  .mtx-cyber-btn::before,
+  .mtx-cyber-btn::after,
+  .mtx-cyber-face,
+  .mtx-cyber-glitch {
+    display: none;
+  }
+}
+
+@keyframes mtx-toast-enter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -16px, 0) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes mtx-toast-exit {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0) scale(0.92);
+  }
+}
+
+@keyframes mtx-toast-fade-enter {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes mtx-toast-fade-exit {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.mtx-toast-enter {
+  animation: mtx-toast-enter 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+}
+
+.mtx-toast-exit {
+  animation: mtx-toast-exit 0.25s cubic-bezier(0.06, 0.71, 0.55, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mtx-toast-enter {
+    animation: mtx-toast-fade-enter 0.15s ease-out forwards;
+  }
+
+  .mtx-toast-exit {
+    animation: mtx-toast-fade-exit 0.15s ease-out forwards;
+  }
+}

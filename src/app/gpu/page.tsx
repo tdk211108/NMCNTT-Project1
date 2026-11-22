@@ -8,6 +8,11 @@ export const metadata: Metadata = buildPageMetadata({
   description: VI_MESSAGES.home.browseGpuDesc,
 });
 
-export default function GpuListingPage() {
-  return <CatalogClient category="gpu" />;
+export default async function GpuListingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ series?: string }>;
+}) {
+  const { series } = await searchParams;
+  return <CatalogClient category="gpu" initialSeriesId={typeof series === 'string' ? series : undefined} />;
 }

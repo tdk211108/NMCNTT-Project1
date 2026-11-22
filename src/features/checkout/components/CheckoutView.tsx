@@ -1,17 +1,39 @@
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Badge, Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
+import { ProductImage } from '@/components/ui/ProductImage';
+import { SearchableSelect, type SearchableSelectGroup } from '@/components/ui/SearchableSelect';
 import { formatVnd } from '@/lib/format';
 import { OrderStatusModal } from '@/features/orders/components/OrderStatusModal';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { paymentMethodSchema } from '@/shared/schemas';
 import { TEST_IDS } from '@/shared/testids';
+import type { AddressOption } from '@/shared/types';
 import type { useCheckoutController } from '../useCheckoutController';
 import { ReviewModal } from './ReviewModal';
 
 export type CheckoutViewProps = ReturnType<typeof useCheckoutController>;
+
+function buildAddressGroups(
+  id: string,
+  label: string,
+  items: readonly AddressOption[],
+): SearchableSelectGroup[] {
+  if (items.length === 0) return [];
+  return [
+    {
+      id,
+      label,
+      options: items.map((item) => ({
+        value: item.code,
+        label: item.name,
+        keywords: item.code,
+      })),
+    },
+  ];
+}
 
 export function CheckoutView({ state, actions }: CheckoutViewProps) {
   if (!state.hasHydrated || state.isAuthLoading) {
@@ -39,9 +61,18 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
 
   const { form } = state;
   const errors = form.formState.errors;
+  const provinceGroups = buildAddressGroups('provinces', VI_MESSAGES.checkout.province, state.provinces);
+  const wardGroups = buildAddressGroups('wards', VI_MESSAGES.checkout.ward, state.wards);
 
   return (
     <div className="flex flex-col gap-6">
+      <Breadcrumb
+        items={[
+          { label: VI_MESSAGES.nav.home, href: '/' },
+          { label: VI_MESSAGES.cart.title, href: '/cart' },
+          { label: VI_MESSAGES.checkout.title, href: '/checkout' },
+        ]}
+      />
       <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.checkout.title}</h1>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -68,39 +99,38 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
             />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Select
+              <SearchableSelect
                 label={VI_MESSAGES.checkout.province}
-                autoComplete="address-level1"
-                required
-                data-testid={TEST_IDS.checkout.province}
-                error={errors.provinceCode?.message}
                 value={state.selectedProvinceCode}
-                onChange={(e) => actions.onProvinceChange(e.target.value)}
-              >
-                <option value="">{VI_MESSAGES.checkout.selectProvincePlaceholder}</option>
-                {state.provinces.map((p) => (
-                  <option key={p.code} value={p.code}>
-                    {p.name}
-                  </option>
-                ))}
-              </Select>
+                groups={provinceGroups}
+                placeholder={VI_MESSAGES.checkout.selectProvincePlaceholder}
+                searchPlaceholder={VI_MESSAGES.checkout.searchProvincePlaceholder}
+                required
+                error={errors.provinceCode?.message}
+                triggerTestId={TEST_IDS.checkout.province}
+                searchTestId={TEST_IDS.checkout.provinceSearch}
+                optionTestId={TEST_IDS.checkout.provinceOption}
+                onChange={actions.onProvinceChange}
+              />
 
-              <Select
+              <SearchableSelect
                 label={VI_MESSAGES.checkout.ward}
-                autoComplete="address-level2"
+                value={state.selectedWardCode}
+                groups={wardGroups}
+                placeholder={
+                  state.isLoadingWards
+                    ? VI_MESSAGES.checkout.loadingWardsPlaceholder
+                    : VI_MESSAGES.checkout.selectWardPlaceholder
+                }
+                searchPlaceholder={VI_MESSAGES.checkout.searchWardPlaceholder}
                 required
                 disabled={!state.selectedProvinceCode || state.isLoadingWards}
-                data-testid={TEST_IDS.checkout.ward}
                 error={errors.wardCode?.message}
-                {...form.register('wardCode')}
-              >
-                <option value="">{VI_MESSAGES.checkout.selectWardPlaceholder}</option>
-                {state.wards.map((w) => (
-                  <option key={w.code} value={w.code}>
-                    {w.name}
-                  </option>
-                ))}
-              </Select>
+                triggerTestId={TEST_IDS.checkout.ward}
+                searchTestId={TEST_IDS.checkout.wardSearch}
+                optionTestId={TEST_IDS.checkout.wardOption}
+                onChange={actions.onWardChange}
+              />
             </div>
 
             <Input
@@ -159,12 +189,19 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
             <h2 className="font-display text-base font-bold text-ink">{VI_MESSAGES.orders.summaryHeading}</h2>
             {state.quote ? (
               <>
-                <div className="flex flex-col gap-2 border-b-2 border-border pb-3 text-sm">
+                <div className="flex flex-col gap-2.5 border-b-2 border-border pb-3 text-sm">
                   {state.quote.lines.map((line) => (
-                    <div key={line.productId} className="flex justify-between gap-2">
-                      <span className="text-ink-muted">
-                        {line.name} x {line.quantity}
-                      </span>
+                    <div key={line.productId} className="flex items-center justify-between gap-2.5">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <ProductImage
+                          src={line.imageUrl}
+                          alt={line.name}
+                          className="h-11 w-11 shrink-0 border border-border-strong object-contain p-0.5"
+                        />
+                        <span className="line-clamp-2 text-ink-muted">
+                          {line.name} x {line.quantity}
+                        </span>
+                      </div>
                       <span className="shrink-0 font-mono font-medium tabular-nums text-ink">
                         {formatVnd(line.lineTotalVnd)}
                       </span>

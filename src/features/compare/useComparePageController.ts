@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useCartStore } from '@/features/cart/store';
 import { ApiClientError, apiFetch } from '@/lib/api-client';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type {
@@ -59,6 +60,7 @@ function resolveCompareErrorMessage(error: unknown): string {
 
 export function useComparePageController(rawIds: string) {
   const router = useRouter();
+  const addToCart = useCartStore((s) => s.addItem);
   const [syncedRawIds, setSyncedRawIds] = useState(rawIds);
   const initialParsed = parseCompareSlots(rawIds);
   const [slots, setSlots] = useState<CompareSlots>(initialParsed.slots);
@@ -172,6 +174,22 @@ export function useComparePageController(rawIds: string) {
       },
       onClearAll: () => {
         applySlots([null, null, null], false);
+      },
+      onBuyNowProduct: (product: { id: string; priceVnd: number }) => {
+        const added = addToCart({
+          productId: product.id,
+          unitPriceVnd: product.priceVnd,
+        });
+        if (added) {
+          router.push('/cart');
+        }
+      },
+      onAddToCartProduct: (product: { id: string; name: string; priceVnd: number }) => {
+        addToCart({
+          productId: product.id,
+          name: product.name,
+          unitPriceVnd: product.priceVnd,
+        });
       },
     },
   };

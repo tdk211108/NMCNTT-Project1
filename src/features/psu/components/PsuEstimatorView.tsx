@@ -1,3 +1,4 @@
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
@@ -49,6 +50,12 @@ export type PsuEstimatorViewProps = ReturnType<typeof usePsuController>;
 export function PsuEstimatorView({ state, actions }: PsuEstimatorViewProps) {
   return (
     <div className="flex flex-col gap-6">
+      <Breadcrumb
+        items={[
+          { label: VI_MESSAGES.nav.home, href: '/' },
+          { label: VI_MESSAGES.tools.psu.title, href: '/tools/psu' },
+        ]}
+      />
       <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.tools.psu.title}</h1>
 
       {state.prefillMissing ? (

@@ -15,8 +15,11 @@ import { GooeyNav, type GooeyNavItem } from './GooeyNav';
 import { getChromeContainerClass } from './layout-width';
 import { MusicPlayerBar } from './MusicPlayerBar';
 import { ThemeToggle } from './ThemeToggle';
+import { SfxToggle } from './UiSoundEffects';
 
 type AuthSessionShape = ReturnType<typeof useAuthSession>;
+type HeaderAuthState = Pick<AuthSessionShape['state'], 'user' | 'isLoggingOut'>;
+type HeaderAuthActions = Pick<AuthSessionShape['actions'], 'openAuthModal' | 'logout'>;
 
 function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
@@ -35,13 +38,43 @@ function BrandMark({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function buildNavItems(isAdmin: boolean): GooeyNavItem[] {
+function buildNavItems(isAdmin: boolean, compact = false): GooeyNavItem[] {
   const base: GooeyNavItem[] = [
     { href: '/cpu', label: VI_MESSAGES.nav.cpu },
     { href: '/gpu', label: VI_MESSAGES.nav.gpu },
-    { href: '/compare', label: VI_MESSAGES.nav.compare },
+    {
+      href: '/tools',
+      label: VI_MESSAGES.nav.tools,
+      testId: compact ? TEST_IDS.header.floatingToolsDropdown : TEST_IDS.header.toolsDropdown,
+      menuTestId: compact ? undefined : TEST_IDS.header.toolsMenu,
+      subItems: [
+        {
+          href: '/compare',
+          label: VI_MESSAGES.nav.compare,
+          description: VI_MESSAGES.nav.compareMenuDesc,
+          testId: compact ? undefined : TEST_IDS.header.toolsCompare,
+        },
+        {
+          href: '/tools/combo',
+          label: VI_MESSAGES.nav.combo,
+          description: VI_MESSAGES.nav.comboMenuDesc,
+          testId: compact ? undefined : TEST_IDS.header.toolsCombo,
+        },
+        {
+          href: '/tools/upgrade',
+          label: VI_MESSAGES.nav.upgrade,
+          description: VI_MESSAGES.nav.upgradeMenuDesc,
+          testId: compact ? undefined : TEST_IDS.header.toolsUpgrade,
+        },
+        {
+          href: '/tools/psu',
+          label: VI_MESSAGES.nav.psu,
+          description: VI_MESSAGES.nav.psuMenuDesc,
+          testId: compact ? undefined : TEST_IDS.header.toolsPsu,
+        },
+      ],
+    },
     { href: '/tools/perf-per-price', label: VI_MESSAGES.nav.perfPerPrice },
-    { href: '/tools/psu', label: VI_MESSAGES.nav.psu },
   ];
 
   if (!isAdmin) {
@@ -59,7 +92,7 @@ function PrimaryNavLinks({
   isAdmin: boolean;
   compact?: boolean;
 }) {
-  const navItems = buildNavItems(isAdmin);
+  const navItems = buildNavItems(isAdmin, compact);
   const currentPath = pathname ?? '/';
   const activeHref = currentPath.startsWith('/orders') ? '/orders/lookup' : currentPath;
 
@@ -79,15 +112,17 @@ function HeaderActions({
 }: {
   totalCartCount: number;
   isAdmin: boolean;
-  authState: AuthSessionShape['state'];
-  authActions: AuthSessionShape['actions'];
+  authState: HeaderAuthState;
+  authActions: HeaderAuthActions;
   floating?: boolean;
 }) {
   const labelCollapseClass = floating ? 'hidden xl:inline' : 'hidden sm:inline';
 
   return (
-    <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+    <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
       {!floating ? <MusicPlayerBar /> : null}
+
+      {!floating ? <SfxToggle testId={TEST_IDS.header.sfxToggle} /> : null}
 
       <Link
         href="/cart"
@@ -123,7 +158,7 @@ function HeaderActions({
 
       {authState.user ? (
         isAdmin ? (
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-2 sm:gap-2.5">
             <Link
               href="/admin"
               data-testid={floating ? undefined : TEST_IDS.header.adminToggle}
@@ -146,7 +181,7 @@ function HeaderActions({
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-2 sm:gap-2.5">
             <Link
               href="/orders"
               data-testid={floating ? undefined : TEST_IDS.auth.headerMyOrders}
@@ -192,6 +227,51 @@ function HeaderActions({
           <span className={floating ? 'hidden lg:inline' : ''}>{VI_MESSAGES.nav.login}</span>
         </button>
       )}
+    </div>
+  );
+}
+
+interface FloatingNavBarProps {
+  containerClass: string;
+  pathname: string | null;
+  isAdmin: boolean;
+  totalCartCount: number;
+  authState: HeaderAuthState;
+  authActions: HeaderAuthActions;
+}
+
+/** Compact scrolled navigation bar grouping the 5 nav links beside the brand mark without SfxToggle. */
+export function FloatingNavBar({
+  containerClass,
+  pathname,
+  isAdmin,
+  totalCartCount,
+  authState,
+  authActions,
+}: FloatingNavBarProps) {
+  return (
+    <div
+      role="region"
+      aria-label="Điều hướng cố định"
+      data-testid={TEST_IDS.header.floatingNav}
+      className="mtx-floating-nav hidden border-b-2 border-border-strong bg-surface/95 backdrop-blur-sm md:fixed md:inset-x-0 md:top-0 md:z-40 md:block"
+    >
+      <div className={`${containerClass} flex min-h-14 items-center justify-between gap-3 py-1.5`}>
+        <div className="flex min-w-0 items-center gap-3 lg:gap-5">
+          <BrandMark compact />
+          <PrimaryNavLinks pathname={pathname} isAdmin={isAdmin} compact />
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <SearchBar compactTrigger />
+          <HeaderActions
+            totalCartCount={totalCartCount}
+            isAdmin={isAdmin}
+            authState={authState}
+            authActions={authActions}
+            floating
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -243,7 +323,7 @@ export function Header() {
     <>
       <header
         ref={staticHeaderRef}
-        className="relative z-20 border-b-2 border-border-strong bg-surface"
+        className="relative z-20 overflow-x-clip border-b-2 border-border-strong bg-surface"
       >
         <div className={`${containerClass} flex flex-col gap-2 py-2.5`}>
           <div className="relative z-30 flex flex-wrap items-center justify-between gap-2">
@@ -264,27 +344,14 @@ export function Header() {
       </header>
 
       {showFloatingNav ? (
-        <div
-          role="region"
-          aria-label="Điều hướng cố định"
-          data-testid={TEST_IDS.header.floatingNav}
-          className="mtx-floating-nav hidden border-b-2 border-border-strong bg-surface/95 backdrop-blur-sm md:fixed md:inset-x-0 md:top-0 md:z-40 md:block"
-        >
-          <div className={`${containerClass} flex min-h-14 items-center justify-between gap-3 py-1.5`}>
-            <BrandMark compact />
-            <PrimaryNavLinks pathname={pathname} isAdmin={isAdmin} compact />
-            <div className="flex shrink-0 items-center gap-2">
-              <SearchBar compactTrigger />
-              <HeaderActions
-                totalCartCount={totalCartCount}
-                isAdmin={isAdmin}
-                authState={authState}
-                authActions={authActions}
-                floating
-              />
-            </div>
-          </div>
-        </div>
+        <FloatingNavBar
+          containerClass={containerClass}
+          pathname={pathname}
+          isAdmin={isAdmin}
+          totalCartCount={totalCartCount}
+          authState={authState}
+          authActions={authActions}
+        />
       ) : null}
     </>
   );

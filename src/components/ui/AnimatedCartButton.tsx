@@ -79,6 +79,7 @@ export function AnimatedCartButton({
   return (
     <motion.button
       type="button"
+      data-sfx="success"
       aria-label={ariaLabel}
       title={title}
       data-testid={testId}

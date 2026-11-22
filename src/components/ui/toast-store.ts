@@ -1,45 +1,17 @@
 'use client';
 
-import { create } from 'zustand';
+import { createElement } from 'react';
+import toast from 'react-hot-toast';
+import { ToastItemCard, type ToastTone } from './Toast';
 
-export type ToastTone = 'info' | 'success' | 'warning' | 'error';
+export type { ToastTone };
 
-export interface ToastItem {
-  id: string;
-  message: string;
-  tone: ToastTone;
-}
+const DEFAULT_TOAST_DURATION_MS = 4500;
 
-interface ToastState {
-  toasts: ToastItem[];
-  push: (message: string, tone?: ToastTone) => void;
-  dismiss: (id: string) => void;
-}
-
-let nextToastSeq = 1;
-
-export const useToastStore = create<ToastState>((set) => ({
-  toasts: [],
-  push(message, tone = 'info') {
-    const id = `toast-${nextToastSeq++}`;
-    set((state) => ({
-      toasts: [...state.toasts.slice(-4), { id, message, tone }],
-    }));
-    if (typeof window !== 'undefined') {
-      window.setTimeout(() => {
-        set((state) => ({
-          toasts: state.toasts.filter((t) => t.id !== id),
-        }));
-      }, 4500);
-    }
-  },
-  dismiss(id) {
-    set((state) => ({
-      toasts: state.toasts.filter((t) => t.id !== id),
-    }));
-  },
-}));
-
+/** Dispatches a Neo-Brutalist toast notification through react-hot-toast. */
 export function showToast(message: string, tone: ToastTone = 'info'): void {
-  useToastStore.getState().push(message, tone);
+  toast.custom(
+    (item) => createElement(ToastItemCard, { toast: item, message, tone }),
+    { duration: DEFAULT_TOAST_DURATION_MS },
+  );
 }

@@ -55,7 +55,7 @@ export function OrderStatusModal({
           compactHeading
         />
 
-        <div className="flex flex-wrap items-center justify-end gap-2 border-t-2 border-border pt-4">
+        <div className="flex flex-wrap items-center justify-end gap-3 border-t-2 border-border pt-4">
           <Button
             variant="outline"
             data-testid={TEST_IDS.orders.placedContinueShopping}

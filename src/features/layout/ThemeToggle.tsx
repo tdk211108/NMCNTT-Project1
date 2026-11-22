@@ -72,6 +72,7 @@ export function ThemeToggle({ testId = TEST_IDS.header.themeToggle }: { testId?:
       ref={buttonRef}
       type="button"
       role="switch"
+      data-sfx="toggle"
       aria-checked={isDark}
       aria-label={label}
       title={label}

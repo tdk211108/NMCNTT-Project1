@@ -1,6 +1,7 @@
 import { ArrowRight, Minus, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { AlertDialog } from '@/components/ui/AlertDialog';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Badge, Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
@@ -19,6 +20,12 @@ export function CartView({ state, actions }: CartViewProps) {
 
   return (
     <div className="flex flex-col gap-6">
+      <Breadcrumb
+        items={[
+          { label: VI_MESSAGES.nav.home, href: '/' },
+          { label: VI_MESSAGES.cart.title, href: '/cart' },
+        ]}
+      />
       <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.cart.title}</h1>
 
       {state.errorMessage ? <EmptyState title={state.errorMessage} /> : null}
@@ -67,10 +74,11 @@ export function CartView({ state, actions }: CartViewProps) {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2.5">
                     <Button
                       variant="outline"
                       size="sm"
+                      cyber={false}
                       aria-label={`Giảm số lượng ${line.name}`}
                       data-testid={TEST_IDS.cart.qtyDec(line.productId)}
                       onClick={() => actions.onDecrement(line.productId, line.quantity)}
@@ -92,6 +100,7 @@ export function CartView({ state, actions }: CartViewProps) {
                     <Button
                       variant="outline"
                       size="sm"
+                      cyber={false}
                       aria-label={`Tăng số lượng ${line.name}`}
                       data-testid={TEST_IDS.cart.qtyInc(line.productId)}
                       onClick={() => actions.onIncrement(line.productId, line.quantity)}

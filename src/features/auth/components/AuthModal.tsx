@@ -87,7 +87,7 @@ export function AuthModal() {
           </p>
         ) : null}
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <a
             href={buildOAuthStartUrl('google', state.oauthNextPath)}
             data-testid={TEST_IDS.auth.googleButton}
@@ -126,6 +126,7 @@ export function AuthModal() {
         <div className="grid grid-cols-2 gap-2 rounded-control border-2 border-border-strong bg-surface-subtle p-1">
           <button
             type="button"
+            data-sfx="toggle"
             data-testid={TEST_IDS.auth.tabLogin}
             onClick={() => actions.setActiveTab('login')}
             className={`min-h-9 cursor-pointer rounded-control px-3 text-sm font-semibold transition ${
@@ -138,6 +139,7 @@ export function AuthModal() {
           </button>
           <button
             type="button"
+            data-sfx="toggle"
             data-testid={TEST_IDS.auth.tabRegister}
             onClick={() => actions.setActiveTab('register')}
             className={`min-h-9 cursor-pointer rounded-control px-3 text-sm font-semibold transition ${
@@ -204,7 +206,7 @@ export function AuthModal() {
               }}
               data-testid={TEST_IDS.auth.loginPassword}
             />
-            <div className="mt-1 flex justify-end gap-2">
+            <div className="mt-1 flex justify-end gap-3">
               <Button variant="secondary" onClick={resetFormsAndClose}>
                 {VI_MESSAGES.common.cancel}
               </Button>
@@ -275,7 +277,7 @@ export function AuthModal() {
               }}
               data-testid={TEST_IDS.auth.registerPassword}
             />
-            <div className="mt-1 flex justify-end gap-2">
+            <div className="mt-1 flex justify-end gap-3">
               <Button variant="secondary" onClick={resetFormsAndClose}>
                 {VI_MESSAGES.common.cancel}
               </Button>

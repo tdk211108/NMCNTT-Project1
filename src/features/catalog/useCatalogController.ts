@@ -84,6 +84,7 @@ function buildProductsUrl(
     vramGb: number[];
     aibBrands: string[];
     sockets: string[];
+    seriesId: string;
     limitedOnly: boolean;
     sort: ProductSort;
   },
@@ -107,6 +108,9 @@ function buildProductsUrl(
   }
   if (category === 'gpu' && filters.aibBrands.length > 0) {
     params.set('aibBrand', filters.aibBrands.join(','));
+  }
+  if (category === 'gpu' && filters.seriesId.trim()) {
+    params.set('seriesId', filters.seriesId.trim());
   }
   if (category === 'gpu' && filters.limitedOnly) {
     params.set('limitedEdition', 'true');
@@ -135,7 +139,7 @@ export function groupProductsByVendor(
   return [...grouped.entries()].map(([vendor, groupItems]) => ({ vendor, items: groupItems }));
 }
 
-export function useCatalogController(category: Category) {
+export function useCatalogController(category: Category, initialSeriesId = '') {
   const [vendors, setVendors] = useState<ChipVendor[]>([]);
   const [priceMinInput, setPriceMinInput] = useState('');
   const [priceMaxInput, setPriceMaxInput] = useState('');
@@ -144,6 +148,7 @@ export function useCatalogController(category: Category) {
   const [vramGb, setVramGb] = useState<number[]>([]);
   const [aibBrands, setAibBrands] = useState<string[]>([]);
   const [sockets, setSockets] = useState<string[]>([]);
+  const [seriesId, setSeriesId] = useState(category === 'gpu' ? initialSeriesId.trim() : '');
   const [limitedOnly, setLimitedOnly] = useState(false);
   const [sort, setSort] = useState<ProductSort>('default');
 
@@ -164,6 +169,7 @@ export function useCatalogController(category: Category) {
     vramGb,
     aibBrands,
     sockets,
+    seriesId,
     limitedOnly,
     sort,
   });
@@ -214,6 +220,7 @@ export function useCatalogController(category: Category) {
       selectedVramGb: vramGb,
       selectedAibBrands: aibBrands,
       selectedSockets: sockets,
+      activeSeriesId: seriesId || null,
       limitedOnly,
       sort,
       isLoading: listQuery.isLoading,
@@ -266,6 +273,7 @@ export function useCatalogController(category: Category) {
         setVramGb([]);
         setAibBrands([]);
         setSockets([]);
+        setSeriesId('');
         setSort('default');
         setPaginationState({ queryKey: queryUrl, pageByVendor: {}, flatPage: 1 });
       },

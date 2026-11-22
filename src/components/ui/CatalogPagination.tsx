@@ -76,6 +76,7 @@ export function CatalogPagination({
         <div className="flex flex-wrap items-center gap-1">
           <button
             type="button"
+            data-sfx="toggle"
             disabled={safePage <= 1}
             aria-label={VI_MESSAGES.common.previousPage}
             data-testid={TEST_IDS.listing.paginationPrev(scope)}
@@ -91,6 +92,7 @@ export function CatalogPagination({
               <button
                 key={token}
                 type="button"
+                data-sfx="toggle"
                 aria-current={token === safePage ? 'page' : undefined}
                 data-testid={TEST_IDS.listing.paginationPage(scope, token)}
                 onClick={() => onPageChange(token)}
@@ -126,6 +128,7 @@ export function CatalogPagination({
 
           <button
             type="button"
+            data-sfx="toggle"
             disabled={safePage >= totalPages}
             aria-label={VI_MESSAGES.common.nextPage}
             data-testid={TEST_IDS.listing.paginationNext(scope)}

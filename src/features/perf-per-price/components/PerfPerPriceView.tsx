@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Badge, Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
+import { CpuIcon, GpuCardIcon } from '@/components/ui/Icons';
 import { Input } from '@/components/ui/Input';
 import { ResponsiveTableWrapper } from '@/components/ui/Table';
 import { formatNumberVi, formatVnd } from '@/lib/format';
@@ -14,6 +16,12 @@ export type PerfPerPriceViewProps = ReturnType<typeof usePerfPerPriceController>
 export function PerfPerPriceView({ state, actions }: PerfPerPriceViewProps) {
   return (
     <div className="flex flex-col gap-6">
+      <Breadcrumb
+        items={[
+          { label: VI_MESSAGES.nav.home, href: '/' },
+          { label: VI_MESSAGES.tools.perfPerPrice.title, href: '/tools/perf-per-price' },
+        ]}
+      />
       <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.tools.perfPerPrice.title}</h1>
 
       <Card>
@@ -30,19 +38,25 @@ export function PerfPerPriceView({ state, actions }: PerfPerPriceViewProps) {
             </span>
             <Button
               size="sm"
+              cyber={false}
+              sfx="toggle"
               variant={state.category === 'cpu' ? 'primary' : 'outline'}
               data-testid={TEST_IDS.ppp.category('cpu')}
               onClick={() => actions.onChangeCategory('cpu')}
             >
-              {VI_MESSAGES.nav.cpu}
+              <CpuIcon className="h-4 w-4" />
+              <span>{VI_MESSAGES.nav.cpu}</span>
             </Button>
             <Button
               size="sm"
+              cyber={false}
+              sfx="toggle"
               variant={state.category === 'gpu' ? 'primary' : 'outline'}
               data-testid={TEST_IDS.ppp.category('gpu')}
               onClick={() => actions.onChangeCategory('gpu')}
             >
-              {VI_MESSAGES.nav.gpu}
+              <GpuCardIcon className="h-4 w-4" />
+              <span>{VI_MESSAGES.nav.gpu}</span>
             </Button>
           </div>
 
@@ -56,6 +70,8 @@ export function PerfPerPriceView({ state, actions }: PerfPerPriceViewProps) {
                 <Button
                   key={vendor}
                   size="sm"
+                  cyber={false}
+                  sfx="toggle"
                   variant={active ? 'primary' : 'outline'}
                   data-testid={TEST_IDS.ppp.vendor(vendor)}
                   onClick={() => actions.onToggleVendor(vendor)}

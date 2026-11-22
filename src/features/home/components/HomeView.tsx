@@ -2,13 +2,12 @@
 
 import {
   ArrowRight,
-  Cpu,
   Gauge,
+  Layers,
   Pause,
   Play,
   Scale,
-  Terminal,
-  Zap,
+  TrendingUp,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
@@ -17,6 +16,7 @@ import { Card } from '@/components/ui/Card';
 import { DecryptedText } from '@/components/ui/DecryptedText';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { FocusPullCarousel } from '@/components/ui/FocusPullCarousel';
+import { CpuIcon, GpuCardIcon } from '@/components/ui/Icons';
 import { WIDE_CONTAINER_CLASS } from '@/features/layout/layout-width';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
@@ -239,24 +239,34 @@ export function HomeView({ state, actions }: HomeViewProps) {
                 {VI_MESSAGES.home.heroRetailerLabel}
               </p>
 
-              <div className="mt-8 flex flex-wrap items-center gap-3">
+              <div className="mt-8 flex flex-wrap items-center gap-4">
                 <a
                   href="#featured-cpu"
                   data-testid={TEST_IDS.home.heroScrollCta}
-                  className="mtx-shadow-sm inline-flex min-h-11 items-center justify-center gap-2 rounded-control border-2 border-border-strong bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg hover:bg-[var(--color-primary-hover)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
+                  className="mtx-cyber-btn mtx-cyber-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-control border-2 px-4.5 py-2 text-sm font-bold tracking-wide motion-safe:transition-[transform,background-color,border-color,color] duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
                 >
-                  <span>{VI_MESSAGES.home.heroScrollCta}</span>
-                  <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span aria-hidden="true" className="mtx-cyber-face" />
+                  <span aria-hidden="true" className="mtx-cyber-tag">
+                    01
+                  </span>
+                  <span className="relative z-10 inline-flex items-center justify-center gap-1.5">
+                    <span>{VI_MESSAGES.home.heroScrollCta}</span>
+                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  </span>
+                  <span aria-hidden="true" className="mtx-cyber-glitch">
+                    <span>{VI_MESSAGES.home.heroScrollCta}</span>
+                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  </span>
                 </a>
                 <Link href="/cpu" data-testid={TEST_IDS.home.browseCpu}>
-                  <Button variant="outline">
-                    <Cpu className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <Button variant="outline" cyberTag="02">
+                    <CpuIcon className="h-4 w-4" />
                     <span>{VI_MESSAGES.home.viewAllCpu}</span>
                   </Button>
                 </Link>
                 <Link href="/gpu" data-testid={TEST_IDS.home.browseGpu}>
-                  <Button variant="outline">
-                    <Zap className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <Button variant="outline" cyberTag="03">
+                    <GpuCardIcon className="h-4 w-4" />
                     <span>{VI_MESSAGES.home.viewAllGpu}</span>
                   </Button>
                 </Link>
@@ -419,7 +429,7 @@ export function HomeView({ state, actions }: HomeViewProps) {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:gap-5">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:gap-5">
           <Card className="flex flex-col justify-between gap-4">
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between border-b border-border pb-2">
@@ -443,17 +453,15 @@ export function HomeView({ state, actions }: HomeViewProps) {
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <span className="font-mono text-xs font-bold text-accent-ink">TOOL // 02</span>
-                <Terminal className="h-4 w-4 text-ink-muted" aria-hidden="true" />
+                <Gauge className="h-4 w-4 text-ink-muted" aria-hidden="true" />
               </div>
-              <h3 className="font-display font-bold text-ink">
-                {VI_MESSAGES.tools.perfPerPrice.title}
-              </h3>
-              <p className="text-sm text-ink-muted">{VI_MESSAGES.home.pppShortcutDesc}</p>
+              <h3 className="font-display font-bold text-ink">{VI_MESSAGES.tools.psu.title}</h3>
+              <p className="text-sm text-ink-muted">{VI_MESSAGES.home.psuShortcutDesc}</p>
             </div>
             <div>
-              <Link href="/tools/perf-per-price" data-testid={TEST_IDS.home.toolPpp}>
+              <Link href="/tools/psu" data-testid={TEST_IDS.home.toolPsu}>
                 <Button variant="outline" size="sm">
-                  <span>{VI_MESSAGES.nav.perfPerPrice}</span>
+                  <span>{VI_MESSAGES.nav.psu}</span>
                   <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
                 </Button>
               </Link>
@@ -464,15 +472,34 @@ export function HomeView({ state, actions }: HomeViewProps) {
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <span className="font-mono text-xs font-bold text-accent-ink">TOOL // 03</span>
-                <Gauge className="h-4 w-4 text-ink-muted" aria-hidden="true" />
+                <Layers className="h-4 w-4 text-ink-muted" aria-hidden="true" />
               </div>
-              <h3 className="font-display font-bold text-ink">{VI_MESSAGES.tools.psu.title}</h3>
-              <p className="text-sm text-ink-muted">{VI_MESSAGES.home.psuShortcutDesc}</p>
+              <h3 className="font-display font-bold text-ink">{VI_MESSAGES.tools.combo.title}</h3>
+              <p className="text-sm text-ink-muted">{VI_MESSAGES.home.comboShortcutDesc}</p>
             </div>
             <div>
-              <Link href="/tools/psu" data-testid={TEST_IDS.home.toolPsu}>
+              <Link href="/tools/combo" data-testid={TEST_IDS.home.toolCombo}>
                 <Button variant="outline" size="sm">
-                  <span>{VI_MESSAGES.nav.psu}</span>
+                  <span>{VI_MESSAGES.nav.combo}</span>
+                  <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+                </Button>
+              </Link>
+            </div>
+          </Card>
+
+          <Card className="flex flex-col justify-between gap-4">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between border-b border-border pb-2">
+                <span className="font-mono text-xs font-bold text-accent-ink">TOOL // 04</span>
+                <TrendingUp className="h-4 w-4 text-ink-muted" aria-hidden="true" />
+              </div>
+              <h3 className="font-display font-bold text-ink">{VI_MESSAGES.tools.upgrade.title}</h3>
+              <p className="text-sm text-ink-muted">{VI_MESSAGES.home.upgradeShortcutDesc}</p>
+            </div>
+            <div>
+              <Link href="/tools/upgrade" data-testid={TEST_IDS.home.toolUpgrade}>
+                <Button variant="outline" size="sm">
+                  <span>{VI_MESSAGES.nav.upgrade}</span>
                   <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
                 </Button>
               </Link>
