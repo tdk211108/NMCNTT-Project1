@@ -18,6 +18,9 @@ import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { FocusPullCarousel } from '@/components/ui/FocusPullCarousel';
 import { CpuIcon, GpuCardIcon } from '@/components/ui/Icons';
 import { WIDE_CONTAINER_CLASS } from '@/features/layout/layout-width';
+import { usePreloaderReady } from '@/features/layout/SitePreloader';
+import { resetLandingScrollIfNeeded } from '@/lib/landing-scroll';
+import { HERO_VIDEO_PATH } from '@/shared/constants';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
 import type { useHomeController } from '../useHomeController';
@@ -49,7 +52,7 @@ export function HomeView({ state, actions }: HomeViewProps) {
     getReducedMotionSnapshot,
     getReducedMotionServerSnapshot,
   );
-  const [videoPlayOverride, setVideoPlayOverride] = useState<boolean | null>(null);
+  const isPreloaderReady = usePreloaderReady();
   const [tickerPauseOverride, setTickerPauseOverride] = useState<boolean | null>(null);
   const [carouselOriginMs, setCarouselOriginMs] = useState<number | null>(null);
 
@@ -57,23 +60,39 @@ export function HomeView({ state, actions }: HomeViewProps) {
     setCarouselOriginMs((prev) => prev ?? originMs);
   }, []);
 
-  const isVideoPlaying = videoPlayOverride ?? !prefersReduced;
   const isTickerPaused = tickerPauseOverride ?? prefersReduced;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const prevRestoration =
+      'scrollRestoration' in window.history ? window.history.scrollRestoration : null;
+    resetLandingScrollIfNeeded('/');
+    return () => {
+      if (prevRestoration && 'scrollRestoration' in window.history) {
+        window.history.scrollRestoration = prevRestoration;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (isVideoPlaying) {
+    if (!isPreloaderReady) {
+      video.pause();
+      return;
+    }
+    if (!prefersReduced) {
+      if (video.currentTime > 0 && video.paused) {
+        video.currentTime = 0;
+      }
       const playPromise = video.play();
       if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(() => {
-          setVideoPlayOverride(false);
-        });
+        playPromise.catch(() => {});
       }
     } else {
       video.pause();
     }
-  }, [isVideoPlaying]);
+  }, [isPreloaderReady, prefersReduced]);
 
   useEffect(() => {
     if (
@@ -160,10 +179,6 @@ export function HomeView({ state, actions }: HomeViewProps) {
     };
   }, [state.isLoading]);
 
-  function onToggleVideo() {
-    setVideoPlayOverride(!isVideoPlaying);
-  }
-
   const subtitleParts = VI_MESSAGES.home.heroSubtitle.split('Precision-engineered');
 
   return (
@@ -180,11 +195,12 @@ export function HomeView({ state, actions }: HomeViewProps) {
           >
             <video
               ref={videoRef}
-              src="/ROG-Matrix-GeForce-SnapYT.App.webm"
+              src={HERO_VIDEO_PATH}
+              data-hero-video="true"
               muted
               loop
               playsInline
-              preload="metadata"
+              preload={prefersReduced ? 'metadata' : 'auto'}
               aria-label={VI_MESSAGES.home.heroCrtChannelLabel}
               className="block h-full w-full object-cover object-center"
             />
@@ -271,39 +287,6 @@ export function HomeView({ state, actions }: HomeViewProps) {
                   </Button>
                 </Link>
               </div>
-            </div>
-          </div>
-
-          <div className="pointer-events-none absolute right-4 bottom-3 left-4 z-20 flex justify-start sm:right-24 sm:bottom-4 sm:left-auto">
-            <div className="pointer-events-auto flex flex-wrap items-center gap-2 border-2 border-border-strong bg-black/90 px-2.5 py-1.5 font-mono text-xs">
-              <span
-                aria-hidden="true"
-                className={`inline-block h-2 w-2 ${isVideoPlaying ? 'bg-signal' : 'bg-gunmetal'}`}
-              />
-              <span className="font-bold text-ink">
-                {isVideoPlaying
-                  ? VI_MESSAGES.home.heroCrtStatusLive
-                  : VI_MESSAGES.home.heroCrtStatusPaused}
-              </span>
-              <span className="hidden text-ink-muted sm:inline">
-                {VI_MESSAGES.home.heroCrtChannelLabel}
-              </span>
-              <button
-                type="button"
-                onClick={onToggleVideo}
-                data-testid={TEST_IDS.home.crtToggle}
-                aria-label={
-                  isVideoPlaying ? VI_MESSAGES.home.crtPauseVideo : VI_MESSAGES.home.crtPlayVideo
-                }
-                className="inline-flex min-h-8 cursor-pointer items-center gap-1 border border-border-strong bg-surface-subtle px-2 py-0.5 text-xs font-semibold text-ink hover:border-signal hover:text-accent-ink focus-visible:outline-2 focus-visible:outline-signal"
-              >
-                {isVideoPlaying ? (
-                  <Pause className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                ) : (
-                  <Play className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                )}
-                <span>{isVideoPlaying ? 'PAUSE' : 'PLAY'}</span>
-              </button>
             </div>
           </div>
         </section>

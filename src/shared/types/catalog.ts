@@ -27,6 +27,10 @@ export interface ProductListQuery {
   limitedEdition?: boolean;
   sort?: ProductSort;
   q?: string;
+  page?: number;
+  pageSize?: number;
+  perVendor?: boolean;
+  vendorPages?: Partial<Record<ChipVendor, number>>;
 }
 
 export interface Facets {
@@ -37,10 +41,18 @@ export interface Facets {
   sockets?: string[];
 }
 
+export interface ProductListPagination {
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export interface ProductListResponse {
   items: ProductCard[];
   facets: Facets;
   total: number;
+  pagination?: ProductListPagination;
+  vendorTotals?: Partial<Record<ChipVendor, number>>;
 }
 
 export interface FeaturedProductsResponse {

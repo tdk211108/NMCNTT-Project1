@@ -44,9 +44,9 @@ afterAll(async () => {
 });
 
 describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)', () => {
-  it('lists retail products with category-wide facets, dynamic normalized scores, and filtering', async () => {
+  it('lists retail products with category-wide facets, dynamic normalized scores, server pagination, and filtering', async () => {
     const allCpus = await listProducts({ category: 'cpu' }, db);
-    expect(allCpus.total).toBe(35);
+    expect(allCpus.total).toBe(64);
     expect(allCpus.facets.vendors).toEqual(['amd', 'intel']);
     expect(allCpus.facets.sockets).toEqual(['AM5', 'LGA1700', 'LGA1851']);
     expect(allCpus.facets.priceRange).not.toBeNull();
@@ -62,10 +62,26 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
       },
       db,
     );
-    expect(filtered.items).toHaveLength(1);
-    expect(filtered.items[0].id).toBe('cpu-amd-ryzen-9-9950x3d');
+    expect(filtered.items).toHaveLength(2);
+    expect(filtered.items[0].id).toBe('cpu-amd-ryzen-9-9950x3d2');
     expect(filtered.items[0].score.normalized).toBe(100);
+    expect(filtered.items[1].id).toBe('cpu-amd-ryzen-9-9950x3d');
     expect(filtered.facets.vendors).toEqual(['amd', 'intel']);
+
+    // Server-side per-vendor pagination loads only requested pages per brand
+    const cpuPaged = await listProducts(
+      {
+        category: 'cpu',
+        perVendor: true,
+        pageSize: 16,
+        vendorPages: { amd: 2, intel: 3 },
+      },
+      db,
+    );
+    expect(cpuPaged.total).toBe(64);
+    expect(cpuPaged.vendorTotals).toEqual({ amd: 29, intel: 35 });
+    expect(cpuPaged.items.filter((i) => i.vendor === 'amd')).toHaveLength(13);
+    expect(cpuPaged.items.filter((i) => i.vendor === 'intel')).toHaveLength(3);
 
     // Escapes SQL ILIKE wildcards (`%`, `_`) so they do not match everything
     const wildcard = await listProducts({ category: 'cpu', q: '100%_' }, db);
@@ -77,14 +93,27 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     expect(emptyCategory.items).toEqual([]);
     expect(emptyCategory.facets.priceRange).toBeNull();
 
-    // GPU listing supports filtering Limited Edition and exact seriesId while keeping all 71 in the All tab
+    // GPU listing supports filtering Limited Edition, Intel Arc, server pagination, and exact seriesId
     const allGpus = await listProducts({ category: 'gpu' }, db);
-    expect(allGpus.total).toBe(71);
+    expect(allGpus.total).toBe(219);
+    const gpuPage1 = await listProducts({ category: 'gpu', page: 1, pageSize: 40 }, db);
+    const gpuPage6 = await listProducts({ category: 'gpu', page: 6, pageSize: 40 }, db);
+    expect(gpuPage1.items).toHaveLength(40);
+    expect(gpuPage1.total).toBe(219);
+    expect(gpuPage1.pagination).toEqual({ page: 1, pageSize: 40, totalPages: 6 });
+    expect(gpuPage6.items).toHaveLength(19);
+    const page1Ids = new Set(gpuPage1.items.map((g) => g.id));
+    expect(gpuPage6.items.every((g) => !page1Ids.has(g.id))).toBe(true);
+
+    const intelGpus = await listProducts({ category: 'gpu', vendor: ['intel'] }, db);
+    expect(intelGpus.total).toBe(9);
+    expect(intelGpus.items.every((g) => g.vendor === 'intel')).toBe(true);
+
     const series5060 = await listProducts({ category: 'gpu', seriesId: 'gs-rtx-5060' }, db);
     expect(series5060.total).toBeGreaterThan(0);
     expect(series5060.items.every((g) => !g.name.toLowerCase().includes('5060 ti'))).toBe(true);
     const limitedGpus = await listProducts({ category: 'gpu', limitedEdition: true }, db);
-    expect(limitedGpus.total).toBe(8);
+    expect(limitedGpus.total).toBe(45);
     expect(limitedGpus.items.every((g) => g.isLimitedEdition)).toBe(true);
   });
 
@@ -96,7 +125,7 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     const cpuVendors = new Set(featured.cpus.map((c) => c.vendor));
     const gpuVendors = new Set(featured.gpus.map((g) => g.vendor));
     expect(cpuVendors).toEqual(new Set(['intel', 'amd']));
-    expect(gpuVendors).toEqual(new Set(['nvidia', 'amd']));
+    expect(gpuVendors).toEqual(new Set(['nvidia', 'amd', 'intel']));
 
     // Soft-deleting the top flagship removes it from featured results cleanly
     await db
@@ -120,6 +149,11 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     expect(gpuDetail.specGroups.map((g) => g.key)).toEqual(['specs', 'physical', 'outputs']);
     expect(gpuDetail.series).toEqual({ id: 'gs-rtx-5090', name: 'NVIDIA GeForce RTX 5090' });
     expect(gpuDetail.psuPrefill).toEqual({ gpu: 'gs-rtx-5090' });
+
+    const intelDetail = await getProductDetail('gpu-intel-arc-b580-limited-edition-12gb', db);
+    expect(intelDetail.vendor).toBe('intel');
+    expect(intelDetail.isLimitedEdition).toBe(true);
+    expect(intelDetail.specGroups[0].items.find((i) => i.key === 'cores')?.label).toBe('Shading Units');
 
     await db
       .update(products)
@@ -192,7 +226,7 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     });
   });
 
-  it('ranks active products by performance-per-price and handles low-budget empty state', async () => {
+  it('ranks active products by performance-per-price, builds 8 CPU and 9 GPU grouped hardware awards, and handles low-budget empty state', async () => {
     const ranking = await getPerfPerPriceRanking(
       { category: 'cpu', vendor: ['amd'], maxPriceVnd: 15_000_000 },
       db,
@@ -200,12 +234,32 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     expect(ranking.items.length).toBeGreaterThan(0);
     expect(ranking.items[0].bestValue).toBe(true);
     expect(ranking.items.every((i) => i.vendor === 'amd' && i.priceVnd <= 15_000_000)).toBe(true);
+    expect(ranking.totalEvaluated).toBe(ranking.items.length);
+    expect(ranking.awards.length).toBeGreaterThan(0);
+    expect(ranking.awards.reduce((sum, w) => sum + w.awardCount, 0)).toBe(8);
+    expect(new Set(ranking.awards.map((w) => w.id)).size).toBe(ranking.awards.length);
+
+    const gpuAwards = await getPerfPerPriceRanking({ category: 'gpu' }, db);
+    expect(gpuAwards.totalEvaluated).toBe(219);
+    expect(gpuAwards.awards.reduce((sum, w) => sum + w.awardCount, 0)).toBe(9);
+    expect(gpuAwards.awards[0].awardCount).toBeGreaterThanOrEqual(
+      gpuAwards.awards[gpuAwards.awards.length - 1].awardCount,
+    );
+    const largestGpuWinner = gpuAwards.awards.find((w) =>
+      w.awards.some((a) => a.key === 'largest_gpu'),
+    );
+    expect(largestGpuWinner?.id).toBe('gpu-asus-rtx-5080-noctua-oc-16gb');
+    expect(largestGpuWinner?.awards.find((a) => a.key === 'largest_gpu')?.metricDisplay).toBe(
+      '385 mm (4,0 slot)',
+    );
 
     const emptyBudget = await getPerfPerPriceRanking(
       { category: 'gpu', maxPriceVnd: 100_000 },
       db,
     );
     expect(emptyBudget.items).toEqual([]);
+    expect(emptyBudget.awards).toEqual([]);
+    expect(emptyBudget.totalEvaluated).toBe(0);
   });
 
   it('builds PSU options excluding retail series with zero active variants and estimates wattage', async () => {
@@ -337,6 +391,7 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     expect(storeCpuUpgrade.platformSwapCpus.every((c) => !c.sameSocket)).toBe(true);
 
     // Legacy CPU without PassMark degrades cleanly -> notes include missingPassmarkNote & upliftPct null
+    await updateAdminLegacyCpu('C19', { passmarkRaw: null, passmarkSource: null }, db);
     const legacyNoScore = await getUpgradeRecommendations(
       { category: 'cpu', current: 'legacy:C19' },
       db,

@@ -11,6 +11,7 @@ import { LEGACY_GPU_SERIES_SEEDS } from '@/server/db/seed/data/legacy-gpus';
 import { RETAIL_CPU_SEEDS } from '@/server/db/seed/data/retail-cpus';
 import { buildSeedImageUrl } from '@/server/db/seed/seed-catalog';
 import {
+  CATALOG_MAX_RESULTS,
   LEGACY_CPU_ID_REGEX,
   MAX_IMAGE_BYTES,
   PRODUCT_ID_MAX_LEN,
@@ -42,12 +43,14 @@ describe('Seed datasets and Drizzle schema integrity', () => {
   });
 
   it('has expected baseline counts and stays within catalog ceiling', () => {
-    expect(RETAIL_CPU_SEEDS).toHaveLength(35);
-    expect(RETAIL_GPU_SERIES_SEEDS).toHaveLength(13);
-    expect(GPU_VARIANT_SEEDS).toHaveLength(71);
-    expect(LEGACY_CPU_SEEDS).toHaveLength(24);
-    expect(LEGACY_GPU_SERIES_SEEDS).toHaveLength(33);
-    expect(RETAIL_CPU_SEEDS.length + GPU_VARIANT_SEEDS.length).toBeLessThanOrEqual(180);
+    expect(RETAIL_CPU_SEEDS).toHaveLength(64);
+    expect(RETAIL_GPU_SERIES_SEEDS).toHaveLength(16);
+    expect(GPU_VARIANT_SEEDS).toHaveLength(219);
+    expect(LEGACY_CPU_SEEDS).toHaveLength(61);
+    expect(LEGACY_GPU_SERIES_SEEDS).toHaveLength(81);
+    expect(RETAIL_CPU_SEEDS.length + GPU_VARIANT_SEEDS.length).toBeLessThanOrEqual(
+      CATALOG_MAX_RESULTS,
+    );
   });
 
   it('validates all retail CPUs against DB/Zod rules', () => {
@@ -135,7 +138,7 @@ describe('Seed datasets and Drizzle schema integrity', () => {
       expect(parsed.success, `GPU variant ${variant.id} failed Zod validation`).toBe(true);
     }
 
-    expect(GPU_VARIANT_SEEDS.filter((v) => v.isLimitedEdition)).toHaveLength(8);
+    expect(GPU_VARIANT_SEEDS.filter((v) => v.isLimitedEdition)).toHaveLength(45);
   });
 
   it('validates all legacy CPUs and legacy GPUs against DB/Zod rules', () => {

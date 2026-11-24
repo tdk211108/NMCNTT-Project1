@@ -1,9 +1,10 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { showToast } from '@/components/ui/toast-store';
 import { apiFetch, apiUpload } from '@/lib/api-client';
+import { ADMIN_PRODUCTS_PAGE_SIZE } from '@/shared/constants';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type { ImageRef } from '@/shared/schemas/admin';
 import type {
@@ -12,6 +13,7 @@ import type {
   AdminGpuVariantListItem,
   AdminImageUploadResponse,
   AdminProductListItem,
+  AdminProductPageResponse,
   Category,
   CpuVendor,
 } from '@/shared/types';
@@ -208,11 +210,16 @@ function buildProductPayload(form: ProductFormState): Record<string, unknown> {
 export function useAdminProductsController() {
   const queryClient = useQueryClient();
   const [category, setCategory] = useState<Category>('cpu');
+  const [page, setPage] = useState(1);
   const [form, setForm] = useState<ProductFormState | null>(null);
 
   const productsQuery = useQuery({
-    queryKey: ['admin', 'products', category],
-    queryFn: () => apiFetch<AdminProductListItem[]>(`/api/admin/products?category=${category}`),
+    queryKey: ['admin', 'products', category, page, ADMIN_PRODUCTS_PAGE_SIZE],
+    queryFn: () =>
+      apiFetch<AdminProductPageResponse>(
+        `/api/admin/products?category=${category}&page=${page}&pageSize=${ADMIN_PRODUCTS_PAGE_SIZE}`,
+      ),
+    placeholderData: keepPreviousData,
   });
 
   const retailSeriesQuery = useQuery({
@@ -280,24 +287,18 @@ export function useAdminProductsController() {
     onError: (err) => handleAdminApiError(err, invalidateSession),
   });
 
-  const items = useMemo(() => productsQuery.data ?? [], [productsQuery.data]);
+  const items = useMemo(() => productsQuery.data?.items ?? [], [productsQuery.data]);
   const retailSeries = useMemo(() => retailSeriesQuery.data ?? [], [retailSeriesQuery.data]);
 
-  const existingSockets = useMemo(() => {
-    const values = new Set<string>();
-    for (const item of items) {
-      if (item.category === 'cpu') values.add(item.socket);
-    }
-    return [...values].sort();
-  }, [items]);
+  const existingSockets = useMemo(
+    () => productsQuery.data?.existingSockets ?? [],
+    [productsQuery.data],
+  );
 
-  const existingAibBrands = useMemo(() => {
-    const values = new Set<string>();
-    for (const item of items) {
-      if (item.category === 'gpu') values.add(item.aibBrand);
-    }
-    return [...values].sort();
-  }, [items]);
+  const existingAibBrands = useMemo(
+    () => productsQuery.data?.existingAibBrands ?? [],
+    [productsQuery.data],
+  );
 
   const selectedSeries =
     form?.category === 'gpu'
@@ -308,12 +309,16 @@ export function useAdminProductsController() {
     state: {
       category,
       items,
+      total: productsQuery.data?.total ?? 0,
+      page: productsQuery.data?.page ?? page,
+      pageSize: productsQuery.data?.pageSize ?? ADMIN_PRODUCTS_PAGE_SIZE,
       retailSeries,
       selectedSeries,
       existingSockets,
       existingAibBrands,
       form,
       isLoading: productsQuery.isLoading,
+      isFetching: productsQuery.isFetching,
       isUploading: uploadMutation.isPending,
       isSaving: saveMutation.isPending,
       isDeleting: deleteMutation.isPending,
@@ -321,8 +326,10 @@ export function useAdminProductsController() {
     actions: {
       onChangeCategory: (nextCat: Category) => {
         setCategory(nextCat);
+        setPage(1);
         setForm(null);
       },
+      onChangePage: (nextPage: number) => setPage(nextPage),
       onStartCreate: () =>
         setForm(createEmptyProductForm(category, retailSeries[0]?.id ?? '')),
       onStartEdit: (item: AdminProductListItem) => setForm(formFromItem(item)),

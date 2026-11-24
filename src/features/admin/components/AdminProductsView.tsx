@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { AlertDialog } from '@/components/ui/AlertDialog';
 import { Card } from '@/components/ui/Card';
+import { CatalogPagination } from '@/components/ui/CatalogPagination';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { Input } from '@/components/ui/Input';
@@ -377,60 +378,72 @@ export function AdminProductsView({ state, actions }: AdminProductsViewProps) {
       ) : state.items.length === 0 ? (
         <EmptyState title={VI_MESSAGES.common.noData} />
       ) : (
-        <ResponsiveTableWrapper label={VI_MESSAGES.admin.navProducts}>
-          <table className="w-full min-w-[640px] border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-border bg-surface-subtle">
-                <th className="px-3 py-2.5 font-semibold text-ink-muted">ID</th>
-                <th className="px-3 py-2.5 font-semibold text-ink-muted">Tên</th>
-                <th className="px-3 py-2.5 font-semibold text-ink-muted">Giá</th>
-                <th className="px-3 py-2.5 font-semibold text-ink-muted">Thông số chính</th>
-                <th className="px-3 py-2.5 font-semibold text-ink-muted">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {state.items.map((item) => (
-                <tr
-                  key={item.id}
-                  data-testid={TEST_IDS.admin.productRow(item.id)}
-                  className="border-b border-border last:border-b-0"
-                >
-                  <td className="px-3 py-2.5 font-mono text-xs text-ink-muted">{item.id}</td>
-                  <td className="px-3 py-2.5 font-medium text-ink">{item.name}</td>
-                  <td className="px-3 py-2.5 text-primary">{formatVnd(item.priceVnd)}</td>
-                  <td className="px-3 py-2.5 text-xs text-ink-muted">
-                    {item.category === 'cpu'
-                      ? `${item.vendor.toUpperCase()} | ${item.socket} | ${item.coresTotal}C/${item.threadsTotal}T`
-                      : `${item.series.name} | ${item.aibBrand} | ${item.series.vramGb} GB${
-                          item.isLimitedEdition ? ' | Limited Edition' : ''
-                        }`}
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        data-testid={TEST_IDS.admin.productEdit(item.id)}
-                        onClick={() => actions.onStartEdit(item)}
-                      >
-                        {VI_MESSAGES.common.edit}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        disabled={state.isDeleting}
-                        data-testid={TEST_IDS.admin.productDelete(item.id)}
-                        onClick={() => setPendingDeleteId(item.id)}
-                      >
-                        {VI_MESSAGES.common.delete}
-                      </Button>
-                    </div>
-                  </td>
+        <div
+          className={`flex flex-col gap-4 transition-opacity ${state.isFetching && !state.isLoading ? 'opacity-65' : ''}`}
+        >
+          <ResponsiveTableWrapper label={VI_MESSAGES.admin.navProducts}>
+            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-border bg-surface-subtle">
+                  <th className="px-3 py-2.5 font-semibold text-ink-muted">ID</th>
+                  <th className="px-3 py-2.5 font-semibold text-ink-muted">Tên</th>
+                  <th className="px-3 py-2.5 font-semibold text-ink-muted">Giá</th>
+                  <th className="px-3 py-2.5 font-semibold text-ink-muted">Thông số chính</th>
+                  <th className="px-3 py-2.5 font-semibold text-ink-muted">Thao tác</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </ResponsiveTableWrapper>
+              </thead>
+              <tbody>
+                {state.items.map((item) => (
+                  <tr
+                    key={item.id}
+                    data-testid={TEST_IDS.admin.productRow(item.id)}
+                    className="border-b border-border last:border-b-0"
+                  >
+                    <td className="px-3 py-2.5 font-mono text-xs text-ink-muted">{item.id}</td>
+                    <td className="px-3 py-2.5 font-medium text-ink">{item.name}</td>
+                    <td className="px-3 py-2.5 text-primary">{formatVnd(item.priceVnd)}</td>
+                    <td className="px-3 py-2.5 text-xs text-ink-muted">
+                      {item.category === 'cpu'
+                        ? `${item.vendor.toUpperCase()} | ${item.socket} | ${item.coresTotal}C/${item.threadsTotal}T`
+                        : `${item.series.name} | ${item.aibBrand} | ${item.series.vramGb} GB${
+                            item.isLimitedEdition ? ' | Limited Edition' : ''
+                          }`}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          data-testid={TEST_IDS.admin.productEdit(item.id)}
+                          onClick={() => actions.onStartEdit(item)}
+                        >
+                          {VI_MESSAGES.common.edit}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          disabled={state.isDeleting}
+                          data-testid={TEST_IDS.admin.productDelete(item.id)}
+                          onClick={() => setPendingDeleteId(item.id)}
+                        >
+                          {VI_MESSAGES.common.delete}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ResponsiveTableWrapper>
+
+          <CatalogPagination
+            scope={`admin-${state.category}`}
+            currentPage={state.page}
+            totalItems={state.total}
+            pageSize={state.pageSize}
+            onPageChange={actions.onChangePage}
+          />
+        </div>
       )}
 
       <AlertDialog

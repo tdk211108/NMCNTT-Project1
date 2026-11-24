@@ -68,6 +68,16 @@ export interface AdminGpuVariantListItem {
 
 export type AdminProductListItem = AdminCpuListItem | AdminGpuVariantListItem;
 
+export interface AdminProductPageResponse {
+  items: AdminProductListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  existingSockets: string[];
+  existingAibBrands: string[];
+}
+
 export interface AdminGpuSeriesItem {
   id: string;
   kind: GpuSeriesKind;

@@ -10,6 +10,7 @@ import {
   listAdminGpuSeries,
   listAdminLegacyCpus,
   listAdminProducts,
+  listAdminProductsPage,
   softDeleteAdminGpuSeries,
   softDeleteAdminProduct,
   updateAdminGpuSeries,
@@ -140,7 +141,7 @@ describe('services/admin-catalog, admin-order, reset & DB triggers (Postgres 16)
     ).rejects.toMatchObject({ code: 'DUPLICATE_NAME', status: 409 });
 
     const legacyList = await listAdminLegacyCpus(db);
-    expect(legacyList).toHaveLength(24);
+    expect(legacyList).toHaveLength(61);
   });
 
   it('enforces GPU series rules: SERIES_NOT_RETAIL, HAS_VARIANTS, DB kind immutability, and image cleanup', async () => {
@@ -238,8 +239,14 @@ describe('services/admin-catalog, admin-order, reset & DB triggers (Postgres 16)
     });
 
     const seriesList = await listAdminGpuSeries('retail', db);
-    expect(seriesList.length).toBe(13);
-    expect((await listAdminProducts('cpu', db)).length).toBe(35);
+    expect(seriesList.length).toBe(16);
+    expect((await listAdminProducts('cpu', db)).length).toBe(64);
+
+    const gpuAdminPage = await listAdminProductsPage('gpu', 1, 25, db);
+    expect(gpuAdminPage.items).toHaveLength(25);
+    expect(gpuAdminPage.total).toBe(219);
+    expect(gpuAdminPage.totalPages).toBe(9);
+    expect(gpuAdminPage.existingAibBrands).toHaveLength(16);
   });
 
   it('lists full-phone orders for admin and resets DB + auth_failures + uploads cleanly', async () => {
@@ -281,7 +288,7 @@ describe('services/admin-catalog, admin-order, reset & DB triggers (Postgres 16)
 
     expect(resetResult).toEqual({
       ordersDeleted: 1,
-      productsRestored: 106,
+      productsRestored: 283,
       imagesPurged: 2,
       warnings: [],
     });

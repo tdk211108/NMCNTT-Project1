@@ -35,7 +35,8 @@ function addInvalidVendorIssues(
   ctx: z.RefinementCtx,
 ): void {
   if (!vendors?.length) return;
-  const allowed = category === 'cpu' ? new Set(['intel', 'amd']) : new Set(['nvidia', 'amd']);
+  const allowed =
+    category === 'cpu' ? new Set(['intel', 'amd']) : new Set(['nvidia', 'amd', 'intel']);
   for (const v of vendors) {
     if (!allowed.has(v)) {
       ctx.addIssue({
@@ -46,6 +47,14 @@ function addInvalidVendorIssues(
     }
   }
 }
+
+export const vendorPagesSchema = z
+  .object({
+    intel: z.number().int().min(1).optional(),
+    amd: z.number().int().min(1).optional(),
+    nvidia: z.number().int().min(1).optional(),
+  })
+  .strict();
 
 export const productListQuerySchema = z
   .object({
@@ -60,6 +69,10 @@ export const productListQuerySchema = z
     limitedEdition: z.boolean().optional(),
     sort: productSortSchema.optional(),
     q: z.string().trim().max(SEARCH_SUGGEST_MAX_LEN).optional(),
+    page: z.number().int().min(1).optional(),
+    pageSize: z.number().int().min(1).max(100).optional(),
+    perVendor: z.boolean().optional(),
+    vendorPages: vendorPagesSchema.optional(),
   })
   .superRefine((val, ctx) => {
     addInvalidVendorIssues(val.category, val.vendor, ctx);
@@ -116,7 +129,7 @@ export const comboQuerySchema = z.object({
   budgetVnd: z.number().int().min(COMBO_MIN_BUDGET_VND).max(COMBO_MAX_BUDGET_VND),
   purpose: comboPurposeSchema.default('gaming_aaa'),
   cpuVendor: z.enum(['intel', 'amd']).optional(),
-  gpuVendor: z.enum(['nvidia', 'amd']).optional(),
+  gpuVendor: z.enum(['nvidia', 'amd', 'intel']).optional(),
 });
 
 export const upgradeSortSchema = z.enum([

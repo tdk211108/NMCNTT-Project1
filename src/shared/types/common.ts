@@ -1,6 +1,6 @@
 export type Category = 'cpu' | 'gpu';
 export type CpuVendor = 'intel' | 'amd';
-export type GpuVendor = 'nvidia' | 'amd';
+export type GpuVendor = 'nvidia' | 'amd' | 'intel';
 export type ChipVendor = 'intel' | 'amd' | 'nvidia';
 export type GpuSeriesKind = 'retail' | 'legacy';
 export type PaymentMethod = 'cod' | 'bank_transfer' | 'card';

@@ -15,7 +15,7 @@ export const STANDARD_SHIPPING_FEE_VND = 50_000;
 export const COMPARE_MIN_ITEMS = 2;
 export const COMPARE_MAX_ITEMS = 3;
 
-export const CATALOG_MAX_RESULTS = 200;
+export const CATALOG_MAX_RESULTS = 500;
 export const FEATURED_PER_CATEGORY = 8;
 export const LANDING_FEATURED_CPU_IDS = [
   'cpu-intel-core-i5-14600k',
@@ -39,6 +39,7 @@ export const SEARCH_SUGGEST_MAX_RESULTS = 8;
 export const SEARCH_SUGGEST_MIN_LEN = 2;
 export const SEARCH_SUGGEST_MAX_LEN = 50;
 export const ADMIN_ORDERS_MAX_ROWS = 500;
+export const ADMIN_PRODUCTS_PAGE_SIZE = 25;
 
 export const ORDER_ID_PREFIX = 'PC-';
 export const ORDER_ID_RANDOM_LENGTH = 10;
@@ -122,7 +123,13 @@ export const PACKAGING_DEFAULT = 'full_box' as const;
 
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 export const MAX_JSON_BYTES = 32 * 1024;
+export const BRAND_LOGO_PATH = '/logo.png';
+export const BRAND_LOGO_MARK_PATH = '/icons/logo-mark.png';
+export const BRAND_LOGO_MARK_LIGHT_PATH = '/icons/logo-mark-light.png';
+export const MUSIC_PLAYER_ICON_PATH = '/icons/music.svg';
 export const PLACEHOLDER_IMAGE_PATH = '/icons/placeholder-product.svg';
+export const HERO_VIDEO_PATH = '/ROG-Matrix-GeForce-SnapYT.App.webm';
+export const PRELOADER_FAILSAFE_TIMEOUT_MS = 12_000;
 
 export const REVIEW_COUNTDOWN_SECONDS = 5;
 

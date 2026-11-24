@@ -35,7 +35,7 @@ interface AppliedUpgradeParams {
 
 const VENDORS_BY_CATEGORY: Record<Category, readonly ChipVendor[]> = {
   cpu: ['intel', 'amd'],
-  gpu: ['nvidia', 'amd'],
+  gpu: ['nvidia', 'amd', 'intel'],
 };
 
 function parseCategory(raw?: string): Category {

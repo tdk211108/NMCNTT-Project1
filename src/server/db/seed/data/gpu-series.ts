@@ -94,4 +94,25 @@ export const RETAIL_GPU_SERIES_SEEDS: readonly RetailGpuSeriesSeed[] = [
     memoryType: "GDDR6", busWidthBit: 128, tbpW: 150, passmarkRaw: 19710,
     passmarkSource: "PassMark", sourceUrl: "https://www.videocardbenchmark.net/gpu.php?gpu=Radeon+RX+9060+XT+8GB&id=6575",
   },
+  // Source: https://www.videocardbenchmark.net/gpu.php?gpu=Radeon+RX+9050&id=9526
+  {
+    id: "gs-rx-9050", kind: "retail", name: "AMD Radeon RX 9050", vendor: "amd",
+    vramGb: 8, cores: 1024, baseClockMhz: 1920, boostClockMhz: 2600,
+    memoryType: "GDDR6", busWidthBit: 128, tbpW: 92, passmarkRaw: 11918,
+    passmarkSource: "PassMark", sourceUrl: "https://www.videocardbenchmark.net/gpu.php?gpu=Radeon+RX+9050&id=9526",
+  },
+  // Source: https://www.videocardbenchmark.net/gpu.php?gpu=Intel+Arc+B580&id=5306
+  {
+    id: "gs-arc-b580", kind: "retail", name: "Intel Arc B580", vendor: "intel",
+    vramGb: 12, cores: 2560, baseClockMhz: 2670, boostClockMhz: 2670,
+    memoryType: "GDDR6", busWidthBit: 192, tbpW: 190, passmarkRaw: 16097,
+    passmarkSource: "PassMark", sourceUrl: "https://www.videocardbenchmark.net/gpu.php?gpu=Intel+Arc+B580&id=5306",
+  },
+  // Source: https://www.videocardbenchmark.net/gpu.php?gpu=Intel+Arc+B570&id=5652
+  {
+    id: "gs-arc-b570", kind: "retail", name: "Intel Arc B570", vendor: "intel",
+    vramGb: 10, cores: 2304, baseClockMhz: 2500, boostClockMhz: 2500,
+    memoryType: "GDDR6", busWidthBit: 160, tbpW: 150, passmarkRaw: 14214,
+    passmarkSource: "PassMark", sourceUrl: "https://www.videocardbenchmark.net/gpu.php?gpu=Intel+Arc+B570&id=5652",
+  },
 ];

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button, CyberButtonLayers, getButtonClassNames } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
@@ -47,7 +47,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }
 
   const navItems = [
-    { href: '/admin', label: VI_MESSAGES.admin.navDashboard, testId: undefined },
+    { href: '/admin', label: VI_MESSAGES.admin.navDashboard, testId: TEST_IDS.admin.navDashboard },
     { href: '/admin/products', label: VI_MESSAGES.admin.navProducts, testId: TEST_IDS.admin.navProducts },
     { href: '/admin/gpu-series', label: VI_MESSAGES.admin.navGpuSeries, testId: TEST_IDS.admin.navGpuSeries },
     { href: '/admin/legacy-cpus', label: VI_MESSAGES.admin.navLegacyCpus, testId: TEST_IDS.admin.navLegacyCpus },
@@ -57,21 +57,34 @@ export function AdminShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
-        <nav aria-label="Điều hướng quản trị" className="flex flex-wrap items-center gap-2">
+        <nav aria-label="Điều hướng quản trị" className="flex flex-wrap items-center gap-2.5">
           {navItems.map((item) => {
             const active = pathname === item.href;
+            const { classes } = getButtonClassNames({
+              size: 'sm',
+              variant: active ? 'primary' : 'outline',
+              cyber: true,
+            });
             return (
-              <Link key={item.href} href={item.href} data-testid={item.testId}>
-                <Button size="sm" cyber={false} sfx="toggle" variant={active ? 'primary' : 'outline'}>
+              <Link
+                key={item.href}
+                href={item.href}
+                data-testid={item.testId}
+                data-sfx="toggle"
+                aria-current={active ? 'page' : undefined}
+                className={classes}
+              >
+                <CyberButtonLayers glitchContent={item.label} />
+                <span className="relative z-10 inline-flex items-center justify-center gap-1.5">
                   {item.label}
-                </Button>
+                </span>
               </Link>
             );
           })}
         </nav>
 
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           isLoading={state.isLoggingOut}
           data-testid={TEST_IDS.admin.logout}

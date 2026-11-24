@@ -34,6 +34,7 @@ export function ProductImage({
       src={displaySrc}
       alt={alt}
       loading={loading}
+      decoding="async"
       data-testid={testId}
       onError={() => {
         if (displaySrc !== PLACEHOLDER_IMAGE_PATH) {

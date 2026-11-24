@@ -38,3 +38,6 @@ Thumbs.db
 # Playwright CLI output & local config (may contain credentials/machine settings)
 .playwright/
 .playwright-cli/
+
+# Local research scratch reports (kept locally, not pushed)
+*_analysis_report.txt

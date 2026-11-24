@@ -21,7 +21,14 @@ import {
 } from '../useCatalogController';
 import { ProductCard } from './ProductCard';
 
-export type CatalogViewProps = ReturnType<typeof useCatalogController>;
+type CatalogControllerResult = ReturnType<typeof useCatalogController>;
+type CatalogControllerState = CatalogControllerResult['state'];
+
+export interface CatalogViewProps {
+  state: Omit<CatalogControllerState, 'serverPaginated' | 'vendorTotals' | 'isFetching'> &
+    Partial<Pick<CatalogControllerState, 'serverPaginated' | 'vendorTotals' | 'isFetching'>>;
+  actions: CatalogControllerResult['actions'];
+}
 
 const SORT_OPTIONS: readonly ComboboxSelectOption<ProductSort>[] = [
   { value: 'default', label: VI_MESSAGES.catalog.sortDefault },
@@ -319,7 +326,10 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
           </Card>
         </aside>
 
-        <section ref={resultsRef} className="min-w-0 scroll-mt-24">
+        <section
+          ref={resultsRef}
+          className={`min-w-0 scroll-mt-24 transition-opacity ${state.isFetching && !state.isLoading ? 'opacity-65' : ''}`}
+        >
           {state.isLoading ? (
             <Spinner />
           ) : state.errorMessage ? (
@@ -336,11 +346,16 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
           ) : state.category === 'cpu' && state.groupedByVendor ? (
             <div className="flex flex-col gap-8">
               {state.groupedByVendor.map((group) => {
-                const pagedGroup = paginateItems(
-                  group.items,
-                  pageByVendor[group.vendor] ?? 1,
-                  pageSize,
-                );
+                const isServer = Boolean(state.serverPaginated);
+                const groupTotal = isServer
+                  ? (state.vendorTotals?.[group.vendor] ?? group.items.length)
+                  : group.items.length;
+                const pagedGroup = isServer
+                  ? {
+                      page: pageByVendor[group.vendor] ?? 1,
+                      items: group.items,
+                    }
+                  : paginateItems(group.items, pageByVendor[group.vendor] ?? 1, pageSize);
                 return (
                   <section
                     key={group.vendor}
@@ -350,7 +365,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
                     className="flex scroll-mt-24 flex-col gap-3"
                   >
                     <h2 className="font-display border-b-2 border-border-strong pb-2 text-lg font-bold text-ink">
-                      {group.vendor.toUpperCase()} ({group.items.length})
+                      {group.vendor.toUpperCase()} ({groupTotal})
                     </h2>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                       {pagedGroup.items.map((product) => (
@@ -367,7 +382,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
                     <CatalogPagination
                       scope={group.vendor}
                       currentPage={pagedGroup.page}
-                      totalItems={group.items.length}
+                      totalItems={groupTotal}
                       pageSize={pageSize}
                       onPageChange={(nextPage) => {
                         actions.onChangeVendorPage?.(group.vendor, nextPage);
@@ -380,7 +395,11 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
             </div>
           ) : state.category === 'gpu' && state.groupedByVendor ? (
             (() => {
-              const pagedGpu = paginateItems(state.items, flatPage, pageSize);
+              const isServer = Boolean(state.serverPaginated);
+              const pagedGpu = isServer
+                ? { page: flatPage, items: state.items }
+                : paginateItems(state.items, flatPage, pageSize);
+              const totalGpuItems = isServer ? state.total : state.items.length;
               const groupedPage = groupProductsByVendor(pagedGpu.items);
               return (
                 <div className="flex flex-col gap-8">
@@ -406,7 +425,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
                   <CatalogPagination
                     scope="gpu"
                     currentPage={pagedGpu.page}
-                    totalItems={state.items.length}
+                    totalItems={totalGpuItems}
                     pageSize={pageSize}
                     onPageChange={(nextPage) => {
                       actions.onChangeFlatPage?.(nextPage);
@@ -418,7 +437,11 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
             })()
           ) : (
             (() => {
-              const pagedFlat = paginateItems(state.items, flatPage, pageSize);
+              const isServer = Boolean(state.serverPaginated);
+              const pagedFlat = isServer
+                ? { page: flatPage, items: state.items }
+                : paginateItems(state.items, flatPage, pageSize);
+              const totalFlatItems = isServer ? state.total : state.items.length;
               return (
                 <div className="flex flex-col gap-6">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
@@ -436,7 +459,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
                   <CatalogPagination
                     scope={state.category}
                     currentPage={pagedFlat.page}
-                    totalItems={state.items.length}
+                    totalItems={totalFlatItems}
                     pageSize={pageSize}
                     onPageChange={(nextPage) => {
                       actions.onChangeFlatPage?.(nextPage);

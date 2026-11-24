@@ -329,6 +329,7 @@ export function ComboAdvisorView({ state, actions }: ComboAdvisorViewProps) {
                   { value: null, label: VI_MESSAGES.tools.combo.allVendorsOption, key: 'all' },
                   { value: 'nvidia' as GpuVendor, label: 'NVIDIA', key: 'nvidia' },
                   { value: 'amd' as GpuVendor, label: 'AMD', key: 'amd' },
+                  { value: 'intel' as GpuVendor, label: 'Intel', key: 'intel' },
                 ] as const
               ).map((opt) => (
                 <Button

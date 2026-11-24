@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
 import { CPU_PER_BRAND_PAGE_SIZE, GPU_PAGE_SIZE } from '@/shared/constants';
@@ -75,7 +75,7 @@ function toggleItem<T>(list: readonly T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
 
-function buildProductsUrl(
+function buildFilterParams(
   category: Category,
   filters: {
     vendors: ChipVendor[];
@@ -88,7 +88,7 @@ function buildProductsUrl(
     limitedOnly: boolean;
     sort: ProductSort;
   },
-): string {
+): URLSearchParams {
   const params = new URLSearchParams({ category });
   if (filters.vendors.length > 0) params.set('vendor', filters.vendors.join(','));
 
@@ -121,7 +121,7 @@ function buildProductsUrl(
   if (filters.sort !== 'default') {
     params.set('sort', filters.sort);
   }
-  return `/api/products?${params.toString()}`;
+  return params;
 }
 
 export function groupProductsByVendor(
@@ -162,7 +162,7 @@ export function useCatalogController(category: Category, initialSeriesId = '') {
     return () => clearTimeout(timer);
   }, [priceMinInput, priceMaxInput]);
 
-  const queryUrl = buildProductsUrl(category, {
+  const filterParams = buildFilterParams(category, {
     vendors,
     priceMinInput: debouncedPriceMin,
     priceMaxInput: debouncedPriceMax,
@@ -173,28 +173,49 @@ export function useCatalogController(category: Category, initialSeriesId = '') {
     limitedOnly,
     sort,
   });
+  const filterKey = filterParams.toString();
 
   const [paginationState, setPaginationState] = useState<{
     queryKey: string;
     pageByVendor: Record<string, number>;
     flatPage: number;
   }>({
-    queryKey: queryUrl,
+    queryKey: filterKey,
     pageByVendor: {},
     flatPage: 1,
   });
 
   const activePageByVendor =
-    paginationState.queryKey === queryUrl ? paginationState.pageByVendor : {};
-  const activeFlatPage = paginationState.queryKey === queryUrl ? paginationState.flatPage : 1;
+    paginationState.queryKey === filterKey ? paginationState.pageByVendor : {};
+  const activeFlatPage = paginationState.queryKey === filterKey ? paginationState.flatPage : 1;
+  const pageSize = category === 'cpu' ? CPU_PER_BRAND_PAGE_SIZE : GPU_PAGE_SIZE;
+  const isPerVendorMode = category === 'cpu' && sort === 'default';
+
+  const requestParams = new URLSearchParams(filterParams);
+  if (isPerVendorMode) {
+    requestParams.set('perVendor', 'true');
+    requestParams.set('pageSize', String(pageSize));
+    const vendorPageToken = Object.entries(activePageByVendor)
+      .filter(([, p]) => p > 1)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([v, p]) => `${v}:${p}`)
+      .join(',');
+    if (vendorPageToken) {
+      requestParams.set('vendorPage', vendorPageToken);
+    }
+  } else {
+    requestParams.set('page', String(activeFlatPage));
+    requestParams.set('pageSize', String(pageSize));
+  }
+  const queryUrl = `/api/products?${requestParams.toString()}`;
 
   const listQuery = useQuery({
     queryKey: ['products', 'list', queryUrl],
     queryFn: () => apiFetch<ProductListResponse>(queryUrl),
+    placeholderData: keepPreviousData,
   });
 
   const items = listQuery.data?.items ?? [];
-  const pageSize = category === 'cpu' ? CPU_PER_BRAND_PAGE_SIZE : GPU_PAGE_SIZE;
   const groupedByVendor = sort === 'default' ? groupProductsByVendor(items) : null;
   const sliderBounds = clampPriceSliderBounds(priceMinInput, priceMaxInput);
 
@@ -204,9 +225,11 @@ export function useCatalogController(category: Category, initialSeriesId = '') {
       items,
       groupedByVendor,
       total: listQuery.data?.total ?? 0,
+      vendorTotals: listQuery.data?.vendorTotals ?? {},
+      serverPaginated: true,
       pageSize,
       pageByVendor: activePageByVendor,
-      flatPage: activeFlatPage,
+      flatPage: listQuery.data?.pagination?.page ?? activeFlatPage,
       facets: listQuery.data?.facets ?? { vendors: [], priceRange: null },
       selectedVendors: vendors,
       priceMinInput,
@@ -224,6 +247,7 @@ export function useCatalogController(category: Category, initialSeriesId = '') {
       limitedOnly,
       sort,
       isLoading: listQuery.isLoading,
+      isFetching: listQuery.isFetching,
       errorMessage: listQuery.error?.message ?? null,
     },
     actions: {
@@ -251,17 +275,17 @@ export function useCatalogController(category: Category, initialSeriesId = '') {
       onChangeSort: setSort,
       onChangeVendorPage: (vendor: string, nextPage: number) =>
         setPaginationState((prev) => ({
-          queryKey: queryUrl,
+          queryKey: filterKey,
           pageByVendor: {
-            ...(prev.queryKey === queryUrl ? prev.pageByVendor : {}),
+            ...(prev.queryKey === filterKey ? prev.pageByVendor : {}),
             [vendor]: nextPage,
           },
-          flatPage: prev.queryKey === queryUrl ? prev.flatPage : 1,
+          flatPage: prev.queryKey === filterKey ? prev.flatPage : 1,
         })),
       onChangeFlatPage: (nextPage: number) =>
         setPaginationState((prev) => ({
-          queryKey: queryUrl,
-          pageByVendor: prev.queryKey === queryUrl ? prev.pageByVendor : {},
+          queryKey: filterKey,
+          pageByVendor: prev.queryKey === filterKey ? prev.pageByVendor : {},
           flatPage: nextPage,
         })),
       onClearFilters: () => {
@@ -275,7 +299,7 @@ export function useCatalogController(category: Category, initialSeriesId = '') {
         setSockets([]);
         setSeriesId('');
         setSort('default');
-        setPaginationState({ queryKey: queryUrl, pageByVendor: {}, flatPage: 1 });
+        setPaginationState({ queryKey: filterKey, pageByVendor: {}, flatPage: 1 });
       },
       ...cardActions,
     },

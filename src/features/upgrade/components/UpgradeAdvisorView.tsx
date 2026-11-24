@@ -257,6 +257,91 @@ function UpgradeGroupHeader({
   );
 }
 
+function UpgradeCardActions({
+  item,
+  onAddToCart,
+  seriesId,
+  aibVariantsHref,
+}: {
+  item: {
+    id: string;
+    name: string;
+    priceVnd: number;
+    psuHref: string;
+    compareHref: string | null;
+  };
+  onAddToCart: (item: { id: string; name: string; priceVnd: number }) => void;
+  seriesId?: string;
+  aibVariantsHref?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-2.5 pt-1">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <Button
+          variant="primary"
+          size="sm"
+          sfx="success"
+          data-testid={TEST_IDS.upgrade.addCart(item.id)}
+          onClick={() => onAddToCart(item)}
+        >
+          <ShoppingCart className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>{VI_MESSAGES.catalog.addToCart}</span>
+        </Button>
+
+        <Link href={`/products/${item.id}`}>
+          <Button variant="outline" size="sm">
+            <span>{VI_MESSAGES.tools.upgrade.viewDetailAction}</span>
+          </Button>
+        </Link>
+      </div>
+
+      {/* Keep PSU check and direct compare strictly paired on a single row down to 360px. */}
+      <div className={`grid gap-2 ${item.compareHref ? 'grid-cols-2' : 'grid-cols-1'}`}>
+        <Link
+          href={item.psuHref}
+          data-testid={TEST_IDS.upgrade.psuLink(item.id)}
+          className="block min-w-0"
+        >
+          <Button variant="outline" size="xs" cyber={false} className="w-full min-w-0 whitespace-nowrap">
+            <Gauge className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span>{VI_MESSAGES.tools.upgrade.checkPsuAction}</span>
+          </Button>
+        </Link>
+
+        {item.compareHref ? (
+          <Link
+            href={item.compareHref}
+            data-testid={TEST_IDS.upgrade.compareLink(item.id)}
+            className="block min-w-0"
+          >
+            <Button
+              variant="outline"
+              size="xs"
+              cyber={false}
+              className="w-full min-w-0 whitespace-nowrap"
+            >
+              <Scale className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>{VI_MESSAGES.tools.upgrade.compareDirectAction}</span>
+            </Button>
+          </Link>
+        ) : null}
+      </div>
+
+      {aibVariantsHref && seriesId ? (
+        <Link
+          href={aibVariantsHref}
+          data-testid={TEST_IDS.upgrade.aibVariantsLink(seriesId)}
+          className="block w-full"
+        >
+          <Button variant="outline" size="sm" cyber={false} className="w-full">
+            <span>{VI_MESSAGES.tools.upgrade.viewAibVariantsAction}</span>
+          </Button>
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
 function CpuUpgradeCard({
   item,
   onAddToCart,
@@ -341,40 +426,7 @@ function CpuUpgradeCard({
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 pt-1">
-        <Button
-          variant="primary"
-          size="sm"
-          sfx="success"
-          data-testid={TEST_IDS.upgrade.addCart(item.id)}
-          onClick={() => onAddToCart(item)}
-        >
-          <ShoppingCart className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>{VI_MESSAGES.catalog.addToCart}</span>
-        </Button>
-
-        <Link href={`/products/${item.id}`}>
-          <Button variant="outline" size="sm">
-            <span>{VI_MESSAGES.tools.upgrade.viewDetailAction}</span>
-          </Button>
-        </Link>
-
-        <Link href={item.psuHref} data-testid={TEST_IDS.upgrade.psuLink(item.id)}>
-          <Button variant="outline" size="sm" cyber={false}>
-            <Gauge className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span>{VI_MESSAGES.tools.upgrade.checkPsuAction}</span>
-          </Button>
-        </Link>
-
-        {item.compareHref ? (
-          <Link href={item.compareHref} data-testid={TEST_IDS.upgrade.compareLink(item.id)}>
-            <Button variant="outline" size="sm" cyber={false}>
-              <Scale className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span>{VI_MESSAGES.tools.upgrade.compareDirectAction}</span>
-            </Button>
-          </Link>
-        ) : null}
-      </div>
+      <UpgradeCardActions item={item} onAddToCart={onAddToCart} />
     </Card>
   );
 }
@@ -469,49 +521,12 @@ function GpuUpgradeCard({
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 pt-1">
-        <Button
-          variant="primary"
-          size="sm"
-          sfx="success"
-          data-testid={TEST_IDS.upgrade.addCart(item.id)}
-          onClick={() => onAddToCart(item)}
-        >
-          <ShoppingCart className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>{VI_MESSAGES.catalog.addToCart}</span>
-        </Button>
-
-        <Link href={`/products/${item.id}`}>
-          <Button variant="outline" size="sm">
-            <span>{VI_MESSAGES.tools.upgrade.viewDetailAction}</span>
-          </Button>
-        </Link>
-
-        <Link href={item.psuHref} data-testid={TEST_IDS.upgrade.psuLink(item.id)}>
-          <Button variant="outline" size="sm" cyber={false}>
-            <Gauge className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span>{VI_MESSAGES.tools.upgrade.checkPsuAction}</span>
-          </Button>
-        </Link>
-
-        {item.compareHref ? (
-          <Link href={item.compareHref} data-testid={TEST_IDS.upgrade.compareLink(item.id)}>
-            <Button variant="outline" size="sm" cyber={false}>
-              <Scale className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span>{VI_MESSAGES.tools.upgrade.compareDirectAction}</span>
-            </Button>
-          </Link>
-        ) : null}
-
-        <Link
-          href={item.aibVariantsHref}
-          data-testid={TEST_IDS.upgrade.aibVariantsLink(item.seriesId)}
-        >
-          <Button variant="outline" size="sm" cyber={false}>
-            <span>{VI_MESSAGES.tools.upgrade.viewAibVariantsAction}</span>
-          </Button>
-        </Link>
-      </div>
+      <UpgradeCardActions
+        item={item}
+        onAddToCart={onAddToCart}
+        seriesId={item.seriesId}
+        aibVariantsHref={item.aibVariantsHref}
+      />
     </Card>
   );
 }

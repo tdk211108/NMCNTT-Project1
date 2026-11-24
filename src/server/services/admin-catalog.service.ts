@@ -24,6 +24,7 @@ import type {
   AdminGpuVariantListItem,
   AdminLegacyCpuItem,
   AdminProductListItem,
+  AdminProductPageResponse,
   Category,
   GpuSeriesKind,
 } from '@/shared/types';
@@ -285,6 +286,93 @@ export async function listAdminProducts(
     ...cpuRows.map((r) => buildCpuItemFromRow(r.product, r.spec)),
     ...gpuRows.map((r) => buildGpuItemFromRow(r.product, r.variant, r.series)),
   ];
+}
+
+export async function listAdminProductsPage(
+  category: Category,
+  page: number,
+  pageSize: number,
+  db: DbClient = getDb(),
+): Promise<AdminProductPageResponse> {
+  if (category === 'cpu') {
+    const [{ count: total }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(products)
+      .innerJoin(cpuSpecs, eq(cpuSpecs.productId, products.id))
+      .where(isNull(products.deletedAt));
+
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const offset = (safePage - 1) * pageSize;
+
+    const [rows, socketRows] = await Promise.all([
+      db
+        .select({ product: products, spec: cpuSpecs })
+        .from(products)
+        .innerJoin(cpuSpecs, eq(cpuSpecs.productId, products.id))
+        .where(isNull(products.deletedAt))
+        .orderBy(asc(cpuSpecs.vendor), asc(products.name), asc(products.id))
+        .limit(pageSize)
+        .offset(offset),
+      db
+        .selectDistinct({ socket: cpuSpecs.socket })
+        .from(cpuSpecs)
+        .innerJoin(products, eq(products.id, cpuSpecs.productId))
+        .where(isNull(products.deletedAt))
+        .orderBy(asc(cpuSpecs.socket)),
+    ]);
+
+    return {
+      items: rows.map((r) => buildCpuItemFromRow(r.product, r.spec)),
+      total,
+      page: safePage,
+      pageSize,
+      totalPages,
+      existingSockets: socketRows.map((r) => r.socket),
+      existingAibBrands: [],
+    };
+  }
+
+  const gpuActiveWhere = and(isNull(products.deletedAt), isNull(gpuSeries.deletedAt));
+  const [{ count: total }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(products)
+    .innerJoin(gpuVariants, eq(gpuVariants.productId, products.id))
+    .innerJoin(gpuSeries, eq(gpuSeries.id, gpuVariants.seriesId))
+    .where(gpuActiveWhere);
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const offset = (safePage - 1) * pageSize;
+
+  const [rows, aibRows] = await Promise.all([
+    db
+      .select({ product: products, variant: gpuVariants, series: gpuSeries })
+      .from(products)
+      .innerJoin(gpuVariants, eq(gpuVariants.productId, products.id))
+      .innerJoin(gpuSeries, eq(gpuSeries.id, gpuVariants.seriesId))
+      .where(gpuActiveWhere)
+      .orderBy(asc(gpuSeries.vendor), asc(products.name), asc(products.id))
+      .limit(pageSize)
+      .offset(offset),
+    db
+      .selectDistinct({ aibBrand: gpuVariants.aibBrand })
+      .from(gpuVariants)
+      .innerJoin(products, eq(products.id, gpuVariants.productId))
+      .innerJoin(gpuSeries, eq(gpuSeries.id, gpuVariants.seriesId))
+      .where(gpuActiveWhere)
+      .orderBy(asc(gpuVariants.aibBrand)),
+  ]);
+
+  return {
+    items: rows.map((r) => buildGpuItemFromRow(r.product, r.variant, r.series)),
+    total,
+    page: safePage,
+    pageSize,
+    totalPages,
+    existingSockets: [],
+    existingAibBrands: aibRows.map((r) => r.aibBrand),
+  };
 }
 
 export async function createAdminProduct(

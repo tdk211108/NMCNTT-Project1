@@ -2,6 +2,8 @@
 
 import { Pause, Play, SkipBack, SkipForward, Volume1, Volume2, VolumeX } from 'lucide-react';
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
+import { fetchCachedMusicTracks } from '@/lib/music-cache';
+import { MUSIC_PLAYER_ICON_PATH } from '@/shared/constants';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
 import type { MusicTrack } from '@/shared/types';
@@ -72,12 +74,9 @@ export function MusicPlayerBar() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/music', { signal: controller.signal })
-      .then((res) => (res.ok ? res.json() : { tracks: [] }))
-      .then((payload: { tracks?: MusicTrack[] }) => {
-        if (Array.isArray(payload.tracks)) {
-          setTracks(payload.tracks);
-        }
+    fetchCachedMusicTracks(controller.signal)
+      .then((list) => {
+        setTracks(list);
       })
       .catch(() => {
         // Ignore abort / offline errors quietly so header never stalls.
@@ -233,21 +232,16 @@ export function MusicPlayerBar() {
         className="relative z-10 mr-6 flex shrink-0 cursor-pointer items-center focus-visible:outline-2 focus-visible:outline-signal disabled:cursor-default"
       >
         <div
-          className={`relative z-10 flex h-8 w-8 items-center justify-center overflow-hidden rounded-control border border-border-strong bg-[#12141A] shadow-md transition-transform duration-300 ${
+          className={`relative z-10 flex h-8 w-8 items-center justify-center overflow-hidden rounded-control border border-border-strong bg-surface-elevated p-0.5 shadow-md transition-transform duration-300 ${
             effectivePlaying ? '-translate-x-0.5' : 'group-hover:-translate-x-0.5'
           }`}
         >
-          <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden="true">
-            <defs>
-              <linearGradient id={`cr-art-${uid}`} x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#D71920" />
-                <stop offset="100%" stopColor="#141820" />
-              </linearGradient>
-            </defs>
-            <rect width="32" height="32" fill={`url(#cr-art-${uid})`} />
-            <circle cx="16" cy="16" r="8" fill="none" stroke="#F8FAFC" strokeOpacity="0.8" strokeWidth="1.5" />
-            <circle cx="16" cy="16" r="2.5" fill="#FF4D58" />
-          </svg>
+          <img
+            src={MUSIC_PLAYER_ICON_PATH}
+            alt=""
+            aria-hidden="true"
+            className="h-full w-full object-contain"
+          />
         </div>
 
         <div

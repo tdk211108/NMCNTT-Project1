@@ -94,6 +94,23 @@ const gpuAmd: CompareGpuInput = {
   busWidthBit: 256,
 };
 
+const gpuIntel: CompareGpuInput = {
+  id: 'gpu-intel-b580',
+  category: 'gpu',
+  name: 'Intel Arc B580 Limited Edition',
+  priceVnd: 7_250_000,
+  vendor: 'intel',
+  passmarkRaw: 16097,
+  normalizedScore: 41.2,
+  vramGb: 12,
+  cores: 2560,
+  tbpW: 190,
+  baseClockMhz: 2670,
+  boostClockMhz: 2670,
+  memoryType: 'GDDR6',
+  busWidthBit: 192,
+};
+
 describe('domain/compare', () => {
   it('parses compare query IDs in validation order', () => {
     expect(parseCompareIds(undefined)).toEqual({ ok: false, reason: 'NO_IDS' });
@@ -171,6 +188,12 @@ describe('domain/compare', () => {
     expect(amdRows[3].label).toBe('Stream Processors');
     expect(amdRows[1].cells[0].display).toBe('Chưa có dữ liệu');
     expect(amdRows[1].cells.every((c) => !c.highlighted)).toBe(true);
+
+    const intelRows = buildCompareRows('gpu', [gpuIntel, gpuIntel]);
+    expect(intelRows[3].label).toBe('Shading Units');
+
+    const allVendorsRows = buildCompareRows('gpu', [gpuNvidia, gpuAmd, gpuIntel]);
+    expect(allVendorsRows[3].label).toBe('CUDA Cores / Stream Processors / Shading Units');
 
     const mixedVendorRows = buildCompareRows('gpu', [gpuNvidia, gpuAmd]);
     expect(mixedVendorRows[3].label).toBe('CUDA Cores / Stream Processors');

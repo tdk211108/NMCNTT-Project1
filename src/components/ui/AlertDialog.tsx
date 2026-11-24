@@ -83,7 +83,7 @@ export function AlertDialog({
       onClick={(event) => {
         if (!dismissible) return;
         const dialog = dialogRef.current;
-        if (!dialog) return;
+        if (!dialog || event.target !== dialog || event.detail === 0) return;
         const rect = dialog.getBoundingClientRect();
         const outside =
           event.clientX < rect.left ||

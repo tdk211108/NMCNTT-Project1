@@ -3,9 +3,18 @@ import toast from 'react-hot-toast';
 import { showToast } from '@/components/ui/toast-store';
 import { ApiClientError, apiFetch } from '@/lib/api-client';
 import { formatDateTimeVi, formatExactWatts, formatNumberVi, formatVnd } from '@/lib/format';
-import { buildPageMetadata } from '@/lib/metadata';
+import {
+  DEFAULT_OPENGRAPH_IMAGES,
+  buildPageMetadata,
+  resolveSiteMetadataBase,
+} from '@/lib/metadata';
 import { matchesSearchTokens, normalizeSearchText } from '@/lib/search-filter';
 import { createValidatedLocalPersistStorage, safeLocalStorage, safeSessionStorage } from '@/lib/safe-storage';
+import {
+  getLandingScrollInitScript,
+  isReloadNavigationType,
+  shouldResetLandingScroll,
+} from '@/lib/landing-scroll';
 import {
   DEFAULT_THEME_MODE,
   THEME_STORAGE_KEY,
@@ -24,6 +33,7 @@ import {
   warmUiAudio,
 } from '@/lib/ui-sound';
 import { useCartStore } from '@/features/cart/store';
+import { BRAND_LOGO_PATH } from '@/shared/constants';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { cartStoredStateSchema, compareStoredStateSchema } from '@/shared/schemas';
 
@@ -158,6 +168,13 @@ describe('client cart store', () => {
       siteName: VI_MESSAGES.brand.name,
       title: 'Bộ vi xử lý (CPU) | CoreRaster',
       description: 'Danh mục CPU chính hãng.',
+      images: DEFAULT_OPENGRAPH_IMAGES,
+    });
+    expect(DEFAULT_OPENGRAPH_IMAGES[0]).toMatchObject({
+      url: BRAND_LOGO_PATH,
+      width: 1200,
+      height: 1200,
+      alt: VI_MESSAGES.brand.name,
     });
     expect(publicMeta.robots).toBeUndefined();
 
@@ -167,6 +184,26 @@ describe('client cart store', () => {
     });
     expect(privateMeta.description).toBe(VI_MESSAGES.brand.tagline);
     expect(privateMeta.robots).toEqual({ index: false, follow: false });
+
+    const prevSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    const prevProdUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    const prevVercelUrl = process.env.VERCEL_URL;
+    try {
+      delete process.env.NEXT_PUBLIC_SITE_URL;
+      delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+      delete process.env.VERCEL_URL;
+      expect(resolveSiteMetadataBase().href).toBe('http://localhost:3000/');
+
+      process.env.VERCEL_URL = 'coreraster-preview.vercel.app';
+      expect(resolveSiteMetadataBase().href).toBe('https://coreraster-preview.vercel.app/');
+
+      process.env.NEXT_PUBLIC_SITE_URL = 'https://shop.coreraster.vn';
+      expect(resolveSiteMetadataBase().href).toBe('https://shop.coreraster.vn/');
+    } finally {
+      process.env.NEXT_PUBLIC_SITE_URL = prevSiteUrl;
+      process.env.VERCEL_PROJECT_PRODUCTION_URL = prevProdUrl;
+      process.env.VERCEL_URL = prevVercelUrl;
+    }
   });
 
   it('parses, persists, and initializes dual-theme preferences cleanly with dark default', () => {
@@ -240,5 +277,23 @@ describe('client cart store', () => {
       showToast('Lỗi', 'error');
       toast.removeAll();
     }).not.toThrow();
+  });
+
+  it('resets scroll on landing reload/entry while preserving back_forward and catalog routes', () => {
+    expect(isReloadNavigationType('reload')).toBe(true);
+    expect(isReloadNavigationType('navigate')).toBe(false);
+    expect(isReloadNavigationType(undefined)).toBe(false);
+
+    expect(shouldResetLandingScroll('/', 'reload')).toBe(true);
+    expect(shouldResetLandingScroll('/', 'navigate')).toBe(true);
+    expect(shouldResetLandingScroll('/', 'back_forward')).toBe(false);
+    expect(shouldResetLandingScroll('/cpu', 'reload')).toBe(false);
+    expect(shouldResetLandingScroll('/gpu', 'reload')).toBe(false);
+
+    const script = getLandingScrollInitScript();
+    expect(script).toContain("window.location.pathname!=='/'");
+    expect(script).toContain("window.history.scrollRestoration='manual'");
+    expect(script).toContain('window.history.replaceState');
+    expect(script).toContain('window.scrollTo(0,0)');
   });
 });

@@ -39,7 +39,7 @@ function parseCpuVendor(raw?: string): CpuVendor | undefined {
 }
 
 function parseGpuVendor(raw?: string): GpuVendor | undefined {
-  return raw === 'nvidia' || raw === 'amd' ? raw : undefined;
+  return raw === 'nvidia' || raw === 'amd' || raw === 'intel' ? raw : undefined;
 }
 
 function normalizeBudgetDigits(raw: string): string {

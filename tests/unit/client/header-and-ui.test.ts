@@ -5,7 +5,7 @@ import { AlertDialog } from '@/components/ui/AlertDialog';
 import { AnimatedCartButton } from '@/components/ui/AnimatedCartButton';
 import { AnimatedCopyButton } from '@/components/ui/AnimatedCopyButton';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
-import { Button } from '@/components/ui/Button';
+import { Button, CyberButtonLayers, getButtonClassNames } from '@/components/ui/Button';
 import { CatalogPagination, buildPaginationTokens } from '@/components/ui/CatalogPagination';
 import { ComboboxSelect } from '@/components/ui/ComboboxSelect';
 import { DecryptedText } from '@/components/ui/DecryptedText';
@@ -23,7 +23,7 @@ import { SpectrumLoader } from '@/components/ui/SpectrumLoader';
 import { ToastContainer, ToastItemCard } from '@/components/ui/Toast';
 import { CatalogView } from '@/features/catalog/components/CatalogView';
 import { paginateItems } from '@/features/catalog/useCatalogController';
-import { GooeyNav } from '@/features/layout/GooeyNav';
+import { GooeyMenuChevron, GooeyNav } from '@/features/layout/GooeyNav';
 import {
   DEFAULT_MUSIC_VOLUME,
   MusicPlayerBar,
@@ -38,11 +38,13 @@ import {
   clampPriceSliderBounds,
 } from '@/features/catalog/useCatalogController';
 import { CompareTableView } from '@/features/compare/components/CompareTableView';
+import { AdminDashboardView } from '@/features/admin/components/AdminDashboardView';
 import { ComboAdvisorView } from '@/features/combo/components/ComboAdvisorView';
 import { HomeView } from '@/features/home/components/HomeView';
 import { PerfPerPriceView } from '@/features/perf-per-price/components/PerfPerPriceView';
 import { UpgradeAdvisorView } from '@/features/upgrade/components/UpgradeAdvisorView';
 import { InteractiveBackground } from '@/features/layout/InteractiveBackground';
+import { Footer } from '@/features/layout/Footer';
 import {
   CATALOG_CONTAINER_CLASS,
   CENTERED_CONTAINER_CLASS,
@@ -57,6 +59,11 @@ import { OrderStatusModal } from '@/features/orders/components/OrderStatusModal'
 import { PolicyLayout } from '@/features/policies/PolicyLayout';
 import { ProductDetailView } from '@/features/product-detail/components/ProductDetailView';
 import { SearchResultsView } from '@/features/search/components/SearchResultsView';
+import {
+  BRAND_LOGO_MARK_LIGHT_PATH,
+  BRAND_LOGO_MARK_PATH,
+  MUSIC_PLAYER_ICON_PATH,
+} from '@/shared/constants';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type {
   CompareResponse,
@@ -178,15 +185,24 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
     expect(adminHtml).toContain('href="/admin"');
   });
 
-  it('renders ZaloButton as a circular icon-only heartbeat bubble with dual radar ripple', () => {
+  it('renders collapsible support dock with Facebook and Zalo links by default', () => {
     const html = renderToStaticMarkup(createElement(ZaloButton));
+    expect(html).toContain('data-testid="support-float-dock"');
+    expect(html).toContain('data-no-grid-cascade');
+    expect(html).toContain('data-testid="facebook-float-button"');
+    expect(html).toContain('href="https://www.facebook.com/tdk1108/"');
+    expect(html).toContain('src="/icons/facebook.svg"');
     expect(html).toContain('data-testid="zalo-float-button"');
+    expect(html).toContain('data-testid="support-collapse-toggle"');
+    expect(html).toContain('aria-expanded="true"');
     expect(html).toContain('zalo-heartbeat');
     expect(html).toContain('zalo-pulse-ring');
     expect(html).toContain('zalo-pulse-ring-delay');
     expect(html).toContain('h-14 w-14');
     expect(html).toContain('rounded-full');
     expect(html).not.toContain('>Zalo<');
+    expect(html).not.toContain('<ul');
+    expect(html).not.toContain('<ol');
   });
 
   it('renders interactive ShapeGrid canvas background synced cleanly to dark/light themes', () => {
@@ -207,6 +223,7 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
     expect(isWideContainerRoute('/')).toBe(true);
     expect(isWideContainerRoute('/cpu')).toBe(true);
     expect(isWideContainerRoute('/gpu')).toBe(true);
+    expect(isWideContainerRoute('/tools/perf-per-price')).toBe(true);
     expect(isWideContainerRoute('/checkout')).toBe(false);
     expect(isWideContainerRoute('/orders/lookup')).toBe(false);
     expect(isWideContainerRoute('/policies/warranty')).toBe(false);
@@ -215,6 +232,7 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
     expect(getMainContainerClass('/')).toBe('w-full flex-1 pb-6');
     expect(getMainContainerClass('/cpu')).toContain('max-w-[1760px]');
     expect(getMainContainerClass('/gpu')).toContain('max-w-[1760px]');
+    expect(getMainContainerClass('/tools/perf-per-price')).toContain('max-w-[1760px]');
     expect(getMainContainerClass('/checkout')).toContain(CENTERED_CONTAINER_CLASS);
 
     expect(getChromeContainerClass()).toBe(WIDE_CONTAINER_CLASS);
@@ -591,12 +609,13 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
     expect(homeHtml).toContain('hero-video-fade');
     expect(homeHtml).toContain('lg:pb-[clamp(8.5rem,24dvh,14.5rem)]');
     expect(homeHtml).toContain('/ROG-Matrix-GeForce-SnapYT.App.webm');
-    expect(homeHtml).toContain('data-testid="home-crt-toggle"');
+    expect(homeHtml).not.toContain('data-testid="home-crt-toggle"');
+    expect(homeHtml).not.toContain('>REC<');
+    expect(homeHtml).not.toContain('>PAUSE<');
     expect(homeHtml).toContain('data-testid="home-ticker-toggle"');
     expect(homeHtml).toContain('data-testid="home-slider-card-cpu-cpu-amd-ryzen-7-9800x3d"');
     expect(homeHtml).not.toContain('data-testid="product-card-buy-now-cpu-amd-ryzen-7-9800x3d"');
     expect(homeHtml).toContain('items-end');
-    expect(homeHtml).toContain('sm:right-24');
     expect(homeHtml).toContain('<span class="whitespace-nowrap">Precision-engineered</span>');
     expect(homeHtml).not.toContain('hero-tech-grid');
     expect(homeHtml).not.toContain('SYS.VER // 30TH-MTX');
@@ -816,6 +835,34 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
     expect(gooeyHtml).not.toContain('<ul');
     expect(gooeyHtml).not.toContain('<ol');
 
+    const closedChevronHtml = renderToStaticMarkup(createElement(GooeyMenuChevron, { open: false }));
+    expect(closedChevronHtml).toContain('lucide-chevron-down');
+    expect(closedChevronHtml).not.toContain('rotate-180');
+
+    const openChevronHtml = renderToStaticMarkup(createElement(GooeyMenuChevron, { open: true }));
+    expect(openChevronHtml).toContain('lucide-chevron-down');
+    expect(openChevronHtml).toContain('motion-safe:transition-transform');
+    expect(openChevronHtml).toContain('rotate-180');
+
+    const toolsGooeyHtml = renderToStaticMarkup(
+      createElement(GooeyNav, {
+        items: [
+          { href: '/cpu', label: 'CPU' },
+          {
+            href: '/tools',
+            label: VI_MESSAGES.nav.tools,
+            testId: 'header-tools-dropdown',
+            subItems: [
+              { href: '/compare', label: VI_MESSAGES.nav.compare, description: 'So sánh' },
+            ],
+          },
+        ],
+        activeHref: '/compare',
+      }),
+    );
+    expect((toolsGooeyHtml.match(/lucide-chevron-down/g) ?? []).length).toBe(2);
+    expect(toolsGooeyHtml).not.toContain('rotate-180');
+
     expect(DEFAULT_MUSIC_VOLUME).toBe(0.2);
     expect(clampMusicVolume(1.5)).toBe(1);
     expect(clampMusicVolume(-0.2)).toBe(0);
@@ -830,6 +877,7 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
     expect(playerHtml).toContain('mr-6');
     expect(playerHtml).toContain('animate-spin');
     expect(playerHtml).toContain('blur-xl');
+    expect(playerHtml).toContain(`src="${MUSIC_PLAYER_ICON_PATH}"`);
   });
 
   it('renders Cyber Glitch Buttons, SFX toggle (default ON), SearchableSelect errors, Breadcrumb, Search tabs/pagination, and PolicyLayout without <ul>/<ol>', () => {
@@ -838,6 +886,12 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
       actions: { openAuthModal: vi.fn(), logout: vi.fn() },
     });
     const headerHtml = renderToStaticMarkup(createElement(Header));
+    expect(headerHtml).toContain('data-testid="header-brand-link"');
+    expect(headerHtml).toContain('mtx-brand-dark-mark');
+    expect(headerHtml).toContain('mtx-brand-light-mark');
+    expect(headerHtml).not.toContain('bg-[#17181C]');
+    expect(headerHtml).toContain(`src="${BRAND_LOGO_MARK_PATH}"`);
+    expect(headerHtml).toContain(`src="${BRAND_LOGO_MARK_LIGHT_PATH}"`);
     expect(headerHtml).toContain('data-testid="header-sfx-toggle"');
     expect(headerHtml).toContain('aria-pressed="true"');
     expect(headerHtml.indexOf('data-testid="header-sfx-toggle"')).toBeLessThan(
@@ -854,6 +908,9 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
         authActions: { openAuthModal: vi.fn(), logout: vi.fn() },
       }),
     );
+    expect(floatingHtml).toContain('data-testid="header-floating-brand-link"');
+    expect(floatingHtml).toContain(`src="${BRAND_LOGO_MARK_PATH}"`);
+    expect(floatingHtml).toContain(`src="${BRAND_LOGO_MARK_LIGHT_PATH}"`);
     expect(floatingHtml).toContain('data-testid="header-floating-nav"');
     expect(floatingHtml).toContain('data-testid="floating-tools-dropdown"');
     expect(floatingHtml).toContain('data-testid="header-floating-cart-link"');
@@ -865,6 +922,15 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
     expect(floatingHtml.indexOf('Điều hướng nhanh', floatingBrandNavGapIdx)).toBeGreaterThan(
       floatingHtml.indexOf(VI_MESSAGES.brand.name, floatingBrandNavGapIdx),
     );
+
+    const footerHtml = renderToStaticMarkup(createElement(Footer));
+    expect(footerHtml).toContain('data-testid="footer-brand-link"');
+    expect(footerHtml).toContain(`src="${BRAND_LOGO_MARK_PATH}"`);
+    expect(footerHtml).toContain(`src="${BRAND_LOGO_MARK_LIGHT_PATH}"`);
+    expect(footerHtml).toContain(VI_MESSAGES.brand.name);
+    expect(footerHtml).toContain('data-testid="footer-github-button"');
+    expect(footerHtml).not.toContain('<ul');
+    expect(footerHtml).not.toContain('<ol');
 
     const toastHostHtml = renderToStaticMarkup(createElement(ToastContainer));
     expect(toastHostHtml).toContain('role="region"');
@@ -1277,7 +1343,16 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
     expect(upgradeCpuHtml).toContain('data-testid="upgrade-uplift-cpu-i5-14600k"');
     expect(upgradeCpuHtml).toContain('data-testid="upgrade-warning-cpu-r7-9800x3d-socket_change"');
     expect(upgradeCpuHtml).toContain('data-testid="upgrade-add-cart-cpu-i5-14600k"');
+    expect(upgradeCpuHtml).toContain('data-testid="upgrade-psu-link-cpu-i5-14600k"');
     expect(upgradeCpuHtml).toContain('data-testid="upgrade-compare-link-cpu-i5-14600k"');
+    const cpuActionGridStart = upgradeCpuHtml.indexOf('<div class="grid gap-2 grid-cols-2">');
+    expect(cpuActionGridStart).toBeGreaterThan(-1);
+    const cpuActionGridEnd = upgradeCpuHtml.indexOf('</a></div>', cpuActionGridStart);
+    expect(cpuActionGridEnd).toBeGreaterThan(cpuActionGridStart);
+    const cpuActionRow = upgradeCpuHtml.slice(cpuActionGridStart, cpuActionGridEnd);
+    expect(cpuActionRow).toContain('data-testid="upgrade-psu-link-cpu-i5-14600k"');
+    expect(cpuActionRow).toContain('data-testid="upgrade-compare-link-cpu-i5-14600k"');
+    expect(cpuActionRow).not.toContain('data-testid="upgrade-add-cart-cpu-i5-14600k"');
     expect(upgradeCpuHtml).not.toContain('<ul');
     expect(upgradeCpuHtml).not.toContain('<ol');
 
@@ -1285,26 +1360,142 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
       createElement(PerfPerPriceView, {
         state: {
           category: 'cpu',
-          availableVendors: ['intel', 'amd'],
-          selectedVendors: [],
-          maxPriceInput: '',
-          budgetInputError: null,
-          data: null,
+          data: {
+            category: 'cpu',
+            maxPriceVnd: null,
+            totalEvaluated: 35,
+            items: [],
+            notes: [VI_MESSAGES.tools.disclaimers.passmark],
+            awards: [
+              {
+                id: 'cpu-amd-ryzen-9-9950x3d',
+                category: 'cpu',
+                name: 'AMD Ryzen 9 9950X3D',
+                vendor: 'amd',
+                aibBrand: null,
+                isLimitedEdition: false,
+                priceVnd: 19_990_000,
+                imageUrl: null,
+                score: { raw: 70116, normalized: 100.0 },
+                perfPerPrice: 5.0,
+                perfPerWatt: 412.4,
+                specs: {
+                  socket: 'AM5',
+                  coresTotal: 16,
+                  threadsTotal: 32,
+                  psuPowerW: 170,
+                  tdpW: 170,
+                  l3CacheMb: 128,
+                  boostClockGhz: 5.7,
+                  seriesName: null,
+                  vramGb: null,
+                  tbpW: null,
+                  lengthMm: null,
+                  slotThickness: null,
+                },
+                awards: [
+                  { key: 'strongest', metricValue: 100, metricDisplay: '100,0 điểm' },
+                  { key: 'largest_cache', metricValue: 128, metricDisplay: '128 MB L3' },
+                ],
+                awardCount: 2,
+              },
+            ],
+          },
           isLoading: false,
           errorMessage: null,
         },
         actions: {
           onChangeCategory: vi.fn(),
-          onToggleVendor: vi.fn(),
-          onChangeMaxPrice: vi.fn(),
-          onSubmit: vi.fn(),
+          onAddToCart: vi.fn(),
         },
       }),
     );
     expect(pppHtml).toContain('bi-cpu');
     expect(pppHtml).toContain('bi-gpu-card');
+    expect(pppHtml).toContain('role="tablist"');
+    expect(pppHtml).toContain('data-testid="ppp-category-cpu"');
+    expect(pppHtml).toContain('data-testid="ppp-category-gpu"');
+    expect(pppHtml).toContain('lg:grid-cols-3');
+    expect(pppHtml).toContain('2xl:grid-cols-4');
+    expect(pppHtml).not.toContain('<aside');
+    expect(pppHtml).not.toContain('ppp-vendor-');
+    expect(pppHtml).not.toContain('ppp-max-price');
+    expect(pppHtml).toContain('data-testid="ppp-awards-summary"');
+    expect(pppHtml).toContain('data-testid="ppp-awards-grid"');
+    expect(pppHtml).toContain('data-testid="ppp-award-card-cpu-amd-ryzen-9-9950x3d"');
+    expect(pppHtml).toContain('data-testid="ppp-award-badge-cpu-amd-ryzen-9-9950x3d-strongest"');
+    expect(pppHtml).toContain(
+      'data-testid="ppp-award-badge-cpu-amd-ryzen-9-9950x3d-largest_cache"',
+    );
+    expect(pppHtml).toContain('ĐA DANH HIỆU // x2');
+    expect(pppHtml).not.toContain('data-testid="ppp-table"');
+    expect(pppHtml).not.toContain('<table');
     expect(pppHtml).not.toContain('<ul');
     expect(pppHtml).not.toContain('<ol');
+
+    const pppGpuHtml = renderToStaticMarkup(
+      createElement(PerfPerPriceView, {
+        state: {
+          category: 'gpu',
+          data: {
+            category: 'gpu',
+            maxPriceVnd: null,
+            totalEvaluated: 10,
+            items: [],
+            notes: [VI_MESSAGES.tools.disclaimers.passmark],
+            awards: [
+              {
+                id: 'gpu-asus-rtx-5080-noctua-oc-16gb',
+                category: 'gpu',
+                name: 'ASUS RTX 5080 Noctua OC 16GB',
+                vendor: 'nvidia',
+                aibBrand: 'ASUS',
+                isLimitedEdition: true,
+                priceVnd: 44_990_000,
+                imageUrl: null,
+                score: { raw: 31800, normalized: 82.0 },
+                perfPerPrice: 1.82,
+                perfPerWatt: 88.3,
+                specs: {
+                  socket: null,
+                  coresTotal: null,
+                  threadsTotal: null,
+                  psuPowerW: null,
+                  tdpW: null,
+                  l3CacheMb: null,
+                  boostClockGhz: null,
+                  seriesName: 'NVIDIA GeForce RTX 5080',
+                  vramGb: 16,
+                  tbpW: 360,
+                  lengthMm: 385,
+                  slotThickness: 4.0,
+                },
+                awards: [
+                  {
+                    key: 'largest_gpu',
+                    metricValue: 385,
+                    metricDisplay: '385 mm (4,0 slot)',
+                  },
+                ],
+                awardCount: 1,
+              },
+            ],
+          },
+          isLoading: false,
+          errorMessage: null,
+        },
+        actions: {
+          onChangeCategory: vi.fn(),
+          onAddToCart: vi.fn(),
+        },
+      }),
+    );
+    expect(pppGpuHtml).toContain(
+      'data-testid="ppp-award-badge-gpu-asus-rtx-5080-noctua-oc-16gb-largest_gpu"',
+    );
+    expect(pppGpuHtml).toContain('GPU to nhất');
+    expect(pppGpuHtml).toContain('385 mm (4,0 slot)');
+    expect(pppGpuHtml).toContain('lucide-maximize-2');
 
     const upgradeGpuHtml = renderToStaticMarkup(
       createElement(UpgradeAdvisorView, {
@@ -1395,8 +1586,155 @@ describe('UI polish, Crimson Matrix dual-theme, Lucide icons, and admin navigati
         },
       }),
     );
+    expect(upgradeGpuHtml).toContain('<div class="grid gap-2 grid-cols-1">');
+    expect(upgradeGpuHtml).not.toContain('<div class="grid gap-2 grid-cols-2">');
+    expect(upgradeGpuHtml).toContain('data-testid="upgrade-psu-link-gpu-zotac-rtx-5060"');
     expect(upgradeGpuHtml).toContain('data-testid="upgrade-aib-variants-link-gs-rtx-5060"');
+    expect(upgradeGpuHtml.indexOf('data-testid="upgrade-psu-link-gpu-zotac-rtx-5060"')).toBeLessThan(
+      upgradeGpuHtml.indexOf('data-testid="upgrade-aib-variants-link-gs-rtx-5060"'),
+    );
     expect(upgradeGpuHtml).not.toContain('<ul');
     expect(upgradeGpuHtml).not.toContain('<ol');
+
+    const upgradeGpuWithCompareHtml = renderToStaticMarkup(
+      createElement(UpgradeAdvisorView, {
+        state: {
+          category: 'gpu',
+          currentId: 'gs-rtx-4060',
+          budgetInput: '',
+          budgetError: null,
+          sameSocketOnly: false,
+          sameSocketAvailable: false,
+          availableVendors: ['nvidia', 'amd'],
+          selectedVendors: [],
+          sort: 'recommended',
+          retailCpuOptions: [],
+          legacyCpuOptions: [],
+          retailGpuOptions: [],
+          legacyGpuOptions: [],
+          isLoadingOptions: false,
+          optionsErrorMessage: null,
+          isLoadingRecommendations: false,
+          errorMessage: null,
+          data: {
+            category: 'gpu',
+            current: {
+              id: 'gs-rtx-4060',
+              retailProductId: 'gpu-rtx-4060',
+              category: 'gpu',
+              source: 'store',
+              name: 'NVIDIA RTX 4060',
+              vendor: 'nvidia',
+              socket: null,
+              coresTotal: null,
+              threadsTotal: null,
+              psuPowerW: null,
+              ramSupport: null,
+              vramGb: 8,
+              tbpW: 115,
+              passmarkRaw: 19000,
+              normalizedScore: 48.0,
+              hasPassmark: true,
+            },
+            hasSameSocketInCatalog: false,
+            isTopTier: false,
+            minUpgradePriceVnd: 8_990_000,
+            sameSocketCpus: [],
+            platformSwapCpus: [],
+            gpus: [
+              {
+                id: 'gpu-zotac-rtx-5060',
+                seriesId: 'gs-rtx-5060',
+                seriesName: 'NVIDIA GeForce RTX 5060',
+                name: 'ZOTAC RTX 5060 Solo',
+                aibBrand: 'ZOTAC',
+                vendor: 'nvidia',
+                priceVnd: 8_990_000,
+                imageUrl: null,
+                vramGb: 8,
+                tbpW: 145,
+                lengthMm: 165,
+                slotThickness: 2.0,
+                variantCount: 5,
+                score: { raw: 20581, normalized: 52.7 },
+                perfPerPrice: 5.86,
+                upliftPct: 21,
+                warnings: [],
+                psuHref: '/tools/psu?gpu=gs-rtx-5060',
+                compareHref: '/compare?ids=gpu-rtx-4060,gpu-zotac-rtx-5060',
+                aibVariantsHref: '/gpu?series=gs-rtx-5060',
+              },
+            ],
+            notes: [VI_MESSAGES.tools.disclaimers.passmark],
+          },
+        },
+        actions: {
+          onRetryOptions: vi.fn(),
+          onChangeCategory: vi.fn(),
+          onSelectCurrent: vi.fn(),
+          onChangeBudgetInput: vi.fn(),
+          onSelectBudgetPreset: vi.fn(),
+          onClearBudget: vi.fn(),
+          onToggleSameSocket: vi.fn(),
+          onToggleVendor: vi.fn(),
+          onChangeSort: vi.fn(),
+          onSubmit: vi.fn(),
+          onAddToCart: vi.fn(),
+        },
+      }),
+    );
+    const gpuPairStart = upgradeGpuWithCompareHtml.indexOf('<div class="grid gap-2 grid-cols-2">');
+    expect(gpuPairStart).toBeGreaterThan(-1);
+    const gpuAibIdx = upgradeGpuWithCompareHtml.indexOf(
+      'data-testid="upgrade-aib-variants-link-gs-rtx-5060"',
+    );
+    expect(gpuAibIdx).toBeGreaterThan(gpuPairStart);
+    const gpuPairRow = upgradeGpuWithCompareHtml.slice(gpuPairStart, gpuAibIdx);
+    expect(gpuPairRow).toContain('data-testid="upgrade-psu-link-gpu-zotac-rtx-5060"');
+    expect(gpuPairRow).toContain('data-testid="upgrade-compare-link-gpu-zotac-rtx-5060"');
+    expect(gpuPairRow).not.toContain('upgrade-aib-variants-link');
+  });
+
+  it('renders Admin Dashboard shortcut cards with active hover/press feedback and Cyber danger reset trigger', () => {
+    const dangerButtonHtml = renderToStaticMarkup(
+      createElement(Button, { variant: 'danger', cyberTag: 'RST' }, 'Reset'),
+    );
+    expect(dangerButtonHtml).toContain('mtx-cyber-btn');
+    expect(dangerButtonHtml).toContain('mtx-cyber-danger');
+    expect(dangerButtonHtml).toContain('mtx-cyber-glitch');
+    expect(dangerButtonHtml).toContain('>RST<');
+
+    const { classes: tabClasses } = getButtonClassNames({ size: 'sm', variant: 'outline', cyber: true });
+    expect(tabClasses).toContain('mtx-cyber-outline');
+    const layersHtml = renderToStaticMarkup(createElement(CyberButtonLayers, { glitchContent: 'Tab' }));
+    expect(layersHtml).toContain('mtx-cyber-face');
+    expect(layersHtml).toContain('mtx-cyber-glitch');
+
+    const dashboardHtml = renderToStaticMarkup(
+      createElement(AdminDashboardView, {
+        state: {
+          confirmOpen: false,
+          isResetting: false,
+          lastResetResult: null,
+        },
+        actions: {
+          onOpenConfirm: vi.fn(),
+          onCloseConfirm: vi.fn(),
+          onConfirmReset: vi.fn(),
+        },
+      }),
+    );
+
+    expect(dashboardHtml).toContain('data-testid="admin-card-products"');
+    expect(dashboardHtml).toContain('data-testid="admin-card-gpu-series"');
+    expect(dashboardHtml).toContain('data-testid="admin-card-legacy-cpus"');
+    expect(dashboardHtml).toContain('data-testid="admin-card-orders"');
+    expect(dashboardHtml).not.toContain('hover:border-border-strong');
+    expect(dashboardHtml).toContain('group-hover:border-signal');
+    expect(dashboardHtml).toContain('group-active:translate-x-[3px]');
+    expect(dashboardHtml).toContain('mtx-cyber-danger');
+    expect(dashboardHtml).toContain('data-testid="admin-reset-button"');
+    expect(dashboardHtml).not.toContain('<ul');
+    expect(dashboardHtml).not.toContain('<ol');
   });
 });

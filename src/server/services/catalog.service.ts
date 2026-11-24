@@ -3,7 +3,9 @@ import 'server-only';
 import { and, asc, desc, eq, gte, inArray, isNull, lte, sql, type SQL } from 'drizzle-orm';
 import {
   CATALOG_MAX_RESULTS,
+  CPU_PER_BRAND_PAGE_SIZE,
   FEATURED_PER_CATEGORY,
+  GPU_PAGE_SIZE,
   LANDING_FEATURED_CPU_IDS,
   LANDING_FEATURED_GPU_IDS,
   PACKAGING_DEFAULT,
@@ -180,6 +182,7 @@ async function queryCpuCardRows(
   orderBy: ReturnType<typeof buildSortOrder>,
   limit: number,
   db: DbClient,
+  offset = 0,
 ): Promise<Array<{ card: ProductCard; seriesId: null }>> {
   const rows = await db
     .select({
@@ -201,7 +204,8 @@ async function queryCpuCardRows(
     .innerJoin(cpuSpecs, eq(cpuSpecs.productId, storefrontProductsV.id))
     .where(whereClause)
     .orderBy(...orderBy)
-    .limit(limit);
+    .limit(limit)
+    .offset(offset);
 
   return rows.map((row) => ({
     seriesId: null,
@@ -228,6 +232,7 @@ async function queryGpuCardRows(
   orderBy: ReturnType<typeof buildSortOrder>,
   limit: number,
   db: DbClient,
+  offset = 0,
 ): Promise<Array<{ card: ProductCard; seriesId: string | null }>> {
   const rows = await db
     .select({
@@ -251,7 +256,8 @@ async function queryGpuCardRows(
     .innerJoin(gpuSeries, eq(gpuSeries.id, storefrontProductsV.seriesId))
     .where(whereClause)
     .orderBy(...orderBy)
-    .limit(limit);
+    .limit(limit)
+    .offset(offset);
 
   return rows.map((row) => ({
     seriesId: row.seriesId,
@@ -316,6 +322,79 @@ export async function listProducts(
 
   const orderBy = buildSortOrder(query.sort);
   const whereClause = and(...conditions);
+  const defaultPageSize =
+    query.category === 'cpu' ? CPU_PER_BRAND_PAGE_SIZE : GPU_PAGE_SIZE;
+
+  if (query.perVendor) {
+    const pageSize = query.pageSize ?? defaultPageSize;
+    const vendorCountRows = await db
+      .select({
+        vendor: storefrontProductsV.vendor,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(storefrontProductsV)
+      .where(whereClause)
+      .groupBy(storefrontProductsV.vendor)
+      .orderBy(asc(storefrontProductsV.vendor));
+
+    const vendorTotals: Partial<Record<ChipVendor, number>> = {};
+    let total = 0;
+    for (const row of vendorCountRows) {
+      vendorTotals[row.vendor as ChipVendor] = row.count;
+      total += row.count;
+    }
+
+    const perVendorRows = await Promise.all(
+      vendorCountRows
+        .filter((row) => row.count > 0)
+        .map((row) => {
+          const vendorKey = row.vendor as ChipVendor;
+          const totalPages = Math.max(1, Math.ceil(row.count / pageSize));
+          const safePage = Math.min(Math.max(1, query.vendorPages?.[vendorKey] ?? 1), totalPages);
+          const offset = (safePage - 1) * pageSize;
+          const vendorWhere = whereClause
+            ? and(whereClause, eq(storefrontProductsV.vendor, row.vendor))
+            : eq(storefrontProductsV.vendor, row.vendor);
+          return query.category === 'cpu'
+            ? queryCpuCardRows(vendorWhere, orderBy, pageSize, db, offset)
+            : queryGpuCardRows(vendorWhere, orderBy, pageSize, db, offset);
+        }),
+    );
+
+    return {
+      items: perVendorRows.flatMap((group) => group.map((row) => row.card)),
+      facets,
+      total,
+      vendorTotals,
+    };
+  }
+
+  if (query.page !== undefined || query.pageSize !== undefined) {
+    const pageSize = query.pageSize ?? defaultPageSize;
+    const [{ count: total }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(storefrontProductsV)
+      .where(whereClause);
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const safePage = Math.min(Math.max(1, query.page ?? 1), totalPages);
+    const offset = (safePage - 1) * pageSize;
+
+    const rows =
+      query.category === 'cpu'
+        ? await queryCpuCardRows(whereClause, orderBy, pageSize, db, offset)
+        : await queryGpuCardRows(whereClause, orderBy, pageSize, db, offset);
+
+    return {
+      items: rows.map((row) => row.card),
+      facets,
+      total,
+      pagination: {
+        page: safePage,
+        pageSize,
+        totalPages,
+      },
+    };
+  }
 
   const rows =
     query.category === 'cpu'
@@ -496,7 +575,12 @@ export async function getProductDetail(
   }
 
   const { variant, series } = gpuJoin;
-  const coresLabel = series.vendor === 'nvidia' ? 'CUDA Cores' : 'Stream Processors';
+  const coresLabel =
+    series.vendor === 'nvidia'
+      ? 'CUDA Cores'
+      : series.vendor === 'intel'
+        ? 'Shading Units'
+        : 'Stream Processors';
 
   const specGroups: SpecGroup[] = [
     {

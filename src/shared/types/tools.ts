@@ -42,9 +42,72 @@ export interface PerfPerPriceItem {
   bestValue: boolean;
 }
 
+export type CpuAwardKey =
+  | 'strongest'
+  | 'best_value'
+  | 'best_efficiency'
+  | 'lowest_power'
+  | 'cheapest'
+  | 'most_expensive'
+  | 'most_cores'
+  | 'largest_cache';
+
+export type GpuAwardKey =
+  | 'strongest'
+  | 'best_value'
+  | 'best_efficiency'
+  | 'lowest_power'
+  | 'cheapest'
+  | 'most_expensive'
+  | 'most_vram'
+  | 'most_compact'
+  | 'largest_gpu';
+
+export type HardwareAwardKey = CpuAwardKey | GpuAwardKey;
+
+export interface HardwareAwardBadge {
+  key: HardwareAwardKey;
+  metricValue: number;
+  metricDisplay: string;
+}
+
+export interface HardwareAwardSpecs {
+  socket: string | null;
+  coresTotal: number | null;
+  threadsTotal: number | null;
+  psuPowerW: number | null;
+  tdpW: number | null;
+  l3CacheMb: number | null;
+  boostClockGhz: number | null;
+  seriesName: string | null;
+  vramGb: number | null;
+  tbpW: number | null;
+  lengthMm: number | null;
+  slotThickness: number | null;
+}
+
+export interface HardwareAwardWinner {
+  id: string;
+  category: Category;
+  name: string;
+  vendor: ChipVendor;
+  aibBrand: string | null;
+  isLimitedEdition: boolean;
+  priceVnd: number;
+  imageUrl: string | null;
+  score: Pick<Score, 'raw' | 'normalized'>;
+  perfPerPrice: number;
+  perfPerWatt: number;
+  specs: HardwareAwardSpecs;
+  awards: HardwareAwardBadge[];
+  awardCount: number;
+}
+
 export interface PerfPerPriceResponse {
   category: Category;
   maxPriceVnd: number | null;
+  totalEvaluated: number;
+  awards: HardwareAwardWinner[];
   items: PerfPerPriceItem[];
   notes: string[];
 }

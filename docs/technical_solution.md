@@ -244,10 +244,12 @@ pc-hardware-store/
 ├── scripts/
 │   ├── hash-admin-password.ts        # npm run admin:hash -- "<password>"
 │   ├── seed.ts                       # npm run db:seed (uses server/db/seed)
+│   ├── sync-seed-catalog.ts          # npm run db:sync (non-destructive seed upsert)
 │   ├── upload-seed-images.ts         # npm run storage:seed
 │   └── vendor-address-data.ts        # refreshes src/data/vn-admin-units.json from upstream
 ├── public/
-│   └── icons/ (zalo.svg, github.svg, placeholder-product.svg)
+│   ├── logo.png                      # 1200x1200 OpenGraph brand artwork
+│   └── icons/ (zalo.svg, facebook.svg, github.svg, music.svg, logo-mark.png, logo-mark-light.png, placeholder-product.svg)
 ├── tests/
 │   ├── helpers/                      # test-db.ts: local Postgres schema reset + pool helper
 │   ├── unit/                         # vitest (fileParallelism: false): domain/, infra/, services/, client/, root unit tests
@@ -1202,18 +1204,18 @@ Format: `<area>-<element>[-<qualifier>]`, kebab-case, with a dynamic product or 
 
 | Area | IDs |
 | --- | --- |
-| Header / layout | `header-search-input`, `header-search-submit`, `header-search-suggestion-{id}`, `header-cart-link`, `header-cart-count`, `header-admin-toggle`, `auth-header-login`, `auth-header-user`, `auth-header-my-orders`, `auth-header-logout`, `zalo-float-button`, `footer-github-button`, `footer-link-warranty`, `footer-link-payment-shipping`, `footer-link-contact`, `footer-link-privacy`, `error-not-found-page`, `error-runtime-page`, `error-retry-button`, `error-back-home-button` |
+| Header / layout | `header-brand-link`, `header-floating-brand-link`, `header-search-input`, `header-search-submit`, `header-search-suggestion-{id}`, `header-cart-link`, `header-cart-count`, `header-admin-toggle`, `auth-header-login`, `auth-header-user`, `auth-header-my-orders`, `auth-header-logout`, `site-preloader`, `site-preloader-progress`, `site-preloader-percent`, `site-preloader-status`, `support-float-dock`, `zalo-float-button`, `facebook-float-button`, `support-collapse-toggle`, `support-expand-button`, `footer-brand-link`, `footer-github-button`, `footer-link-warranty`, `footer-link-payment-shipping`, `footer-link-contact`, `footer-link-privacy`, `error-not-found-page`, `error-runtime-page`, `error-retry-button`, `error-back-home-button` |
 | Auth Modal | `auth-modal`, `auth-tab-login`, `auth-tab-register`, `auth-google-button`, `auth-facebook-button`, `auth-login-username`, `auth-login-password`, `auth-login-submit`, `auth-register-username`, `auth-register-display-name`, `auth-register-password`, `auth-register-submit`, `auth-error-alert` |
 | Home | `home-hero-scroll-cta`, `home-featured-cpu-section`, `home-featured-gpu-section`, `home-featured-cpu-all`, `home-featured-gpu-all`, `home-browse-cpu`, `home-browse-gpu`, `home-tool-compare`, `home-tool-ppp`, `home-tool-psu` |
 | Listing | `filter-vendor-{vendor}`, `filter-price-min`, `filter-price-max`, `filter-vram-{gb}`, `filter-aib-{brand}`, `filter-socket-{socket}`, `filter-clear`, `gpu-tab-all`, `gpu-tab-limited`, `sort-select`, `product-card-{id}`, `product-card-buy-now-{id}`, `product-card-compare-{id}`, `product-card-add-to-cart-{id}` |
 | Detail | `detail-buy-now`, `detail-add-to-cart`, `detail-compare-this`, `detail-calc-psu` |
 | Compare | `compare-slot-select-{index}`, `compare-slot-search-{index}`, `compare-slot-option-{index}-{id}`, `compare-slot-clear-{index}`, `compare-slot-preview-{index}`, `compare-add-column`, `compare-clear-all`, `compare-table`, `compare-header-image-{id}`, `compare-cell-{rowKey}-{id}`, `compare-error-back` |
-| Perf-per-Price | `ppp-category-{cpu\|gpu}`, `ppp-vendor-{vendor}`, `ppp-max-price`, `ppp-submit`, `ppp-table`, `ppp-row-{id}`, `ppp-best-value-{id}`, `ppp-empty` |
+| Perf-per-Price | `ppp-category-{cpu\|gpu}`, `ppp-vendor-{vendor}`, `ppp-max-price`, `ppp-submit`, `ppp-table`, `ppp-row-{id}`, `ppp-best-value-{id}`, `ppp-empty`, `ppp-awards-summary`, `ppp-awards-grid`, `ppp-award-card-{id}`, `ppp-award-badge-{id}-{key}`, `ppp-award-add-cart-{id}` |
 | PSU | `psu-cpu-select`, `psu-cpu-search`, `psu-cpu-option-{id}`, `psu-gpu-select`, `psu-gpu-search`, `psu-gpu-option-{id}`, `psu-calculate`, `psu-result-exact`, `psu-result-tier`, `psu-prefill-notice` |
 | Cart | `cart-empty-notice`, `cart-item-{id}`, `cart-qty-input-{id}`, `cart-qty-inc-{id}`, `cart-qty-dec-{id}`, `cart-remove-{id}`, `cart-remove-confirm`, `cart-remove-cancel`, `cart-subtotal`, `cart-shipping`, `cart-total`, `cart-checkout` |
 | Checkout | `checkout-fullname`, `checkout-phone`, `checkout-province`, `checkout-ward`, `checkout-street`, `checkout-note`, `checkout-payment-{cod\|bank_transfer\|card}`, `checkout-submit`, `review-modal`, `review-countdown`, `review-cancel`, `review-confirm-now`, `payment-qr-image`, `payment-card-number`, `payment-confirm` |
 | Orders & Auth Gate | `order-id-display`, `order-id-copy`, `order-stage-{0..4}`, `order-demo-advance`, `order-completed-message`, `lookup-order-id`, `lookup-phone`, `lookup-submit`, `lookup-error`, `orders-my-list`, `orders-my-row-{orderId}`, `orders-my-empty`, `checkout-auth-gate`, `checkout-auth-login` |
-| Admin | `admin-login-password`, `admin-login-submit`, `admin-logout`, `admin-nav-products`, `admin-nav-gpu-series`, `admin-nav-legacy-cpus`, `admin-nav-orders`, `admin-reset-button`, `admin-reset-confirm`, `admin-product-tab-{cpu\|gpu}`, `admin-product-add`, `admin-product-row-{id}`, `admin-product-edit-{id}`, `admin-product-delete-{id}`, `admin-product-save`, `admin-product-cancel`, `admin-image-url`, `admin-image-upload`, `admin-series-tab-{retail\|legacy}`, `admin-series-add`, `admin-series-row-{id}`, `admin-series-edit-{id}`, `admin-series-delete-{id}`, `admin-series-save`, `admin-legacy-cpu-add`, `admin-legacy-cpu-row-{id}`, `admin-legacy-cpu-edit-{id}`, `admin-legacy-cpu-delete-{id}`, `admin-legacy-cpu-save`, `admin-order-row-{orderId}`, `admin-order-open-{orderId}` |
+| Admin | `admin-login-password`, `admin-login-submit`, `admin-logout`, `admin-nav-dashboard`, `admin-nav-products`, `admin-nav-gpu-series`, `admin-nav-legacy-cpus`, `admin-nav-orders`, `admin-card-products`, `admin-card-gpu-series`, `admin-card-legacy-cpus`, `admin-card-orders`, `admin-reset-button`, `admin-reset-confirm`, `admin-product-tab-{cpu\|gpu}`, `admin-product-add`, `admin-product-row-{id}`, `admin-product-edit-{id}`, `admin-product-delete-{id}`, `admin-product-save`, `admin-product-cancel`, `admin-image-url`, `admin-image-upload`, `admin-series-tab-{retail\|legacy}`, `admin-series-add`, `admin-series-row-{id}`, `admin-series-edit-{id}`, `admin-series-delete-{id}`, `admin-series-save`, `admin-legacy-cpu-add`, `admin-legacy-cpu-row-{id}`, `admin-legacy-cpu-edit-{id}`, `admin-legacy-cpu-delete-{id}`, `admin-legacy-cpu-save`, `admin-order-row-{orderId}`, `admin-order-open-{orderId}` |
 
 ### 12.4 Page notes
 

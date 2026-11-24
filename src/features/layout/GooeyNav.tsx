@@ -345,6 +345,18 @@ function matchesGooeyItem(item: GooeyNavItem, activeHref: string): boolean {
     : activeHref === item.href || activeHref.startsWith(`${item.href}/`);
 }
 
+/** Renders the dropdown chevron so trigger and gooey overlay layers stay in lockstep. */
+export function GooeyMenuChevron({ open }: { open: boolean }) {
+  return (
+    <ChevronDown
+      aria-hidden="true"
+      className={`h-3.5 w-3.5 shrink-0 motion-safe:transition-transform ${
+        open ? 'rotate-180' : ''
+      }`}
+    />
+  );
+}
+
 export function GooeyNav({
   items,
   activeHref,
@@ -959,12 +971,7 @@ export function GooeyNav({
                       }`}
                     >
                       <span>{item.label}</span>
-                      <ChevronDown
-                        aria-hidden="true"
-                        className={`h-3.5 w-3.5 shrink-0 motion-safe:transition-transform ${
-                          menuOpen ? 'rotate-180' : ''
-                        }`}
-                      />
+                      <GooeyMenuChevron open={menuOpen} />
                     </Menu.Trigger>
 
                     <Menu.Portal>
@@ -1035,20 +1042,22 @@ export function GooeyNav({
           aria-hidden="true"
           className="pointer-events-none invisible absolute inset-0 z-20 flex flex-wrap items-center gap-0.5 text-primary-fg [clip-path:inset(100%)]"
         >
-          {items.map((item) => (
-            <div key={item.href} className="flex">
-              <span
-                className={`inline-flex items-center whitespace-nowrap rounded-full font-semibold ${
-                  item.subItems?.length ? 'gap-1' : ''
-                } ${itemPad}`}
-              >
-                <span>{item.label}</span>
-                {item.subItems?.length ? (
-                  <ChevronDown aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-                ) : null}
-              </span>
-            </div>
-          ))}
+          {items.map((item) => {
+            const menuOpen = openMenuHref === item.href;
+
+            return (
+              <div key={item.href} className="flex">
+                <span
+                  className={`inline-flex items-center whitespace-nowrap rounded-full font-semibold ${
+                    item.subItems?.length ? 'gap-1' : ''
+                  } ${itemPad}`}
+                >
+                  <span>{item.label}</span>
+                  {item.subItems?.length ? <GooeyMenuChevron open={menuOpen} /> : null}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

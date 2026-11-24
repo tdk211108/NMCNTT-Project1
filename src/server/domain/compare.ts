@@ -203,9 +203,15 @@ function formatCoresThreads(cpu: CompareCpuInput): string {
 function resolveGpuCoresLabel(gpus: readonly CompareGpuInput[]): string {
   const vendors = new Set(gpus.map((g) => g.vendor));
   if (vendors.size === 1) {
-    return vendors.has('nvidia') ? 'CUDA Cores' : 'Stream Processors';
+    if (vendors.has('nvidia')) return 'CUDA Cores';
+    if (vendors.has('intel')) return 'Shading Units';
+    return 'Stream Processors';
   }
-  return 'CUDA Cores / Stream Processors';
+  const parts: string[] = [];
+  if (vendors.has('nvidia')) parts.push('CUDA Cores');
+  if (vendors.has('amd')) parts.push('Stream Processors');
+  if (vendors.has('intel')) parts.push('Shading Units');
+  return parts.join(' / ');
 }
 
 export function buildCompareRows(

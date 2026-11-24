@@ -78,6 +78,7 @@ export function AdminGpuSeriesView({ state, actions }: AdminGpuSeriesViewProps) 
               >
                 <option value="nvidia">NVIDIA</option>
                 <option value="amd">AMD</option>
+                <option value="intel">Intel</option>
               </Select>
               <Input
                 type="number"

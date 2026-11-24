@@ -1,5 +1,5 @@
 {
-  "name": "techcore",
+  "name": "coreraster",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -15,6 +15,7 @@
     "db:generate": "node --conditions=react-server ./node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "node --conditions=react-server ./node_modules/drizzle-kit/bin.cjs migrate",
     "db:seed": "node --conditions=react-server --import tsx scripts/seed.ts",
+    "db:sync": "node --conditions=react-server --import tsx scripts/sync-seed-catalog.ts",
     "storage:seed": "node --conditions=react-server --import tsx scripts/upload-seed-images.ts",
     "admin:hash": "node --conditions=react-server --import tsx scripts/hash-admin-password.ts",
     "address:vendor": "tsx scripts/vendor-address-data.ts"

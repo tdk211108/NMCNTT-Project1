@@ -18,7 +18,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { categoryEnum, products } from './products';
 
-export const gpuVendorEnum = pgEnum('gpu_vendor', ['nvidia', 'amd']);
+export const gpuVendorEnum = pgEnum('gpu_vendor', ['nvidia', 'amd', 'intel']);
 export const gpuSeriesKindEnum = pgEnum('gpu_series_kind', ['retail', 'legacy']);
 
 export const gpuSeries = pgTable(

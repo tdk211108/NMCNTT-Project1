@@ -1,0 +1,1 @@
+ALTER TYPE "public"."gpu_vendor" ADD VALUE 'intel';

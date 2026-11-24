@@ -130,7 +130,7 @@ export const adminCreateProductSchema = z.discriminatedUnion('category', [
 
 const gpuSeriesCommonShape = {
   name: z.string().transform(normalizeWhitespaceNfc).pipe(z.string().min(2).max(100)),
-  vendor: z.enum(['nvidia', 'amd']),
+  vendor: z.enum(['nvidia', 'amd', 'intel']),
   vramGb: z.number().int().positive(),
   tbpW: z.number().int().positive(),
 };

@@ -4,6 +4,7 @@ import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
+import { BrandMark } from './BrandMark';
 import { getChromeContainerClass } from './layout-width';
 
 export function Footer() {
@@ -30,6 +31,7 @@ export function Footer() {
             <span>GitHub</span>
             <ExternalLink className="h-3.5 w-3.5 shrink-0 text-ink-muted" aria-hidden="true" />
           </a>
+          <BrandMark size="sm" testId={TEST_IDS.layout.footerBrandLink} />
           <span className="text-xs text-ink-muted">{VI_MESSAGES.brand.tagline}</span>
         </div>
 

@@ -11,6 +11,7 @@ import { useCartStore } from '@/features/cart/store';
 import { SearchBar } from '@/features/search/SearchBar';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
+import { BrandMark } from './BrandMark';
 import { GooeyNav, type GooeyNavItem } from './GooeyNav';
 import { getChromeContainerClass } from './layout-width';
 import { MusicPlayerBar } from './MusicPlayerBar';
@@ -20,23 +21,6 @@ import { SfxToggle } from './UiSoundEffects';
 type AuthSessionShape = ReturnType<typeof useAuthSession>;
 type HeaderAuthState = Pick<AuthSessionShape['state'], 'user' | 'isLoggingOut'>;
 type HeaderAuthActions = Pick<AuthSessionShape['actions'], 'openAuthModal' | 'logout'>;
-
-function BrandMark({ compact = false }: { compact?: boolean }) {
-  return (
-    <Link
-      href="/"
-      className={`font-display inline-flex shrink-0 items-center gap-1.5 font-bold tracking-wider text-ink uppercase sm:gap-2 ${
-        compact ? 'text-base lg:text-lg' : 'text-sm sm:text-lg'
-      }`}
-    >
-      <span
-        aria-hidden="true"
-        className="inline-block h-3 w-3 shrink-0 border-2 border-border-strong bg-primary sm:h-3.5 sm:w-3.5"
-      />
-      <span>{VI_MESSAGES.brand.name}</span>
-    </Link>
-  );
-}
 
 function buildNavItems(isAdmin: boolean, compact = false): GooeyNavItem[] {
   const base: GooeyNavItem[] = [
@@ -258,7 +242,7 @@ export function FloatingNavBar({
     >
       <div className={`${containerClass} flex min-h-14 items-center justify-between gap-3 py-1.5`}>
         <div className="flex min-w-0 items-center gap-3 lg:gap-5">
-          <BrandMark compact />
+          <BrandMark size="compact" testId={TEST_IDS.header.floatingBrandLink} />
           <PrimaryNavLinks pathname={pathname} isAdmin={isAdmin} compact />
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -327,7 +311,7 @@ export function Header() {
       >
         <div className={`${containerClass} flex flex-col gap-2 py-2.5`}>
           <div className="relative z-30 flex flex-wrap items-center justify-between gap-2">
-            <BrandMark />
+            <BrandMark testId={TEST_IDS.header.brandLink} />
             <HeaderActions
               totalCartCount={totalCartCount}
               isAdmin={isAdmin}
