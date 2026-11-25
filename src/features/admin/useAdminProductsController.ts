@@ -17,8 +17,8 @@ import type {
   Category,
   CpuVendor,
 } from '@/shared/types';
+import { AUTH_SESSION_QUERY_KEY } from '@/features/auth/useAuthSession';
 import { handleAdminApiError } from './admin-error';
-import { ADMIN_SESSION_QUERY_KEY } from './useAdminSession';
 
 export interface ProductFormState {
   mode: 'create' | 'edit';
@@ -228,7 +228,7 @@ export function useAdminProductsController() {
   });
 
   const invalidateSession = () =>
-    queryClient.invalidateQueries({ queryKey: ADMIN_SESSION_QUERY_KEY });
+    queryClient.invalidateQueries({ queryKey: AUTH_SESSION_QUERY_KEY });
 
   const uploadMutation = useMutation({
     mutationFn: (file: File) => apiUpload<AdminImageUploadResponse>('/api/admin/images', file),

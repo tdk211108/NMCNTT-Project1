@@ -1,6 +1,6 @@
 import { AppError } from '@/server/http/errors';
 import { jsonWithHeaders, withHandler } from '@/server/http/handler';
-import { uploadProductImage } from '@/server/services/image.service';
+import { uploadAdminImage } from '@/server/storage/supabase-storage';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -25,7 +25,7 @@ export const POST = withHandler(
       throw new AppError('IMAGE_INVALID');
     }
 
-    const uploaded = await uploadProductImage(file as File);
+    const uploaded = await uploadAdminImage(file as File);
     return jsonWithHeaders(uploaded, { status: 201 });
   },
 );

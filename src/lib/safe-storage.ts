@@ -16,7 +16,7 @@ function readBrowserStorage(type: 'local' | 'session'): Storage | null {
   }
   try {
     const store = type === 'local' ? window.localStorage : window.sessionStorage;
-    const probeKey = '__techcore_probe__';
+    const probeKey = '__coreraster_probe__';
     store.setItem(probeKey, '1');
     store.removeItem(probeKey);
     return store;

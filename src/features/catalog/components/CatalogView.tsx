@@ -6,17 +6,17 @@ import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { CatalogPagination } from '@/components/ui/CatalogPagination';
-import { ComboboxSelect, type ComboboxSelectOption } from '@/components/ui/ComboboxSelect';
+import { ComboboxSelect } from '@/components/ui/ComboboxSelect';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { Input } from '@/components/ui/Input';
 import { formatVnd } from '@/lib/format';
+import { paginateItems, PRODUCT_SORT_OPTIONS } from '@/lib/pagination';
 import { CPU_PER_BRAND_PAGE_SIZE, GPU_PAGE_SIZE } from '@/shared/constants';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
-import type { ChipVendor, ProductSort } from '@/shared/types';
+import type { ChipVendor } from '@/shared/types';
 import {
   groupProductsByVendor,
-  paginateItems,
   type useCatalogController,
 } from '../useCatalogController';
 import { ProductCard } from './ProductCard';
@@ -29,13 +29,6 @@ export interface CatalogViewProps {
     Partial<Pick<CatalogControllerState, 'serverPaginated' | 'vendorTotals' | 'isFetching'>>;
   actions: CatalogControllerResult['actions'];
 }
-
-const SORT_OPTIONS: readonly ComboboxSelectOption<ProductSort>[] = [
-  { value: 'default', label: VI_MESSAGES.catalog.sortDefault },
-  { value: 'price_asc', label: VI_MESSAGES.catalog.sortPriceAsc },
-  { value: 'price_desc', label: VI_MESSAGES.catalog.sortPriceDesc },
-  { value: 'score_desc', label: VI_MESSAGES.catalog.sortScoreDesc },
-];
 
 export function CatalogView({ state, actions }: CatalogViewProps) {
   const [activeThumb, setActiveThumb] = useState<'min' | 'max'>('max');
@@ -77,7 +70,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
           <ComboboxSelect
             label={VI_MESSAGES.catalog.sortLabel}
             value={state.sort}
-            options={SORT_OPTIONS}
+            options={PRODUCT_SORT_OPTIONS}
             testId={TEST_IDS.listing.sortSelect}
             onChange={(nextSort) => actions.onChangeSort(nextSort)}
           />
@@ -130,7 +123,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]">
         <aside
-          aria-label="Bộ lọc sản phẩm"
+          aria-label={VI_MESSAGES.catalog.filterSidebarAria}
           className="mtx-sticky-aside min-w-0 overscroll-contain lg:sticky lg:top-[4.75rem] lg:max-h-[calc(100dvh-5.5rem)] lg:self-start lg:overflow-y-auto lg:pr-1 lg:pb-2"
         >
           <Card className="flex flex-col gap-4">

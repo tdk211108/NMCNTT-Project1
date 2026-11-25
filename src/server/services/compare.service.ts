@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type { ChipVendor, CompareResponse } from '@/shared/types';
 import { getDb, type DbClient } from '../db/client';
@@ -84,7 +84,6 @@ export async function compareProducts(
         and(
           eq(storefrontProductsV.category, 'gpu'),
           inArray(storefrontProductsV.id, parsed.ids),
-          isNull(gpuSeries.deletedAt),
         ),
       ),
   ]);

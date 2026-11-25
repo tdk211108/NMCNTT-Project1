@@ -1,11 +1,19 @@
+import { APPLE_PAY_SFX_PATH } from '@/shared/constants';
+
 export type UiSoundKind = 'click' | 'toggle' | 'success' | 'modal';
 
 export const UI_SFX_STORAGE_KEY = 'coreraster-ui-sfx';
 export const DEFAULT_UI_SFX_ENABLED = true;
 const UI_SFX_EVENT = 'coreraster-ui-sfx-change';
+const DELIVERY_SFX_GAIN = 0.85;
 
 let sharedAudioCtx: AudioContext | null = null;
 let sharedNoiseBuffer: AudioBuffer | null = null;
+let applePayBytesPromise: Promise<ArrayBuffer | null> | null = null;
+let applePayDecodedCtx: AudioContext | null = null;
+let applePayBuffer: AudioBuffer | null = null;
+let applePayTrimOffsetSec = 0;
+let applePayDecodePromise: Promise<AudioBuffer | null> | null = null;
 
 /** Parse persisted SFX flag strictly; defaults to enabled (`true`). */
 export function parseStoredUiSfx(value: unknown): boolean {
@@ -111,6 +119,97 @@ function buildNoiseBuffer(ctx: AudioContext): AudioBuffer {
   return buffer;
 }
 
+function loadApplePayBytes(): Promise<ArrayBuffer | null> {
+  if (typeof fetch !== 'function') {
+    return Promise.resolve(null);
+  }
+  if (!applePayBytesPromise) {
+    applePayBytesPromise = fetch(APPLE_PAY_SFX_PATH)
+      .then(async (res) => {
+        if (!res.ok) {
+          applePayBytesPromise = null;
+          return null;
+        }
+        return res.arrayBuffer();
+      })
+      .catch(() => {
+        applePayBytesPromise = null;
+        return null;
+      });
+  }
+  return applePayBytesPromise;
+}
+
+function computeLeadingTrimOffsetSec(buffer: AudioBuffer): number {
+  if (!buffer.numberOfChannels || typeof buffer.getChannelData !== 'function' || buffer.sampleRate <= 0) {
+    return 0;
+  }
+  const threshold = 0.002;
+  const safetySamples = Math.round(buffer.sampleRate * 0.002);
+  let earliest = buffer.length;
+
+  for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
+    const data = buffer.getChannelData(channel);
+    const limit = Math.min(data.length, earliest);
+    for (let i = 0; i < limit; i += 1) {
+      if (Math.abs(data[i] ?? 0) > threshold) {
+        earliest = i;
+        break;
+      }
+    }
+  }
+
+  if (earliest >= buffer.length) {
+    return 0;
+  }
+  return Math.max(0, (earliest - safetySamples) / buffer.sampleRate);
+}
+
+function ensureApplePayBuffer(ctx: AudioContext): Promise<AudioBuffer | null> {
+  if (applePayDecodedCtx === ctx && applePayBuffer) {
+    return Promise.resolve(applePayBuffer);
+  }
+  if (applePayDecodedCtx !== ctx) {
+    applePayDecodedCtx = ctx;
+    applePayBuffer = null;
+    applePayTrimOffsetSec = 0;
+    applePayDecodePromise = null;
+  }
+  if (!applePayDecodePromise) {
+    applePayDecodePromise = loadApplePayBytes()
+      .then(async (bytes) => {
+        if (!bytes || typeof ctx.decodeAudioData !== 'function') {
+          applePayDecodePromise = null;
+          return null;
+        }
+        // Clone before decodeAudioData because Web Audio detaches the input ArrayBuffer.
+        const decoded = await ctx.decodeAudioData(bytes.slice(0));
+        if (applePayDecodedCtx === ctx) {
+          applePayBuffer = decoded;
+          applePayTrimOffsetSec = computeLeadingTrimOffsetSec(decoded);
+        }
+        return decoded;
+      })
+      .catch(() => {
+        if (applePayDecodedCtx === ctx) {
+          applePayDecodePromise = null;
+        }
+        return null;
+      });
+  }
+  return applePayDecodePromise;
+}
+
+/** Prefetch `/applepay.mp3` bytes ahead of user interaction when UI SFX is enabled. */
+export function preloadOrderDeliveredSfx(): void {
+  if (!readUiSfxEnabled()) return;
+  void loadApplePayBytes();
+  const ctx = sharedAudioCtx;
+  if (ctx && ctx.state !== 'closed') {
+    void ensureApplePayBuffer(ctx);
+  }
+}
+
 /** Pre-create and resume the interactive AudioContext on early user gestures to eliminate first-click lag. */
 export function warmUiAudio(): void {
   if (!readUiSfxEnabled()) return;
@@ -119,6 +218,7 @@ export function warmUiAudio(): void {
   if (ctx.state === 'suspended') {
     void ctx.resume().catch(() => {});
   }
+  void ensureApplePayBuffer(ctx);
 }
 
 function triggerTone(
@@ -212,4 +312,92 @@ export function playUiSound(
   }
 
   dispatchSound(ctx, kind);
+}
+
+/** Returns true only when an order transitions from an incomplete stage to delivered (stage 4). */
+export function shouldTriggerOrderDeliveredSfx(
+  previousStage: number,
+  updated: { stage: number; isCompleted: boolean },
+): boolean {
+  return previousStage < 4 && updated.isCompleted && updated.stage >= 4;
+}
+
+function playApplePayHtmlAudioFallback(): void {
+  if (typeof Audio !== 'function') return;
+  try {
+    const audio = new Audio(APPLE_PAY_SFX_PATH);
+    audio.volume = DELIVERY_SFX_GAIN;
+    void audio.play().catch(() => {});
+  } catch {
+    // Ignore HTMLAudio fallback errors cleanly.
+  }
+}
+
+function dispatchApplePayBuffer(
+  ctx: AudioContext,
+  buffer: AudioBuffer,
+  offsetSec: number,
+): void {
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(DELIVERY_SFX_GAIN, ctx.currentTime);
+  source.connect(gain);
+  gain.connect(ctx.destination);
+  source.start(0, offsetSec);
+}
+
+/** Play `/applepay.mp3` synchronously when decoded (0ms latency), or decode/fallback otherwise. */
+export async function playOrderDeliveredSfx(
+  options?: { force?: boolean; storage?: Pick<Storage, 'getItem'> | null },
+): Promise<void> {
+  if (!options?.force && !readUiSfxEnabled(options?.storage)) {
+    return;
+  }
+
+  const ctx = resolveAudioContext();
+  if (!ctx) {
+    playApplePayHtmlAudioFallback();
+    return;
+  }
+
+  // Fast path: trigger immediately inside the user's click gesture without waiting on microtasks.
+  if (ctx.state === 'running' && applePayDecodedCtx === ctx && applePayBuffer) {
+    try {
+      dispatchApplePayBuffer(ctx, applePayBuffer, applePayTrimOffsetSec);
+      return;
+    } catch {
+      playApplePayHtmlAudioFallback();
+      return;
+    }
+  }
+
+  try {
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
+    }
+    const buffer = await ensureApplePayBuffer(ctx);
+    if (!options?.force && !readUiSfxEnabled(options?.storage)) {
+      return;
+    }
+    if (!buffer) {
+      playApplePayHtmlAudioFallback();
+      return;
+    }
+
+    dispatchApplePayBuffer(ctx, buffer, applePayTrimOffsetSec);
+  } catch {
+    playApplePayHtmlAudioFallback();
+  }
+}
+
+/** Reset cached AudioContext and decoded SFX buffers (intended for deterministic tests). */
+export function resetUiSfxCachesForTest(): void {
+  sharedAudioCtx = null;
+  sharedNoiseBuffer = null;
+  applePayBytesPromise = null;
+  applePayDecodedCtx = null;
+  applePayBuffer = null;
+  applePayTrimOffsetSec = 0;
+  applePayDecodePromise = null;
 }

@@ -24,7 +24,6 @@
   /* ROG Matrix 30th Edition Hardware Crimson */
   --color-primary: #C8102E;
   --color-primary-hover: #B81424;
-  --color-primary-pressed: #A71C1E;
   --color-primary-fg: #FFFFFF;
 
   --color-accent: #C8102E;
@@ -40,7 +39,6 @@
   --color-success-fg: #07190D;
 
   --color-warning: #FBBF24;
-  --color-warning-fg: #1F1500;
 
   --color-highlight: #162E22;
   --color-highlight-fg: #6EE7B7;
@@ -65,8 +63,6 @@
   --ease-out-ui: cubic-bezier(0.23, 1, 0.32, 1);
   --grid-line-color: rgba(142, 147, 155, 0.14);
   --scanline-color: rgba(0, 0, 0, 0.24);
-  --hazard-dark: #111215;
-  --hazard-accent: #C8102E;
   --pyramid-c1: #6B0B1A;
   --pyramid-c2: #C8102E;
   --pyramid-c3: #FF1E2D;
@@ -74,7 +70,6 @@
   --pyramid-shadow: rgba(255, 30, 45, 0.72);
 }
 
-:root:has(> head > meta[name="color-scheme"][content="light"]),
 :root[data-theme="light"] {
   color-scheme: light;
   --color-bg: #F2F1ED;
@@ -90,7 +85,6 @@
 
   --color-primary: #C8102E;
   --color-primary-hover: #A71C1E;
-  --color-primary-pressed: #8E1416;
   --color-primary-fg: #FFFFFF;
 
   --color-accent: #C8102E;
@@ -106,7 +100,6 @@
   --color-success-fg: #FFFFFF;
 
   --color-warning: #B45309;
-  --color-warning-fg: #FFFFFF;
 
   --color-highlight: #DCFCE7;
   --color-highlight-fg: #14532D;
@@ -120,8 +113,6 @@
 
   --grid-line-color: rgba(17, 18, 21, 0.08);
   --scanline-color: rgba(17, 18, 21, 0.08);
-  --hazard-dark: #111215;
-  --hazard-accent: #C8102E;
   --pyramid-c1: #111215;
   --pyramid-c2: #A71C1E;
   --pyramid-c3: #C8102E;
@@ -140,10 +131,6 @@
   }
 }
 
-.font-display {
-  font-family: var(--font-display);
-}
-
 .mtx-shadow {
   box-shadow: 4px 4px 0 0 var(--color-shadow);
 }
@@ -154,28 +141,6 @@
 
 .mtx-shadow-accent {
   box-shadow: 6px 6px 0 0 var(--color-shadow-accent);
-}
-
-.mtx-chamfer {
-  clip-path: polygon(
-    14px 0,
-    100% 0,
-    100% calc(100% - 14px),
-    calc(100% - 14px) 100%,
-    0 100%,
-    0 14px
-  );
-}
-
-.mtx-chamfer-sm {
-  clip-path: polygon(
-    8px 0,
-    100% 0,
-    100% calc(100% - 8px),
-    calc(100% - 8px) 100%,
-    0 100%,
-    0 8px
-  );
 }
 
 .mtx-blueprint-grid {
@@ -245,14 +210,6 @@
         rgba(0, 0, 0, 0) 26%
       );
   }
-}
-
-.mtx-hazard-stripe {
-  background-image: repeating-linear-gradient(
-    -45deg,
-    var(--hazard-dark) 0 10px,
-    var(--hazard-accent) 10px 20px
-  );
 }
 
 .mtx-crt-scanlines {
@@ -513,11 +470,6 @@ dialog::backdrop {
     box-shadow: none;
     outline: 1px solid CanvasText;
   }
-
-  .mtx-hazard-stripe {
-    background-image: none;
-    border-block: 2px solid CanvasText;
-  }
 }
 
 ::view-transition-old(root),
@@ -704,7 +656,6 @@ dialog::backdrop {
   );
   --cyber-clip-three: polygon(0 44%, 100% 44%, 100% 54%, 0 54%);
   --cyber-clip-four: polygon(0 0, 100% 0, 100% 0, 0 0);
-  --cyber-clip-five: polygon(0 0, 100% 0, 100% 0, 0 0);
   --cyber-clip-six: polygon(0 40%, 100% 40%, 100% 85%, 8% 85%, 0 70%);
   --cyber-clip-seven: polygon(0 63%, 100% 63%, 100% 80%, 8% 80%, 0 70%);
   position: relative;
@@ -872,14 +823,17 @@ dialog::backdrop {
   0% {
     clip-path: var(--cyber-clip-one);
   }
-  4%,
-  10% {
+  4% {
     clip-path: var(--cyber-clip-two);
     transform: translate3d(calc(var(--cyber-shimmy) * -1%), 0, 0);
   }
   8% {
     clip-path: var(--cyber-clip-two);
     transform: translate3d(calc(var(--cyber-shimmy) * 1%), 0, 0);
+  }
+  10% {
+    clip-path: var(--cyber-clip-two);
+    transform: translate3d(calc(var(--cyber-shimmy) * -1%), 0, 0);
   }
   12% {
     clip-path: var(--cyber-clip-three);
@@ -895,7 +849,7 @@ dialog::backdrop {
     transform: translate3d(calc(var(--cyber-shimmy) * 1%), 0, 0);
   }
   34% {
-    clip-path: var(--cyber-clip-five);
+    clip-path: var(--cyber-clip-four);
     transform: translate3d(calc(var(--cyber-shimmy) * -1%), 0, 0);
   }
   42% {

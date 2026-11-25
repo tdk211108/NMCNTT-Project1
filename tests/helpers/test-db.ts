@@ -1,8 +1,9 @@
 import path from 'node:path';
 import { sql as rawSql } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import { afterAll, beforeAll, beforeEach } from 'vitest';
 import { createDbConnection, type DbClient, type DbConnectionBundle } from '@/server/db/client';
-import { seedCatalog } from '@/server/db/seed/seed-catalog';
+import { seedCatalog, TRUNCATE_SAMPLE_TABLES_SQL } from '@/server/db/seed/seed-catalog';
 
 const DEFAULT_TEST_DB_URL = 'postgresql://postgres:postgres@127.0.0.1:5433/techcore_test';
 export const TEST_STORAGE_CONFIG = {
@@ -62,9 +63,7 @@ export async function getTestDb(): Promise<DbClient> {
 export async function resetAndSeedTestDb(db?: DbClient): Promise<DbClient> {
   const client = db ?? (await getTestDb());
   await client.transaction(async (tx) => {
-    await tx.execute(
-      rawSql`TRUNCATE TABLE order_status_events, order_items, orders, gpu_variants, cpu_specs, products, gpu_series, legacy_cpus, auth_failures CASCADE`,
-    );
+    await tx.execute(rawSql.raw(TRUNCATE_SAMPLE_TABLES_SQL));
     await seedCatalog(tx, TEST_STORAGE_CONFIG);
   });
   return client;
@@ -76,4 +75,27 @@ export async function closeTestDb(): Promise<void> {
     cachedBundle = null;
     migrationPromise = null;
   }
+}
+
+export function setupTestDbLifecycle(options?: {
+  onBeforeAll?: (db: DbClient) => Promise<void> | void;
+  onBeforeEach?: (db: DbClient) => Promise<void> | void;
+}): () => DbClient {
+  let currentDb: DbClient;
+
+  beforeAll(async () => {
+    currentDb = await getTestDb();
+    await options?.onBeforeAll?.(currentDb);
+  });
+
+  beforeEach(async () => {
+    await resetAndSeedTestDb(currentDb);
+    await options?.onBeforeEach?.(currentDb);
+  });
+
+  afterAll(async () => {
+    await closeTestDb();
+  });
+
+  return () => currentDb;
 }

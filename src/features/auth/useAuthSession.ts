@@ -77,7 +77,6 @@ export function useAuthSession() {
     const redirectTarget = useAuthUiStore.getState().postLoginRedirect;
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: AUTH_SESSION_QUERY_KEY }),
-      queryClient.invalidateQueries({ queryKey: ['admin', 'session'] }),
       queryClient.invalidateQueries({ queryKey: ['orders', 'mine'] }),
     ]);
     closeAuthModal();
@@ -124,7 +123,6 @@ export function useAuthSession() {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: AUTH_SESSION_QUERY_KEY }),
-        queryClient.invalidateQueries({ queryKey: ['admin', 'session'] }),
         queryClient.invalidateQueries({ queryKey: ['orders', 'mine'] }),
       ]);
       showToast(VI_MESSAGES.auth.logoutSuccessToast, 'info');
@@ -138,7 +136,6 @@ export function useAuthSession() {
       user: sessionQuery.data?.user ?? null,
       isAuthenticated: Boolean(sessionQuery.data?.user),
       isAdmin: sessionQuery.data?.user?.role === 'admin',
-      providers: sessionQuery.data?.providers ?? { google: false, facebook: false },
       isLoading: sessionQuery.isLoading,
       modalOpen,
       activeTab,

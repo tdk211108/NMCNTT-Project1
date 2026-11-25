@@ -7,6 +7,7 @@ import type {
   HardwareAwardKey,
   HardwareAwardWinner,
 } from '@/shared/types';
+import { formatCpuCoresThreads, roundTo } from './format';
 import { calculatePerfPerPrice } from './scoring';
 
 export interface CpuAwardCandidate {
@@ -47,11 +48,6 @@ interface AwardSpec<T> {
   key: HardwareAwardKey;
   compare: (candidate: T, currentBest: T) => number;
   badge: (winner: T) => HardwareAwardBadge;
-}
-
-function roundTo(value: number, decimals: number): number {
-  const factor = 10 ** decimals;
-  return Math.round((value + 1e-12) * factor) / factor;
 }
 
 function formatViDecimal(value: number, decimals: number): string {
@@ -216,7 +212,7 @@ export function buildCpuAwards(
       badge: (w) => ({
         key: 'most_cores',
         metricValue: w.coresTotal,
-        metricDisplay: `${w.coresTotal} nhân / ${w.threadsTotal} luồng`,
+        metricDisplay: formatCpuCoresThreads(w.coresTotal, w.threadsTotal),
       }),
     },
     {

@@ -298,22 +298,20 @@ export async function exchangeFacebookCode(
   const meJson = (await meRes.json()) as {
     id?: unknown;
     name?: unknown;
-    email?: unknown;
     picture?: { data?: { url?: unknown } };
   };
   if (typeof meJson.id !== 'string' || !meJson.id) {
     throw new Error('Facebook id missing');
   }
 
-  const email = typeof meJson.email === 'string' ? meJson.email.trim().toLowerCase() : null;
   const rawName = typeof meJson.name === 'string' ? meJson.name.trim() : '';
-  const displayName = rawName.slice(0, 80) || email || 'Facebook User';
+  const displayName = rawName.slice(0, 80) || 'Facebook User';
 
   return {
     provider: 'facebook',
     providerAccountId: meJson.id,
     displayName,
-    email,
+    email: null,
     emailVerified: false,
     avatarUrl: sanitizeHttpsUrl(meJson.picture?.data?.url),
   };

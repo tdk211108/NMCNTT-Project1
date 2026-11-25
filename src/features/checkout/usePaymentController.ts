@@ -1,30 +1,18 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { useState, useSyncExternalStore } from 'react';
-import { showToast } from '@/components/ui/toast-store';
-import { ApiClientError, apiFetch } from '@/lib/api-client';
+import { useState } from 'react';
+import { useIsClient } from '@/lib/client-hooks';
 import { useAuthSession } from '@/features/auth/useAuthSession';
-import { useCartStore } from '@/features/cart/store';
 import { usePlacedOrderPopup } from '@/features/orders/usePlacedOrderPopup';
 import { VI_MESSAGES } from '@/shared/messages/vi';
-import type { CheckoutRequest, OrderWithToken } from '@/shared/types';
-import {
-  clearCheckoutAttempt,
-  loadCheckoutAttempt,
-} from './attempt-storage';
-
-const subscribeNoop = () => () => {};
+import { loadCheckoutAttempt } from './attempt-storage';
+import { usePlaceOrder } from './usePlaceOrder';
 
 export function usePaymentController() {
-  const router = useRouter();
   const { state: authState, actions: authActions } = useAuthSession();
-  const clearCart = useCartStore((s) => s.clearCart);
-  const removeCartItem = useCartStore((s) => s.removeItem);
   const placedOrderPopup = usePlacedOrderPopup();
 
-  const isClient = useSyncExternalStore(subscribeNoop, () => true, () => false);
+  const isClient = useIsClient();
   const attempt = isClient ? loadCheckoutAttempt() : null;
 
   // Card inputs remain strictly in component state and are never submitted to the server.
@@ -33,38 +21,8 @@ export function usePaymentController() {
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
 
-  const createOrderMutation = useMutation({
-    mutationFn: (request: CheckoutRequest) =>
-      apiFetch<OrderWithToken>('/api/orders', {
-        method: 'POST',
-        headers: { 'Idempotency-Key': request.idempotencyKey },
-        json: request,
-      }),
-    onSuccess: (res) => {
-      clearCart();
-      clearCheckoutAttempt();
-      placedOrderPopup.actions.openPlacedOrder(res);
-    },
-    onError: (err) => {
-      if (err instanceof ApiClientError && err.code === 'PRODUCT_UNAVAILABLE') {
-        const unavailable = err.details?.items as
-          | Array<{ productId: string; name: string | null }>
-          | undefined;
-        if (unavailable?.length) {
-          for (const item of unavailable) {
-            removeCartItem(item.productId);
-            showToast(VI_MESSAGES.cart.removedUnavailableItemToast(item.name), 'error');
-          }
-        }
-        clearCheckoutAttempt();
-        router.replace('/cart');
-        return;
-      }
-      showToast(
-        err instanceof Error ? err.message : VI_MESSAGES.common.unexpectedError,
-        'error',
-      );
-    },
+  const createOrderMutation = usePlaceOrder({
+    onOrderPlaced: (res) => placedOrderPopup.actions.openPlacedOrder(res),
   });
 
   return {

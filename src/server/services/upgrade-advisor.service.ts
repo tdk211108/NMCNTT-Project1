@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, asc, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type {
   Category,
@@ -14,13 +14,17 @@ import type {
   UpgradeResponse,
 } from '@/shared/types';
 import { getDb, type DbClient } from '../db/client';
-import { cpuSpecs, gpuSeries, gpuVariants, legacyCpus, products } from '../db/schema';
+import { cpuSpecs, gpuSeries, gpuVariants, legacyCpus } from '../db/schema';
 import { storefrontProductsV } from '../db/views';
+import { pickBetterRepresentativeGpu } from '../domain/format';
 import { recommendCpuUpgrades, recommendGpuUpgrades } from '../domain/upgrade-advisor';
 import { AppError } from '../http/errors';
-
-const STORE_CPU_PREFIX = 'store:';
-const LEGACY_CPU_PREFIX = 'legacy:';
+import {
+  LEGACY_CPU_PREFIX,
+  loadHardwareSelectorRows,
+  parsePrefixedCpuId,
+  STORE_CPU_PREFIX,
+} from './hardware-options';
 
 /**
  * Lists retail and legacy CPU/GPU options for the Upgrade Advisor selector,
@@ -30,74 +34,13 @@ export async function getUpgradeOptions(
   category?: Category,
   db: DbClient = getDb(),
 ): Promise<UpgradeOptionsResponse> {
-  const loadCpus = !category || category === 'cpu';
-  const loadGpus = !category || category === 'gpu';
-
-  const [retailCpuRows, legacyCpuRows, retailGpuRows, legacyGpuRows] = await Promise.all([
-    loadCpus
-      ? db
-          .select({
-            id: products.id,
-            name: products.name,
-            vendor: cpuSpecs.vendor,
-            socket: cpuSpecs.socket,
-          })
-          .from(products)
-          .innerJoin(cpuSpecs, eq(cpuSpecs.productId, products.id))
-          .where(isNull(products.deletedAt))
-          .orderBy(asc(cpuSpecs.vendor), asc(products.name))
-      : Promise.resolve([]),
-    loadCpus
-      ? db
-          .select({
-            id: legacyCpus.id,
-            name: legacyCpus.name,
-            vendor: legacyCpus.vendor,
-            socket: legacyCpus.socket,
-            passmarkRaw: legacyCpus.passmarkRaw,
-          })
-          .from(legacyCpus)
-          .where(isNull(legacyCpus.deletedAt))
-          .orderBy(asc(legacyCpus.vendor), asc(legacyCpus.name))
-      : Promise.resolve([]),
-    loadGpus
-      ? db
-          .selectDistinct({
-            id: gpuSeries.id,
-            name: gpuSeries.name,
-            vendor: gpuSeries.vendor,
-            vramGb: gpuSeries.vramGb,
-            passmarkRaw: gpuSeries.passmarkRaw,
-          })
-          .from(gpuSeries)
-          .innerJoin(gpuVariants, eq(gpuVariants.seriesId, gpuSeries.id))
-          .innerJoin(products, eq(products.id, gpuVariants.productId))
-          .where(
-            and(
-              eq(gpuSeries.kind, 'retail'),
-              isNull(gpuSeries.deletedAt),
-              isNull(products.deletedAt),
-            ),
-          )
-          .orderBy(asc(gpuSeries.vendor), asc(gpuSeries.name))
-      : Promise.resolve([]),
-    loadGpus
-      ? db
-          .select({
-            id: gpuSeries.id,
-            name: gpuSeries.name,
-            vendor: gpuSeries.vendor,
-            vramGb: gpuSeries.vramGb,
-            passmarkRaw: gpuSeries.passmarkRaw,
-          })
-          .from(gpuSeries)
-          .where(and(eq(gpuSeries.kind, 'legacy'), isNull(gpuSeries.deletedAt)))
-          .orderBy(asc(gpuSeries.vendor), asc(gpuSeries.name))
-      : Promise.resolve([]),
-  ]);
+  const rows = await loadHardwareSelectorRows(db, {
+    loadCpus: !category || category === 'cpu',
+    loadGpus: !category || category === 'gpu',
+  });
 
   const cpus: UpgradeCpuOption[] = [
-    ...retailCpuRows.map((r) => ({
+    ...rows.retailCpus.map((r) => ({
       id: `${STORE_CPU_PREFIX}${r.id}`,
       name: r.name,
       vendor: r.vendor,
@@ -105,7 +48,7 @@ export async function getUpgradeOptions(
       socket: r.socket,
       hasPassmark: true,
     })),
-    ...legacyCpuRows.map((r) => ({
+    ...rows.legacyCpus.map((r) => ({
       id: `${LEGACY_CPU_PREFIX}${r.id}`,
       name: r.name,
       vendor: r.vendor,
@@ -116,7 +59,7 @@ export async function getUpgradeOptions(
   ];
 
   const gpus: UpgradeGpuOption[] = [
-    ...retailGpuRows.map((r) => ({
+    ...rows.retailGpus.map((r) => ({
       id: r.id,
       name: r.name,
       vendor: r.vendor,
@@ -124,7 +67,7 @@ export async function getUpgradeOptions(
       vramGb: r.vramGb,
       hasPassmark: r.passmarkRaw !== null,
     })),
-    ...legacyGpuRows.map((r) => ({
+    ...rows.legacyGpus.map((r) => ({
       id: r.id,
       name: r.name,
       vendor: r.vendor,
@@ -141,10 +84,12 @@ async function resolveCurrentCpu(
   currentId: string,
   db: DbClient,
 ): Promise<UpgradeCurrentSummary | null> {
-  if (currentId.startsWith(STORE_CPU_PREFIX)) {
-    const productId = currentId.slice(STORE_CPU_PREFIX.length);
-    if (!productId) return null;
+  const parsed = parsePrefixedCpuId(currentId);
+  if (!parsed) {
+    return null;
+  }
 
+  if (parsed.source === 'store') {
     const [row] = await db
       .select({
         id: storefrontProductsV.id,
@@ -160,7 +105,9 @@ async function resolveCurrentCpu(
       })
       .from(storefrontProductsV)
       .innerJoin(cpuSpecs, eq(cpuSpecs.productId, storefrontProductsV.id))
-      .where(and(eq(storefrontProductsV.id, productId), eq(storefrontProductsV.category, 'cpu')))
+      .where(
+        and(eq(storefrontProductsV.id, parsed.productId), eq(storefrontProductsV.category, 'cpu')),
+      )
       .limit(1);
 
     if (!row) return null;
@@ -184,38 +131,31 @@ async function resolveCurrentCpu(
     };
   }
 
-  if (currentId.startsWith(LEGACY_CPU_PREFIX)) {
-    const legacyId = currentId.slice(LEGACY_CPU_PREFIX.length);
-    if (!legacyId) return null;
+  const [row] = await db
+    .select()
+    .from(legacyCpus)
+    .where(and(eq(legacyCpus.id, parsed.legacyId), isNull(legacyCpus.deletedAt)))
+    .limit(1);
 
-    const [row] = await db
-      .select()
-      .from(legacyCpus)
-      .where(and(eq(legacyCpus.id, legacyId), isNull(legacyCpus.deletedAt)))
-      .limit(1);
-
-    if (!row) return null;
-    return {
-      id: currentId,
-      retailProductId: null,
-      category: 'cpu',
-      source: 'legacy',
-      name: row.name,
-      vendor: row.vendor,
-      socket: row.socket,
-      coresTotal: row.coresTotal,
-      threadsTotal: row.threadsTotal,
-      psuPowerW: row.psuPowerW,
-      ramSupport: null,
-      vramGb: null,
-      tbpW: null,
-      passmarkRaw: row.passmarkRaw,
-      normalizedScore: null,
-      hasPassmark: row.passmarkRaw !== null,
-    };
-  }
-
-  return null;
+  if (!row) return null;
+  return {
+    id: currentId,
+    retailProductId: null,
+    category: 'cpu',
+    source: 'legacy',
+    name: row.name,
+    vendor: row.vendor,
+    socket: row.socket,
+    coresTotal: row.coresTotal,
+    threadsTotal: row.threadsTotal,
+    psuPowerW: row.psuPowerW,
+    ramSupport: null,
+    vramGb: null,
+    tbpW: null,
+    passmarkRaw: row.passmarkRaw,
+    normalizedScore: null,
+    hasPassmark: row.passmarkRaw !== null,
+  };
 }
 
 async function resolveCurrentGpu(
@@ -248,14 +188,9 @@ async function resolveCurrentGpu(
       return null;
     }
 
-    repRows.sort((a, b) => {
-      if (a.priceVnd !== b.priceVnd) return a.priceVnd - b.priceVnd;
-      if (a.isLimitedEdition !== b.isLimitedEdition) return a.isLimitedEdition ? 1 : -1;
-      return a.id.localeCompare(b.id);
-    });
-
-    retailProductId = repRows[0].id;
-    normalizedScore = repRows[0].normalizedScore;
+    const bestRep = repRows.reduce((best, row) => pickBetterRepresentativeGpu(best, row));
+    retailProductId = bestRep.id;
+    normalizedScore = bestRep.normalizedScore;
   }
 
   return {

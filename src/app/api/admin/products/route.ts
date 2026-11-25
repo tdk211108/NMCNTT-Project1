@@ -5,9 +5,8 @@ import { jsonWithHeaders, parseJsonBody, withHandler } from '@/server/http/handl
 import { parseStrictIntParam } from '@/server/http/route-helpers';
 import {
   createAdminProduct,
-  listAdminProducts,
   listAdminProductsPage,
-} from '@/server/services/admin-catalog.service';
+} from '@/server/services/admin-products.service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,21 +16,11 @@ const adminPageSizeSchema = z.number().int().min(1).max(100).default(ADMIN_PRODU
 
 export const GET = withHandler({ requireAdmin: true }, async (request) => {
   const sp = request.nextUrl.searchParams;
-  const rawCategory = sp.get('category');
-  const rawPage = sp.get('page');
-  const rawPageSize = sp.get('pageSize');
-
-  if (rawPage !== null || rawPageSize !== null) {
-    const category = categorySchema.parse(rawCategory ?? undefined);
-    const page = adminPageSchema.parse(parseStrictIntParam(rawPage));
-    const pageSize = adminPageSizeSchema.parse(parseStrictIntParam(rawPageSize));
-    const paged = await listAdminProductsPage(category, page, pageSize);
-    return jsonWithHeaders(paged);
-  }
-
-  const category = rawCategory ? categorySchema.parse(rawCategory) : undefined;
-  const items = await listAdminProducts(category);
-  return jsonWithHeaders(items);
+  const category = categorySchema.parse(sp.get('category') ?? undefined);
+  const page = adminPageSchema.parse(parseStrictIntParam(sp.get('page')));
+  const pageSize = adminPageSizeSchema.parse(parseStrictIntParam(sp.get('pageSize')));
+  const paged = await listAdminProductsPage(category, page, pageSize);
+  return jsonWithHeaders(paged);
 });
 
 export const POST = withHandler(

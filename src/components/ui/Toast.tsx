@@ -80,7 +80,7 @@ export function ToastItemCard({ toast: item, message, tone }: ToastItemCardProps
 /** Global top-right toast host managed by react-hot-toast. */
 export function ToastContainer() {
   return (
-    <div role="region" aria-label="Thông báo" aria-live="polite">
+    <div role="region" aria-label={VI_MESSAGES.common.notificationsAria} aria-live="polite">
       <Toaster
         position="top-right"
         gutter={10}

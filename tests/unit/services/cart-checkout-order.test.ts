@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { DbClient } from '@/server/db/client';
 import { products } from '@/server/db/schema';
 import { hashClientIp } from '@/server/security/client-ip';
@@ -11,20 +11,14 @@ import {
   createOrder,
   lookupOrder,
 } from '@/server/services/order.service';
-import { closeTestDb, getTestDb, resetAndSeedTestDb } from '../../helpers/test-db';
+import { setupTestDbLifecycle } from '../../helpers/test-db';
 
 let db: DbClient;
 
-beforeAll(async () => {
-  db = await getTestDb();
-});
-
-beforeEach(async () => {
-  await resetAndSeedTestDb(db);
-});
-
-afterAll(async () => {
-  await closeTestDb();
+setupTestDbLifecycle({
+  onBeforeAll: (client) => {
+    db = client;
+  },
 });
 
 const VALID_CUSTOMER = {
@@ -69,6 +63,24 @@ describe('services/cart, checkout, order & rate-limit (Postgres 16)', () => {
       { productId: 'cpu-intel-core-i3-12100f', name: 'Intel Core i3-12100F' },
       { productId: 'does-not-exist', name: null },
     ]);
+    expect(quote.advisories?.items).toContainEqual({
+      code: 'cpu_ram_platform',
+      severity: 'medium',
+      sockets: ['AM5'],
+      ramKind: 'ddr5_only',
+    });
+
+    const pairedQuote = await quoteCart(
+      [
+        { productId: 'cpu-amd-ryzen-7-9800x3d', quantity: 1 },
+        { productId: 'gpu-asus-rog-matrix-30th-rtx-5090-32gb', quantity: 1 },
+      ],
+      db,
+    );
+    expect(pairedQuote.advisories?.recommendedPsuTierW).toBeGreaterThanOrEqual(850);
+    expect(pairedQuote.advisories?.items.some((item) => item.code === 'psu_recommendation')).toBe(
+      true,
+    );
   });
 
   it('prepares checkout and rejects invalid address or unavailable products', async () => {
@@ -157,11 +169,17 @@ describe('services/cart, checkout, order & rate-limit (Postgres 16)', () => {
       ),
     ).rejects.toMatchObject({ code: 'IDEMPOTENCY_KEY_REUSED', status: 409 });
 
-    // Admin changing product price or soft-deleting does NOT alter placed order snapshot
+    // Admin changing product price or soft-deleting does NOT alter placed order snapshot,
+    // and idempotent replay still succeeds for the already-committed order.
     await db
       .update(products)
       .set({ priceVnd: 99_000_000, deletedAt: new Date() })
       .where(eq(products.id, 'cpu-amd-ryzen-7-9800x3d'));
+
+    const replayedAfterDelete = await createOrder(request, key, db);
+    expect(replayedAfterDelete.replayed).toBe(true);
+    expect(replayedAfterDelete.order.orderId).toBe(created.order.orderId);
+    expect(replayedAfterDelete.order.items[0].unitPriceVnd).toBe(14_390_000);
 
     const ipHash = hashClientIp('198.51.100.1');
     const fetched = await lookupOrder(

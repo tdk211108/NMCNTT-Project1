@@ -4,7 +4,6 @@ import { and, asc, desc, eq, gte, inArray, isNull, lte, sql, type SQL } from 'dr
 import {
   CATALOG_MAX_RESULTS,
   CPU_PER_BRAND_PAGE_SIZE,
-  FEATURED_PER_CATEGORY,
   GPU_PAGE_SIZE,
   LANDING_FEATURED_CPU_IDS,
   LANDING_FEATURED_GPU_IDS,
@@ -21,28 +20,21 @@ import type {
   ProductDetail,
   ProductListQuery,
   ProductListResponse,
-  RemovedItem,
-  ResolveResponse,
   SpecGroup,
   SpecItem,
 } from '@/shared/types';
 import { getDb, type DbClient } from '../db/client';
-import { cpuSpecs, gpuSeries, gpuVariants, products } from '../db/schema';
+import { cpuSpecs, gpuSeries, gpuVariants } from '../db/schema';
 import { storefrontProductsV } from '../db/views';
-import { pickFeaturedCandidates } from '../domain/featured';
+import {
+  formatCpuCoresThreads,
+  formatViNumber,
+  resolveSingleGpuCoresLabel,
+} from '../domain/format';
 import { AppError } from '../http/errors';
 
 export function escapeIlikePattern(value: string): string {
   return value.replace(/[\\%_]/g, '\\$&');
-}
-
-function formatViNumber(value: number, fractionDigits?: number): string {
-  return value.toLocaleString(
-    'vi-VN',
-    fractionDigits === undefined
-      ? undefined
-      : { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits },
-  );
 }
 
 function buildCpuSummary(row: {
@@ -56,7 +48,7 @@ function buildCpuSummary(row: {
     {
       key: 'coresThreads',
       label: 'Nhân / Luồng',
-      value: `${row.coresTotal} nhân / ${row.threadsTotal} luồng`,
+      value: formatCpuCoresThreads(row.coresTotal, row.threadsTotal),
     },
     {
       key: 'boostClock',
@@ -288,7 +280,7 @@ export async function listProducts(
   query: ProductListQuery,
   db: DbClient = getDb(),
 ): Promise<ProductListResponse> {
-  const facets = await computeCategoryFacets(query.category, db);
+  const facetsPromise = computeCategoryFacets(query.category, db);
 
   const conditions = [eq(storefrontProductsV.category, query.category)];
   if (query.vendor?.length) {
@@ -327,15 +319,18 @@ export async function listProducts(
 
   if (query.perVendor) {
     const pageSize = query.pageSize ?? defaultPageSize;
-    const vendorCountRows = await db
-      .select({
-        vendor: storefrontProductsV.vendor,
-        count: sql<number>`count(*)::int`,
-      })
-      .from(storefrontProductsV)
-      .where(whereClause)
-      .groupBy(storefrontProductsV.vendor)
-      .orderBy(asc(storefrontProductsV.vendor));
+    const [facets, vendorCountRows] = await Promise.all([
+      facetsPromise,
+      db
+        .select({
+          vendor: storefrontProductsV.vendor,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(storefrontProductsV)
+        .where(whereClause)
+        .groupBy(storefrontProductsV.vendor)
+        .orderBy(asc(storefrontProductsV.vendor)),
+    ]);
 
     const vendorTotals: Partial<Record<ChipVendor, number>> = {};
     let total = 0;
@@ -371,10 +366,13 @@ export async function listProducts(
 
   if (query.page !== undefined || query.pageSize !== undefined) {
     const pageSize = query.pageSize ?? defaultPageSize;
-    const [{ count: total }] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(storefrontProductsV)
-      .where(whereClause);
+    const [facets, [{ count: total }]] = await Promise.all([
+      facetsPromise,
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(storefrontProductsV)
+        .where(whereClause),
+    ]);
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     const safePage = Math.min(Math.max(1, query.page ?? 1), totalPages);
     const offset = (safePage - 1) * pageSize;
@@ -396,10 +394,12 @@ export async function listProducts(
     };
   }
 
-  const rows =
+  const [facets, rows] = await Promise.all([
+    facetsPromise,
     query.category === 'cpu'
-      ? await queryCpuCardRows(whereClause, orderBy, CATALOG_MAX_RESULTS, db)
-      : await queryGpuCardRows(whereClause, orderBy, CATALOG_MAX_RESULTS, db);
+      ? queryCpuCardRows(whereClause, orderBy, CATALOG_MAX_RESULTS, db)
+      : queryGpuCardRows(whereClause, orderBy, CATALOG_MAX_RESULTS, db),
+  ]);
 
   const items = rows.map((row) => row.card);
 
@@ -407,31 +407,6 @@ export async function listProducts(
     items,
     facets,
     total: items.length,
-  };
-}
-
-export async function getFeaturedProducts(
-  limit = FEATURED_PER_CATEGORY,
-  db: DbClient = getDb(),
-): Promise<FeaturedProductsResponse> {
-  const orderBy = buildSortOrder('score_desc');
-  const [cpuRows, gpuRows] = await Promise.all([
-    queryCpuCardRows(eq(storefrontProductsV.category, 'cpu'), orderBy, CATALOG_MAX_RESULTS, db),
-    queryGpuCardRows(eq(storefrontProductsV.category, 'gpu'), orderBy, CATALOG_MAX_RESULTS, db),
-  ]);
-
-  const toCandidate = (row: { card: ProductCard; seriesId: string | null }) => ({
-    id: row.card.id,
-    vendor: row.card.vendor,
-    seriesId: row.seriesId,
-    normalizedScore: row.card.score.normalized ?? 0,
-    priceVnd: row.card.priceVnd,
-    card: row.card,
-  });
-
-  return {
-    cpus: pickFeaturedCandidates(cpuRows.map(toCandidate), limit).map((item) => item.card),
-    gpus: pickFeaturedCandidates(gpuRows.map(toCandidate), limit).map((item) => item.card),
   };
 }
 
@@ -496,10 +471,12 @@ export async function getProductDetail(
       throw new AppError('NOT_FOUND');
     }
 
-    const coresValue =
-      cpu.pCores !== null && cpu.eCores !== null
-        ? `${cpu.coresTotal} nhân / ${cpu.threadsTotal} luồng (${cpu.pCores} P-Core, ${cpu.eCores} E-Core)`
-        : `${cpu.coresTotal} nhân / ${cpu.threadsTotal} luồng`;
+    const coresValue = formatCpuCoresThreads(
+      cpu.coresTotal,
+      cpu.threadsTotal,
+      cpu.pCores,
+      cpu.eCores,
+    );
 
     const specGroups: SpecGroup[] = [
       {
@@ -575,12 +552,7 @@ export async function getProductDetail(
   }
 
   const { variant, series } = gpuJoin;
-  const coresLabel =
-    series.vendor === 'nvidia'
-      ? 'CUDA Cores'
-      : series.vendor === 'intel'
-        ? 'Shading Units'
-        : 'Stream Processors';
+  const coresLabel = resolveSingleGpuCoresLabel(series.vendor);
 
   const specGroups: SpecGroup[] = [
     {
@@ -657,54 +629,4 @@ export async function getProductDetail(
     series: { id: series.id, name: series.name },
     psuPrefill: { gpu: series.id },
   };
-}
-
-export async function resolveProducts(
-  ids: readonly string[],
-  db: DbClient = getDb(),
-): Promise<ResolveResponse> {
-  const uniqueIds = [...new Set(ids)];
-  if (uniqueIds.length === 0) {
-    return { active: [], removed: [] };
-  }
-
-  const [activeRows, rawProductRows] = await Promise.all([
-    db
-      .select({
-        id: storefrontProductsV.id,
-        name: storefrontProductsV.name,
-        category: storefrontProductsV.category,
-        priceVnd: storefrontProductsV.priceVnd,
-        imageUrl: storefrontProductsV.imageUrl,
-      })
-      .from(storefrontProductsV)
-      .where(inArray(storefrontProductsV.id, uniqueIds)),
-    db
-      .select({
-        id: products.id,
-        name: products.name,
-      })
-      .from(products)
-      .where(inArray(products.id, uniqueIds)),
-  ]);
-
-  const activeById = new Map(activeRows.map((row) => [row.id, row]));
-  const nameById = new Map(rawProductRows.map((row) => [row.id, row.name]));
-
-  const active: ResolveResponse['active'] = [];
-  const removed: RemovedItem[] = [];
-
-  for (const id of uniqueIds) {
-    const found = activeById.get(id);
-    if (found) {
-      active.push(found);
-    } else {
-      removed.push({
-        productId: id,
-        name: nameById.get(id) ?? null,
-      });
-    }
-  }
-
-  return { active, removed };
 }

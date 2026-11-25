@@ -2,15 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { GET as getProvinces } from '@/app/api/address/provinces/route';
 import { GET as getWards } from '@/app/api/address/provinces/[code]/wards/route';
-import { GET as getAdminSession } from '@/app/api/admin/session/route';
-import { POST as postAdminLogout } from '@/app/api/admin/logout/route';
-import { signAdminSessionToken } from '@/server/auth/admin-session';
+import { GET as getAuthSession } from '@/app/api/auth/session/route';
+import { POST as postAuthLogout } from '@/app/api/auth/logout/route';
+import { createAdminSessionUser, signSessionToken } from '@/server/auth/session';
 import { signOrderAccessToken } from '@/server/auth/order-token';
 import { AppError } from '@/server/http/errors';
 import { parseJsonBody, withHandler } from '@/server/http/handler';
 import {
   assertCartEnvelope,
   parseCommaListParam,
+  parseStrictBoolParam,
   parseStrictIntListParam,
   parseStrictIntParam,
   requireOrderViewer,
@@ -34,6 +35,12 @@ describe('http/route-helpers & handler & stateless route handlers', () => {
     expect(parseStrictIntParam('5000')).toBe(5000);
     expect(Number.isNaN(parseStrictIntParam('12abc'))).toBe(true);
 
+    expect(parseStrictBoolParam(null)).toBeUndefined();
+    expect(parseStrictBoolParam('  ')).toBeUndefined();
+    expect(parseStrictBoolParam('true')).toBe(true);
+    expect(parseStrictBoolParam(' false ')).toBe(false);
+    expect(parseStrictBoolParam('yes')).toBe('yes');
+
     expect(parseStrictIntListParam('8, 16')).toEqual([8, 16]);
     expect(parseStrictIntListParam('8, bad')?.map((n) => Number.isNaN(n))).toEqual([false, true]);
 
@@ -52,7 +59,7 @@ describe('http/route-helpers & handler & stateless route handlers', () => {
   it('authorizes order viewer via admin cookie or scoped order Bearer token', async () => {
     const orderId = 'PC-7K3M9QX2TB';
     const orderToken = await signOrderAccessToken(orderId);
-    const adminToken = await signAdminSessionToken();
+    const adminToken = await signSessionToken(createAdminSessionUser());
 
     await expect(
       requireOrderViewer(
@@ -119,7 +126,7 @@ describe('http/route-helpers & handler & stateless route handlers', () => {
     errorSpy.mockRestore();
   });
 
-  it('serves cacheable address endpoints and admin session/logout endpoints', async () => {
+  it('serves cacheable address endpoints and unified auth session/logout endpoints', async () => {
     const provRes = await getProvinces(new NextRequest('https://shop.example.com/api/address/provinces'), {});
     expect(provRes.status).toBe(200);
     expect(provRes.headers.get('cache-control')).toBe('public, max-age=31536000, immutable');
@@ -139,24 +146,24 @@ describe('http/route-helpers & handler & stateless route handlers', () => {
     expect(wardsMissing.status).toBe(404);
     expect(wardsMissing.headers.get('cache-control')).toBe('no-store');
 
-    const anonSession = await getAdminSession(
-      new NextRequest('https://shop.example.com/api/admin/session'),
+    const anonSession = await getAuthSession(
+      new NextRequest('https://shop.example.com/api/auth/session'),
       {},
     );
     expect(anonSession.status).toBe(200);
-    expect(await anonSession.json()).toEqual({ isAdmin: false });
+    expect(await anonSession.json()).toMatchObject({ user: null });
 
-    const adminToken = await signAdminSessionToken();
-    const authSession = await getAdminSession(
-      new NextRequest('https://shop.example.com/api/admin/session', {
+    const adminToken = await signSessionToken(createAdminSessionUser());
+    const authSession = await getAuthSession(
+      new NextRequest('https://shop.example.com/api/auth/session', {
         headers: { cookie: `${AUTH_SESSION_COOKIE}=${adminToken}` },
       }),
       {},
     );
-    expect(await authSession.json()).toEqual({ isAdmin: true });
+    expect(await authSession.json()).toMatchObject({ user: { role: 'admin' } });
 
-    const logoutRes = await postAdminLogout(
-      new NextRequest('https://shop.example.com/api/admin/logout', {
+    const logoutRes = await postAuthLogout(
+      new NextRequest('https://shop.example.com/api/auth/logout', {
         method: 'POST',
         headers: { origin: 'https://shop.example.com' },
       }),

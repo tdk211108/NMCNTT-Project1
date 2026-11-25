@@ -23,13 +23,9 @@ export interface ValidatedCheckoutCustomer extends NormalizedCustomer {
   wardCode: string;
 }
 
-export async function validateCheckoutAndQuote(
+export function validateCheckoutCustomer(
   request: CheckoutRequest,
-  db: DbExecutor = getDb(),
-): Promise<{
-  quote: Awaited<ReturnType<typeof quoteCart>>;
-  customer: ValidatedCheckoutCustomer;
-}> {
+): ValidatedCheckoutCustomer {
   const cartCheck = validateCartItems(request.items);
   if (!cartCheck.ok) {
     throw new AppError(cartCheck.code);
@@ -66,6 +62,32 @@ export async function validateCheckoutAndQuote(
     throw new AppError('VALIDATION_ERROR', { details: { fieldErrors } });
   }
 
+  return {
+    fullName,
+    phone,
+    phoneMasked: maskPhone(phone),
+    provinceCode: request.customer.provinceCode,
+    provinceName: resolvedAddress.provinceName,
+    wardCode: request.customer.wardCode,
+    wardName: resolvedAddress.wardName,
+    streetAddress,
+    note,
+    addressLine: formatAddressLine(
+      streetAddress,
+      resolvedAddress.wardName,
+      resolvedAddress.provinceName,
+    ),
+  };
+}
+
+export async function validateCheckoutAndQuote(
+  request: CheckoutRequest,
+  db: DbExecutor = getDb(),
+): Promise<{
+  quote: Awaited<ReturnType<typeof quoteCart>>;
+  customer: ValidatedCheckoutCustomer;
+}> {
+  const customer = validateCheckoutCustomer(request);
   const quote = await quoteCart(
     request.items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
     db,
@@ -77,25 +99,7 @@ export async function validateCheckoutAndQuote(
     });
   }
 
-  return {
-    quote,
-    customer: {
-      fullName,
-      phone,
-      phoneMasked: maskPhone(phone),
-      provinceCode: request.customer.provinceCode,
-      provinceName: resolvedAddress.provinceName,
-      wardCode: request.customer.wardCode,
-      wardName: resolvedAddress.wardName,
-      streetAddress,
-      note,
-      addressLine: formatAddressLine(
-        streetAddress,
-        resolvedAddress.wardName,
-        resolvedAddress.provinceName,
-      ),
-    },
-  };
+  return { quote, customer };
 }
 
 export async function prepareCheckout(

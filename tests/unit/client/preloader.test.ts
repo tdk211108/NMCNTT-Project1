@@ -9,7 +9,7 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/cpu',
 }));
 
-const { SitePreloader } = await import('@/features/layout/SitePreloader');
+const { SitePreloader } = await import('@/features/layout/components/SitePreloader');
 
 describe('SitePreloader and essential media preloading', () => {
   afterEach(() => {
@@ -86,6 +86,25 @@ describe('SitePreloader and essential media preloading', () => {
     for (let i = 1; i < updates.length; i += 1) {
       expect(updates[i]!).toBeGreaterThanOrEqual(updates[i - 1]!);
     }
+    expect(updates[updates.length - 1]).toBe(1);
+  });
+
+  it('skips hero video preloading on non-home routes while keeping full 45% progress on home', async () => {
+    const createElementSpy = vi.fn(() => {
+      throw new Error('non-home route must not create offscreen media elements in Node SSR test');
+    });
+    vi.stubGlobal('document', { readyState: 'complete', createElement: createElementSpy, querySelector: () => null });
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({ tracks: [] }) })));
+
+    const updates: number[] = [];
+    await preloadEssentialAssets({
+      pathname: '/cpu',
+      timeoutMs: 25,
+      onUpdate: (u) => updates.push(u.progress),
+    });
+
+    expect(createElementSpy).not.toHaveBeenCalled();
+    expect(updates[0]).toBeGreaterThanOrEqual(0.45);
     expect(updates[updates.length - 1]).toBe(1);
   });
 

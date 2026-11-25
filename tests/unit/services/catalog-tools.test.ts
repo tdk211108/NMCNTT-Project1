@@ -2,15 +2,13 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { eq } from 'drizzle-orm';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { DbClient } from '@/server/db/client';
 import { products } from '@/server/db/schema';
 import {
-  getFeaturedProducts,
   getLandingShowcaseProducts,
   getProductDetail,
   listProducts,
-  resolveProducts,
 } from '@/server/services/catalog.service';
 import { listLocalMusicTracks, parseMusicTrackFilename } from '@/server/services/music.service';
 import { compareProducts } from '@/server/services/compare.service';
@@ -25,30 +23,24 @@ import { suggestProducts } from '@/server/services/search.service';
 import {
   createAdminGpuSeries,
   updateAdminGpuSeries,
-  updateAdminLegacyCpu,
-} from '@/server/services/admin-catalog.service';
-import { closeTestDb, getTestDb, resetAndSeedTestDb } from '../../helpers/test-db';
+} from '@/server/services/admin-gpu-series.service';
+import { updateAdminLegacyCpu } from '@/server/services/admin-legacy-cpus.service';
+import { setupTestDbLifecycle } from '../../helpers/test-db';
 
 let db: DbClient;
 
-beforeAll(async () => {
-  db = await getTestDb();
-});
-
-beforeEach(async () => {
-  await resetAndSeedTestDb(db);
-});
-
-afterAll(async () => {
-  await closeTestDb();
+setupTestDbLifecycle({
+  onBeforeAll: (client) => {
+    db = client;
+  },
 });
 
 describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)', () => {
   it('lists retail products with category-wide facets, dynamic normalized scores, server pagination, and filtering', async () => {
     const allCpus = await listProducts({ category: 'cpu' }, db);
-    expect(allCpus.total).toBe(64);
+    expect(allCpus.total).toBe(88);
     expect(allCpus.facets.vendors).toEqual(['amd', 'intel']);
-    expect(allCpus.facets.sockets).toEqual(['AM5', 'LGA1700', 'LGA1851']);
+    expect(allCpus.facets.sockets).toEqual(['AM4', 'AM5', 'LGA1700', 'LGA1851']);
     expect(allCpus.facets.priceRange).not.toBeNull();
 
     // Filtering by vendor & socket still keeps facets over the whole active CPU category
@@ -78,10 +70,10 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
       },
       db,
     );
-    expect(cpuPaged.total).toBe(64);
-    expect(cpuPaged.vendorTotals).toEqual({ amd: 29, intel: 35 });
-    expect(cpuPaged.items.filter((i) => i.vendor === 'amd')).toHaveLength(13);
-    expect(cpuPaged.items.filter((i) => i.vendor === 'intel')).toHaveLength(3);
+    expect(cpuPaged.total).toBe(88);
+    expect(cpuPaged.vendorTotals).toEqual({ amd: 39, intel: 49 });
+    expect(cpuPaged.items.filter((i) => i.vendor === 'amd')).toHaveLength(16);
+    expect(cpuPaged.items.filter((i) => i.vendor === 'intel')).toHaveLength(16);
 
     // Escapes SQL ILIKE wildcards (`%`, `_`) so they do not match everything
     const wildcard = await listProducts({ category: 'cpu', q: '100%_' }, db);
@@ -95,13 +87,13 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
 
     // GPU listing supports filtering Limited Edition, Intel Arc, server pagination, and exact seriesId
     const allGpus = await listProducts({ category: 'gpu' }, db);
-    expect(allGpus.total).toBe(219);
+    expect(allGpus.total).toBe(232);
     const gpuPage1 = await listProducts({ category: 'gpu', page: 1, pageSize: 40 }, db);
     const gpuPage6 = await listProducts({ category: 'gpu', page: 6, pageSize: 40 }, db);
     expect(gpuPage1.items).toHaveLength(40);
-    expect(gpuPage1.total).toBe(219);
+    expect(gpuPage1.total).toBe(232);
     expect(gpuPage1.pagination).toEqual({ page: 1, pageSize: 40, totalPages: 6 });
-    expect(gpuPage6.items).toHaveLength(19);
+    expect(gpuPage6.items).toHaveLength(32);
     const page1Ids = new Set(gpuPage1.items.map((g) => g.id));
     expect(gpuPage6.items.every((g) => !page1Ids.has(g.id))).toBe(true);
 
@@ -117,27 +109,7 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     expect(limitedGpus.items.every((g) => g.isLimitedEdition)).toBe(true);
   });
 
-  it('builds balanced multi-vendor 8+8 featured catalog excluding soft-deleted products', async () => {
-    const featured = await getFeaturedProducts(undefined, db);
-    expect(featured.cpus).toHaveLength(8);
-    expect(featured.gpus).toHaveLength(8);
-
-    const cpuVendors = new Set(featured.cpus.map((c) => c.vendor));
-    const gpuVendors = new Set(featured.gpus.map((g) => g.vendor));
-    expect(cpuVendors).toEqual(new Set(['intel', 'amd']));
-    expect(gpuVendors).toEqual(new Set(['nvidia', 'amd', 'intel']));
-
-    // Soft-deleting the top flagship removes it from featured results cleanly
-    await db
-      .update(products)
-      .set({ deletedAt: new Date() })
-      .where(eq(products.id, featured.cpus[0].id));
-    const refreshed = await getFeaturedProducts(undefined, db);
-    expect(refreshed.cpus).toHaveLength(8);
-    expect(refreshed.cpus.some((c) => c.id === featured.cpus[0].id)).toBe(false);
-  });
-
-  it('loads product detail with stockStatus=in_stock and resolves active vs soft-deleted items', async () => {
+  it('loads product detail with stockStatus=in_stock and hides soft-deleted items', async () => {
     const cpuDetail = await getProductDetail('cpu-amd-ryzen-7-9800x3d', db);
     expect(cpuDetail.stockStatus).toBe('in_stock');
     expect(cpuDetail.warrantyMonths).toBe(36);
@@ -164,16 +136,6 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
       code: 'NOT_FOUND',
       status: 404,
     });
-
-    const resolved = await resolveProducts(
-      ['cpu-amd-ryzen-7-9800x3d', 'cpu-intel-core-i3-12100f', 'nonexistent-id'],
-      db,
-    );
-    expect(resolved.active.map((a) => a.id)).toEqual(['cpu-amd-ryzen-7-9800x3d']);
-    expect(resolved.removed).toEqual([
-      { productId: 'cpu-intel-core-i3-12100f', name: 'Intel Core i3-12100F' },
-      { productId: 'nonexistent-id', name: null },
-    ]);
   });
 
   it('returns search suggestions ordered by name prefix then normalized score', async () => {
@@ -240,7 +202,7 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     expect(new Set(ranking.awards.map((w) => w.id)).size).toBe(ranking.awards.length);
 
     const gpuAwards = await getPerfPerPriceRanking({ category: 'gpu' }, db);
-    expect(gpuAwards.totalEvaluated).toBe(219);
+    expect(gpuAwards.totalEvaluated).toBe(232);
     expect(gpuAwards.awards.reduce((sum, w) => sum + w.awardCount, 0)).toBe(9);
     expect(gpuAwards.awards[0].awardCount).toBeGreaterThanOrEqual(
       gpuAwards.awards[gpuAwards.awards.length - 1].awardCount,
@@ -374,9 +336,9 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
   it('lists upgrade options and computes CPU/GPU upgrades for both store and legacy hardware', async () => {
     const options = await getUpgradeOptions(undefined, db);
     expect(options.cpus.some((c) => c.id === 'store:cpu-intel-core-i5-12400f' && c.hasPassmark)).toBe(true);
-    expect(options.cpus.some((c) => c.id === 'legacy:C19')).toBe(true);
+    expect(options.cpus.some((c) => c.id === 'legacy:C22')).toBe(true);
     expect(options.gpus.some((g) => g.id === 'gs-rtx-5060')).toBe(true);
-    expect(options.gpus.some((g) => g.id === 'G13')).toBe(true);
+    expect(options.gpus.some((g) => g.id === 'G29')).toBe(true);
 
     // Store CPU LGA1700 -> same-socket + platform-swap separation
     const storeCpuUpgrade = await getUpgradeRecommendations(
@@ -391,9 +353,9 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     expect(storeCpuUpgrade.platformSwapCpus.every((c) => !c.sameSocket)).toBe(true);
 
     // Legacy CPU without PassMark degrades cleanly -> notes include missingPassmarkNote & upliftPct null
-    await updateAdminLegacyCpu('C19', { passmarkRaw: null, passmarkSource: null }, db);
+    await updateAdminLegacyCpu('C22', { passmarkRaw: null, passmarkSource: null }, db);
     const legacyNoScore = await getUpgradeRecommendations(
-      { category: 'cpu', current: 'legacy:C19' },
+      { category: 'cpu', current: 'legacy:C22' },
       db,
     );
     expect(legacyNoScore.current.hasPassmark).toBe(false);
@@ -403,18 +365,18 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     expect(legacyNoScore.notes[0]).toContain('PassMark');
 
     // Populate legacy CPU & legacy GPU PassMark via admin service and verify real +10% uplift & warnings
-    await updateAdminLegacyCpu('C19', { passmarkRaw: 21500, passmarkSource: 'PassMark' }, db);
+    await updateAdminLegacyCpu('C22', { passmarkRaw: 21500, passmarkSource: 'PassMark' }, db);
     const legacyWithScore = await getUpgradeRecommendations(
-      { category: 'cpu', current: 'legacy:C19', sort: 'uplift_desc' },
+      { category: 'cpu', current: 'legacy:C22', sort: 'uplift_desc' },
       db,
     );
     expect(legacyWithScore.current.hasPassmark).toBe(true);
     expect(legacyWithScore.platformSwapCpus.length).toBeLessThanOrEqual(3);
     expect(legacyWithScore.platformSwapCpus.every((c) => (c.upliftPct ?? 0) >= 10)).toBe(true);
 
-    await updateAdminGpuSeries('G13', { passmarkRaw: 17000, passmarkSource: 'PassMark' }, db);
+    await updateAdminGpuSeries('G29', { passmarkRaw: 17000, passmarkSource: 'PassMark' }, db);
     const legacyGpuUpgrade = await getUpgradeRecommendations(
-      { category: 'gpu', current: 'G13', sort: 'price_asc' },
+      { category: 'gpu', current: 'G29', sort: 'price_asc' },
       db,
     );
     expect(legacyGpuUpgrade.current.vramGb).toBe(12);

@@ -1,44 +1,36 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { DbClient } from '@/server/db/client';
 import { authFailures, gpuSeries } from '@/server/db/schema';
 import {
   createAdminGpuSeries,
-  createAdminLegacyCpu,
-  createAdminProduct,
   listAdminGpuSeries,
-  listAdminLegacyCpus,
-  listAdminProducts,
-  listAdminProductsPage,
   softDeleteAdminGpuSeries,
-  softDeleteAdminProduct,
   updateAdminGpuSeries,
+} from '@/server/services/admin-gpu-series.service';
+import {
+  createAdminLegacyCpu,
+  listAdminLegacyCpus,
   updateAdminLegacyCpu,
+} from '@/server/services/admin-legacy-cpus.service';
+import {
+  createAdminProduct,
+  listAdminProductsPage,
+  softDeleteAdminProduct,
   updateAdminProduct,
-} from '@/server/services/admin-catalog.service';
+} from '@/server/services/admin-products.service';
 import { getAdminOrderDetail, listAdminOrders } from '@/server/services/admin-order.service';
 import { createOrder } from '@/server/services/order.service';
 import { resetSampleData } from '@/server/services/reset.service';
-import {
-  closeTestDb,
-  getTestDb,
-  resetAndSeedTestDb,
-  TEST_STORAGE_CONFIG,
-} from '../../helpers/test-db';
+import { TEST_STORAGE_CONFIG, setupTestDbLifecycle } from '../../helpers/test-db';
 
 let db: DbClient;
 
-beforeAll(async () => {
-  db = await getTestDb();
-});
-
-beforeEach(async () => {
-  await resetAndSeedTestDb(db);
-});
-
-afterAll(async () => {
-  await closeTestDb();
+setupTestDbLifecycle({
+  onBeforeAll: (client) => {
+    db = client;
+  },
 });
 
 describe('services/admin-catalog, admin-order, reset & DB triggers (Postgres 16)', () => {
@@ -141,7 +133,7 @@ describe('services/admin-catalog, admin-order, reset & DB triggers (Postgres 16)
     ).rejects.toMatchObject({ code: 'DUPLICATE_NAME', status: 409 });
 
     const legacyList = await listAdminLegacyCpus(db);
-    expect(legacyList).toHaveLength(61);
+    expect(legacyList).toHaveLength(37);
   });
 
   it('enforces GPU series rules: SERIES_NOT_RETAIL, HAS_VARIANTS, DB kind immutability, and image cleanup', async () => {
@@ -239,13 +231,13 @@ describe('services/admin-catalog, admin-order, reset & DB triggers (Postgres 16)
     });
 
     const seriesList = await listAdminGpuSeries('retail', db);
-    expect(seriesList.length).toBe(16);
-    expect((await listAdminProducts('cpu', db)).length).toBe(64);
+    expect(seriesList.length).toBe(21);
+    expect((await listAdminProductsPage('cpu', 1, 100, db)).total).toBe(88);
 
     const gpuAdminPage = await listAdminProductsPage('gpu', 1, 25, db);
     expect(gpuAdminPage.items).toHaveLength(25);
-    expect(gpuAdminPage.total).toBe(219);
-    expect(gpuAdminPage.totalPages).toBe(9);
+    expect(gpuAdminPage.total).toBe(232);
+    expect(gpuAdminPage.totalPages).toBe(10);
     expect(gpuAdminPage.existingAibBrands).toHaveLength(16);
   });
 
@@ -288,7 +280,7 @@ describe('services/admin-catalog, admin-order, reset & DB triggers (Postgres 16)
 
     expect(resetResult).toEqual({
       ordersDeleted: 1,
-      productsRestored: 283,
+      productsRestored: 320,
       imagesPurged: 2,
       warnings: [],
     });
@@ -355,5 +347,23 @@ describe('services/admin-catalog, admin-order, reset & DB triggers (Postgres 16)
     await expect(
       updateAdminGpuSeries('gs-rtx-5090', { passmarkRaw: null }, db),
     ).rejects.toMatchObject({ code: 'VALIDATION_ERROR', status: 400 });
+
+    // Editing seeded hardware marks isSeed = false so db:sync can preserve Admin edits.
+    const editedSeedProduct = await updateAdminProduct(
+      'cpu-amd-ryzen-7-9800x3d',
+      { priceVnd: 14_500_000 },
+      db,
+    );
+    expect(editedSeedProduct.isSeed).toBe(false);
+
+    const editedSeedSeries = await updateAdminGpuSeries(
+      'gs-rtx-5090',
+      { tbpW: 580 },
+      db,
+    );
+    expect(editedSeedSeries.isSeed).toBe(false);
+
+    const editedSeedLegacy = await updateAdminLegacyCpu('C01', { psuPowerW: 95 }, db);
+    expect(editedSeedLegacy.isSeed).toBe(false);
   });
 });

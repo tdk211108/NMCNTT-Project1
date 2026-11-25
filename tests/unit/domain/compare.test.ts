@@ -195,6 +195,12 @@ describe('domain/compare', () => {
     const allVendorsRows = buildCompareRows('gpu', [gpuNvidia, gpuAmd, gpuIntel]);
     expect(allVendorsRows[3].label).toBe('CUDA Cores / Stream Processors / Shading Units');
 
+    const amdIntelRows = buildCompareRows('gpu', [gpuAmd, gpuIntel]);
+    expect(amdIntelRows[3].label).toBe('Stream Processors / Shading Units');
+
+    const nvidiaIntelRows = buildCompareRows('gpu', [gpuNvidia, gpuIntel]);
+    expect(nvidiaIntelRows[3].label).toBe('CUDA Cores / Shading Units');
+
     const mixedVendorRows = buildCompareRows('gpu', [gpuNvidia, gpuAmd]);
     expect(mixedVendorRows[3].label).toBe('CUDA Cores / Stream Processors');
     expect(mixedVendorRows[0].cells.map((c) => c.highlighted)).toEqual([false, true]); // lower price

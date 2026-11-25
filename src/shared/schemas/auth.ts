@@ -77,6 +77,3 @@ export const authRegisterSchema = z.object({
       `Mật khẩu phải có từ ${PASSWORD_MIN_LEN} đến ${PASSWORD_MAX_LEN} ký tự.`,
     ),
 });
-
-export type AuthLoginInput = z.infer<typeof authLoginSchema>;
-export type AuthRegisterInput = z.infer<typeof authRegisterSchema>;

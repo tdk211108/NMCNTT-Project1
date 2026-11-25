@@ -16,9 +16,13 @@ export interface SniffedImage {
   contentType: 'image/jpeg' | 'image/png' | 'image/webp';
 }
 
-export function resolvePublicStorageConfig(): Pick<StorageConfig, 'supabaseUrl' | 'bucket'> {
-  const supabaseUrl = (process.env.SUPABASE_URL ?? '').trim().replace(/\/+$/, '');
-  const bucket = (process.env.SUPABASE_STORAGE_BUCKET ?? 'product-images').trim();
+export function resolvePublicStorageConfig(
+  override?: Partial<Pick<StorageConfig, 'supabaseUrl' | 'bucket'>>,
+): Pick<StorageConfig, 'supabaseUrl' | 'bucket'> {
+  const supabaseUrl = (override?.supabaseUrl ?? process.env.SUPABASE_URL ?? '')
+    .trim()
+    .replace(/\/+$/, '');
+  const bucket = (override?.bucket ?? process.env.SUPABASE_STORAGE_BUCKET ?? 'product-images').trim();
 
   if (!supabaseUrl || !bucket) {
     throw new AppError('INTERNAL', {
@@ -48,7 +52,7 @@ export function buildPublicObjectUrl(
   storagePath: string,
   config?: Pick<StorageConfig, 'supabaseUrl' | 'bucket'>,
 ): string {
-  const resolved = config ?? resolvePublicStorageConfig();
+  const resolved = config ? resolvePublicStorageConfig(config) : resolvePublicStorageConfig();
   return `${resolved.supabaseUrl}/storage/v1/object/public/${resolved.bucket}/${storagePath}`;
 }
 

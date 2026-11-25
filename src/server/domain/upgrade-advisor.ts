@@ -18,6 +18,7 @@ import type {
   UpgradeSort,
   UpgradeWarning,
 } from '@/shared/types';
+import { pickBetterRepresentativeGpu } from './format';
 import { calculatePerfPerPrice } from './scoring';
 
 export type RamPlatform = 'ddr4_only' | 'ddr5_only' | 'ddr4_and_ddr5' | 'unknown';
@@ -362,16 +363,9 @@ export function recommendGpuUpgrades(
     const entry = groupedBySeries.get(variant.seriesId);
     if (!entry) {
       groupedBySeries.set(variant.seriesId, { rep: variant, count: 1 });
-      continue;
-    }
-    entry.count += 1;
-    const isCheaper = variant.priceVnd < entry.rep.priceVnd;
-    const isNonLimitedTie =
-      variant.priceVnd === entry.rep.priceVnd &&
-      !variant.isLimitedEdition &&
-      entry.rep.isLimitedEdition;
-    if (isCheaper || isNonLimitedTie) {
-      entry.rep = variant;
+    } else {
+      entry.count += 1;
+      entry.rep = pickBetterRepresentativeGpu(entry.rep, variant);
     }
   }
 

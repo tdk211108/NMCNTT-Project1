@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { ChipVendor, PerfPerPriceItem } from '@/shared/types';
+import { roundTo } from './format';
 
 export interface PerfPerPriceCandidate {
   id: string;
@@ -10,22 +11,6 @@ export interface PerfPerPriceCandidate {
   priceVnd: number;
   passmarkRaw: number;
   normalizedScore: number | null;
-}
-
-function roundTo(value: number, decimals: number): number {
-  const factor = 10 ** decimals;
-  // Tiny bias avoids binary float artifacts such as 1.005 * 100 -> 100.49999999999999
-  return Math.round((value + 1e-12) * factor) / factor;
-}
-
-/**
- * Normalizes a raw PassMark score onto a base-100 scale rounded to 1 decimal.
- */
-export function normalizeScore(raw: number, maxRawInCategory: number | null): number | null {
-  if (!maxRawInCategory || maxRawInCategory <= 0 || raw <= 0) {
-    return null;
-  }
-  return roundTo((100 * raw) / maxRawInCategory, 1);
 }
 
 /**

@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { showToast } from '@/components/ui/toast-store';
 import { ApiClientError, apiFetch } from '@/lib/api-client';
 import { useAuthSession } from '@/features/auth/useAuthSession';
-import { useCartStore } from '@/features/cart/store';
+import { useCartQuote } from '@/features/cart/useCartQuote';
 import { usePlacedOrderPopup } from '@/features/orders/usePlacedOrderPopup';
 import {
   ADDRESS_DATASET_DATE,
@@ -25,9 +25,7 @@ import { VI_MESSAGES } from '@/shared/messages/vi';
 import { normalizeVnPhone, normalizeWhitespaceNfc, paymentMethodSchema } from '@/shared/schemas';
 import type {
   AddressOption,
-  CartQuote,
   CheckoutRequest,
-  OrderWithToken,
   PrepareResponse,
 } from '@/shared/types';
 import {
@@ -35,6 +33,7 @@ import {
   saveCheckoutAttempt,
   type StoredCheckoutAttempt,
 } from './attempt-storage';
+import { handleUnavailableProductsError, usePlaceOrder } from './usePlaceOrder';
 
 const checkoutFormSchema = z.object({
   fullName: z
@@ -82,14 +81,12 @@ export type CheckoutFormValues = z.infer<typeof checkoutFormSchema>;
 export function useCheckoutController() {
   const router = useRouter();
   const { state: authState, actions: authActions } = useAuthSession();
-  const items = useCartStore((s) => s.items);
-  const hasHydrated = useCartStore((s) => s.hasHydrated);
-  const clearCart = useCartStore((s) => s.clearCart);
-  const applyServerQuote = useCartStore((s) => s.applyServerQuote);
   const placedOrderPopup = usePlacedOrderPopup();
 
   const [reviewAttempt, setReviewAttempt] = useState<StoredCheckoutAttempt | null>(null);
   const [countdown, setCountdown] = useState(REVIEW_COUNTDOWN_SECONDS);
+
+  const { items, hasHydrated, quote } = useCartQuote('checkout', { requireItems: true });
 
   useEffect(() => {
     if (
@@ -101,29 +98,6 @@ export function useCheckoutController() {
       router.replace('/cart?notice=empty-cart');
     }
   }, [hasHydrated, items.length, reviewAttempt, placedOrderPopup.state.hasCompletedOrder, router]);
-
-  const quotePayload = items.map((i) => ({
-    productId: i.productId,
-    quantity: i.quantity,
-    knownUnitPriceVnd: i.lastKnownUnitPriceVnd,
-  }));
-
-  const quoteQuery = useQuery({
-    queryKey: ['checkout', 'quote', quotePayload],
-    queryFn: () =>
-      apiFetch<CartQuote>('/api/cart/quote', {
-        method: 'POST',
-        json: { items: quotePayload },
-      }),
-    enabled: hasHydrated && items.length > 0,
-    staleTime: 0,
-  });
-
-  useEffect(() => {
-    if (quoteQuery.data) {
-      applyServerQuote(quoteQuery.data);
-    }
-  }, [quoteQuery.data, applyServerQuote]);
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutFormSchema),
@@ -165,22 +139,7 @@ export function useCheckoutController() {
     staleTime: Number.POSITIVE_INFINITY,
   });
 
-  function handleUnavailableProducts(error: ApiClientError) {
-    const unavailable = error.details?.items as
-      | Array<{ productId: string; name: string | null }>
-      | undefined;
-    if (unavailable?.length) {
-      for (const entry of unavailable) {
-        useCartStore.getState().removeItem(entry.productId);
-        showToast(VI_MESSAGES.cart.removedUnavailableItemToast(entry.name), 'error');
-      }
-    } else {
-      showToast(error.message, 'error');
-    }
-    clearCheckoutAttempt();
-    setReviewAttempt(null);
-    router.replace('/cart');
-  }
+  const clearReviewAndRedirect = () => setReviewAttempt(null);
 
   const prepareMutation = useMutation({
     mutationFn: (request: CheckoutRequest) =>
@@ -190,28 +149,11 @@ export function useCheckoutController() {
       }),
   });
 
-  const createOrderMutation = useMutation({
-    mutationFn: (request: CheckoutRequest) =>
-      apiFetch<OrderWithToken>('/api/orders', {
-        method: 'POST',
-        headers: { 'Idempotency-Key': request.idempotencyKey },
-        json: request,
-      }),
-    onSuccess: (res) => {
-      clearCart();
-      clearCheckoutAttempt();
+  const createOrderMutation = usePlaceOrder({
+    onBeforeRedirect: clearReviewAndRedirect,
+    onOrderPlaced: (res) => {
       setReviewAttempt(null);
       placedOrderPopup.actions.openPlacedOrder(res);
-    },
-    onError: (err) => {
-      if (err instanceof ApiClientError && err.code === 'PRODUCT_UNAVAILABLE') {
-        handleUnavailableProducts(err);
-        return;
-      }
-      showToast(
-        err instanceof Error ? err.message : VI_MESSAGES.common.unexpectedError,
-        'error',
-      );
     },
   });
 
@@ -244,7 +186,7 @@ export function useCheckoutController() {
       setReviewAttempt(attempt);
     } catch (err) {
       if (err instanceof ApiClientError && err.code === 'PRODUCT_UNAVAILABLE') {
-        handleUnavailableProducts(err);
+        handleUnavailableProductsError(err, router, clearReviewAndRedirect);
         return;
       }
       showToast(
@@ -290,7 +232,7 @@ export function useCheckoutController() {
       hasHydrated,
       isAuthLoading: authState.isLoading,
       isAuthenticated: authState.isAuthenticated,
-      quote: quoteQuery.data ?? null,
+      quote,
       provinces: provincesQuery.data ?? [],
       wards: wardsQuery.data ?? [],
       isLoadingWards: wardsQuery.isLoading,

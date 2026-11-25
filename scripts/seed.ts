@@ -8,7 +8,7 @@ import {
   orders,
   products,
 } from '../src/server/db/schema';
-import { seedCatalog } from '../src/server/db/seed/seed-catalog';
+import { seedCatalog, TRUNCATE_SAMPLE_TABLES_SQL } from '../src/server/db/seed/seed-catalog';
 import { loadProjectEnv } from './lib/load-env';
 
 async function main(): Promise<void> {
@@ -32,9 +32,7 @@ async function main(): Promise<void> {
       }
 
       if (force) {
-        await tx.execute(
-          rawSql`TRUNCATE TABLE order_status_events, order_items, orders, gpu_variants, cpu_specs, products, gpu_series, legacy_cpus, auth_failures CASCADE`,
-        );
+        await tx.execute(rawSql.raw(TRUNCATE_SAMPLE_TABLES_SQL));
       } else {
         await tx.delete(gpuVariants);
         await tx.delete(cpuSpecs);

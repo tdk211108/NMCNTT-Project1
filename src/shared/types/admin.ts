@@ -1,9 +1,5 @@
 import type { CpuVendor, GpuSeriesKind, GpuVendor, OrderStage } from './common';
 
-export interface AdminSessionResponse {
-  isAdmin: boolean;
-}
-
 export interface AdminCpuListItem {
   id: string;
   category: 'cpu';

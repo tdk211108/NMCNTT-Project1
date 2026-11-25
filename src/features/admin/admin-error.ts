@@ -1,7 +1,7 @@
 import { showToast } from '@/components/ui/toast-store';
+import { useAuthUiStore } from '@/features/auth/useAuthSession';
 import { ApiClientError } from '@/lib/api-client';
 import { VI_MESSAGES } from '@/shared/messages/vi';
-import { useAdminUiStore } from './useAdminSession';
 
 export function handleAdminApiError(
   error: unknown,
@@ -9,7 +9,7 @@ export function handleAdminApiError(
 ): void {
   if (error instanceof ApiClientError && error.code === 'UNAUTHORIZED') {
     onUnauthorizedInvalidate?.();
-    useAdminUiStore.getState().openLoginModal();
+    useAuthUiStore.getState().openAuthModal({ tab: 'login' });
     showToast(VI_MESSAGES.admin.loginRequiredNotice, 'warning');
     return;
   }

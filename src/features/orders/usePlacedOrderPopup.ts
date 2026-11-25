@@ -1,19 +1,14 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { showToast } from '@/components/ui/toast-store';
-import { ApiClientError, apiFetch } from '@/lib/api-client';
+import { preloadOrderDeliveredSfx } from '@/lib/ui-sound';
 import { VI_MESSAGES } from '@/shared/messages/vi';
-import type { OrderBoard, OrderWithToken } from '@/shared/types';
+import type { OrderWithToken } from '@/shared/types';
 import { saveOrderToken } from './order-tokens';
-
-interface AdvancePlacedOrderInput {
-  orderId: string;
-  accessToken: string;
-  expectedStage: number;
-}
+import { useAdvanceOrderStage } from './useAdvanceOrderStage';
 
 /**
  * Shared state + mutation controller for displaying the live OrderBoard popup immediately
@@ -25,39 +20,20 @@ export function usePlacedOrderPopup() {
   const [placedOrder, setPlacedOrder] = useState<OrderWithToken | null>(null);
   const [hasCompletedOrder, setHasCompletedOrder] = useState(false);
 
-  const advanceMutation = useMutation({
-    mutationFn: ({ orderId, accessToken, expectedStage }: AdvancePlacedOrderInput) =>
-      apiFetch<OrderBoard>(`/api/orders/${encodeURIComponent(orderId)}/advance`, {
-        method: 'POST',
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-        json: { expectedStage },
-      }),
-    onSuccess: (updatedBoard, vars) => {
-      queryClient.setQueryData(['orders', 'board', vars.orderId, vars.accessToken], updatedBoard);
+  const { isAdvancing, advanceStage } = useAdvanceOrderStage({
+    activeBoard: placedOrder?.order ?? null,
+    onBoardUpdated: (orderId, board) => {
       setPlacedOrder((prev) =>
-        prev && prev.order.orderId === vars.orderId ? { ...prev, order: updatedBoard } : prev,
-      );
-    },
-    onError: (err, vars) => {
-      if (err instanceof ApiClientError && err.code === 'STALE_STAGE') {
-        const freshBoard = err.details?.order as OrderBoard | undefined;
-        if (freshBoard) {
-          queryClient.setQueryData(['orders', 'board', vars.orderId, vars.accessToken], freshBoard);
-          setPlacedOrder((prev) =>
-            prev && prev.order.orderId === vars.orderId ? { ...prev, order: freshBoard } : prev,
-          );
-        }
-        return;
-      }
-      showToast(
-        err instanceof Error ? err.message : VI_MESSAGES.common.unexpectedError,
-        'error',
+        prev && prev.order.orderId === orderId ? { ...prev, order: board } : prev,
       );
     },
   });
 
   const openPlacedOrder = useCallback(
     (res: OrderWithToken) => {
+      if (!res.order.isCompleted) {
+        preloadOrderDeliveredSfx();
+      }
       saveOrderToken(res.order.orderId, res.accessToken);
       queryClient.setQueryData(['orders', 'board', res.order.orderId, res.accessToken], res.order);
       setHasCompletedOrder(true);
@@ -71,15 +47,13 @@ export function usePlacedOrderPopup() {
   }, []);
 
   const onAdvanceStage = useCallback(() => {
-    if (!placedOrder || advanceMutation.isPending) {
-      return;
-    }
-    advanceMutation.mutate({
-      orderId: placedOrder.order.orderId,
-      accessToken: placedOrder.accessToken,
-      expectedStage: placedOrder.order.stage,
-    });
-  }, [placedOrder, advanceMutation]);
+    if (!placedOrder) return;
+    advanceStage(
+      placedOrder.order,
+      placedOrder.accessToken,
+      ['orders', 'board', placedOrder.order.orderId, placedOrder.accessToken],
+    );
+  }, [placedOrder, advanceStage]);
 
   const navigateAndClear = useCallback(
     (href: string) => {
@@ -108,7 +82,7 @@ export function usePlacedOrderPopup() {
     state: {
       placedOrder,
       hasCompletedOrder,
-      isAdvancing: advanceMutation.isPending,
+      isAdvancing,
     },
     actions: {
       openPlacedOrder,

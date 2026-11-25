@@ -48,12 +48,16 @@ export function AuthModal() {
     return () => window.cancelAnimationFrame(frame);
   }, [state.modalOpen, state.activeTab]);
 
-  function resetFormsAndClose() {
+  function resetFormFields() {
     setLoginUsername('');
     setLoginPassword('');
     setRegUsername('');
     setRegDisplayName('');
     setRegPassword('');
+  }
+
+  function resetFormsAndClose() {
+    resetFormFields();
     actions.closeAuthModal();
   }
 
@@ -173,7 +177,7 @@ export function AuthModal() {
                   username: loginUsername,
                   password: loginPassword,
                 });
-                resetFormsAndClose();
+                resetFormFields();
               } catch {
                 // Error exposed via state.errorMessage.
               }
@@ -234,7 +238,7 @@ export function AuthModal() {
                   displayName: regDisplayName,
                   password: regPassword,
                 });
-                resetFormsAndClose();
+                resetFormFields();
               } catch {
                 // Error exposed via state.errorMessage.
               }

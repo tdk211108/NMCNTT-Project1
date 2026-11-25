@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { CART_MAX_ITEMS, CART_MAX_QTY, CART_MIN_QTY, COMPARE_MAX_ITEMS } from '../constants';
-import { categorySchema, productIdSchema } from './catalog';
+import { CART_MAX_ITEMS, CART_MAX_QTY, CART_MIN_QTY } from '../constants';
+import { productIdSchema } from './catalog';
 
 export const cartStoredStateSchema = z.object({
   items: z
@@ -13,9 +13,4 @@ export const cartStoredStateSchema = z.object({
       }),
     )
     .max(CART_MAX_ITEMS),
-});
-
-export const compareStoredStateSchema = z.object({
-  category: categorySchema.nullable(),
-  productIds: z.array(productIdSchema).max(COMPARE_MAX_ITEMS),
 });

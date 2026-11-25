@@ -2,48 +2,12 @@ import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
-import { SearchableSelect, type SearchableSelectGroup } from '@/components/ui/SearchableSelect';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { buildRetailLegacyGroups } from '@/features/tools/hardware-select-groups';
 import { formatExactWatts } from '@/lib/format';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
-import type { PsuOption } from '@/shared/types';
 import type { usePsuController } from '../usePsuController';
-
-function buildPsuGroups(
-  retail: readonly PsuOption[],
-  legacy: readonly PsuOption[],
-): SearchableSelectGroup[] {
-  return [
-    ...(retail.length > 0
-      ? [
-          {
-            id: 'retail',
-            label: VI_MESSAGES.tools.psu.groupRetail,
-            options: retail.map((item) => ({
-              value: item.id,
-              label: item.name,
-              meta: item.vendor.toUpperCase(),
-              keywords: item.vendor,
-            })),
-          },
-        ]
-      : []),
-    ...(legacy.length > 0
-      ? [
-          {
-            id: 'legacy',
-            label: VI_MESSAGES.tools.psu.groupLegacy,
-            options: legacy.map((item) => ({
-              value: item.id,
-              label: item.name,
-              meta: item.vendor.toUpperCase(),
-              keywords: item.vendor,
-            })),
-          },
-        ]
-      : []),
-  ];
-}
 
 export type PsuEstimatorViewProps = ReturnType<typeof usePsuController>;
 
@@ -91,7 +55,7 @@ export function PsuEstimatorView({ state, actions }: PsuEstimatorViewProps) {
               <SearchableSelect
                 label={VI_MESSAGES.tools.psu.cpuLabel}
                 value={state.selectedCpu}
-                groups={buildPsuGroups(state.retailCpus, state.legacyCpus)}
+                groups={buildRetailLegacyGroups(state.retailCpus, state.legacyCpus)}
                 placeholder={VI_MESSAGES.tools.psu.selectCpuPlaceholder}
                 triggerTestId={TEST_IDS.psu.cpuSelect}
                 searchTestId={TEST_IDS.psu.cpuSearch}
@@ -102,7 +66,7 @@ export function PsuEstimatorView({ state, actions }: PsuEstimatorViewProps) {
               <SearchableSelect
                 label={VI_MESSAGES.tools.psu.gpuLabel}
                 value={state.selectedGpu}
-                groups={buildPsuGroups(state.retailGpus, state.legacyGpus)}
+                groups={buildRetailLegacyGroups(state.retailGpus, state.legacyGpus)}
                 placeholder={VI_MESSAGES.tools.psu.selectGpuPlaceholder}
                 triggerTestId={TEST_IDS.psu.gpuSelect}
                 searchTestId={TEST_IDS.psu.gpuSearch}

@@ -13,22 +13,6 @@ import type {
 } from '@/shared/types';
 import { useProductCardActions } from './useProductCardActions';
 
-export function paginateItems<T>(
-  items: readonly T[],
-  requestedPage: number,
-  pageSize: number,
-): { page: number; totalPages: number; items: T[] } {
-  const safeSize = Math.max(1, pageSize);
-  const totalPages = Math.max(1, Math.ceil(items.length / safeSize));
-  const page = Math.min(Math.max(1, requestedPage), totalPages);
-  const start = (page - 1) * safeSize;
-  return {
-    page,
-    totalPages,
-    items: items.slice(start, start + safeSize),
-  };
-}
-
 export const CATALOG_PRICE_SLIDER_MIN = 5_000_000;
 export const CATALOG_PRICE_SLIDER_MAX = 300_000_000;
 export const CATALOG_PRICE_SLIDER_STEP = 1_000_000;

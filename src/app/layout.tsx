@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Be_Vietnam_Pro, Chakra_Petch, JetBrains_Mono } from 'next/font/google';
 import type { ReactNode } from 'react';
-import { AppShell } from '@/features/layout/AppShell';
+import { AppShell } from '@/features/layout/components/AppShell';
 import { DEFAULT_OPENGRAPH_IMAGES, resolveSiteMetadataBase } from '@/lib/metadata';
 import { QueryProvider } from '@/lib/query-provider';
 import { getLandingScrollInitScript } from '@/lib/landing-scroll';

@@ -161,6 +161,7 @@ export function OrderBoardPanel({
           ) : (
             <Button
               variant="demo"
+              sfx={board.stage === 3 ? 'none' : undefined}
               isLoading={isAdvancing}
               data-testid={TEST_IDS.orders.demoAdvance}
               onClick={onAdvanceStage}
@@ -203,7 +204,9 @@ export function OrderBoardPanel({
             <table className="w-full min-w-[460px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b-2 border-border bg-surface-subtle">
-                  <th className="px-3 py-2 font-semibold text-ink-muted">Sản phẩm</th>
+                  <th className="px-3 py-2 font-semibold text-ink-muted">
+                    {VI_MESSAGES.orders.columns.product}
+                  </th>
                   <th className="px-3 py-2 font-semibold text-ink-muted">
                     {VI_MESSAGES.cart.unitPriceLabel}
                   </th>

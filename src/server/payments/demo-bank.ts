@@ -4,7 +4,7 @@ import { createHmac } from 'node:crypto';
 import QRCode from 'qrcode';
 import { STORE_DISPLAY_NAME } from '@/shared/constants';
 import type { BankInstructions } from '@/shared/types';
-import { getAuthSecretString } from '../auth/admin-session';
+import { getAuthSecretString } from '../auth/session';
 import { mapBytesToOrderAlphabet } from '../domain/order-id';
 
 export function derivePaymentReference(idempotencyKey: string): string {

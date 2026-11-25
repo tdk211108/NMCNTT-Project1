@@ -1,15 +1,17 @@
-import { requireSession } from '@/server/auth/session';
+import { AppError } from '@/server/http/errors';
 import { jsonWithHeaders, withHandler } from '@/server/http/handler';
 import { listOrdersForUser } from '@/server/services/order.service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export const GET = withHandler({ requireAuth: true }, async (request) => {
-  const user = await requireSession(request);
-  if (user.role !== 'customer') {
+export const GET = withHandler({ requireAuth: true }, async (_request, _context, session) => {
+  if (!session) {
+    throw new AppError('UNAUTHORIZED');
+  }
+  if (session.role !== 'customer') {
     return jsonWithHeaders([]);
   }
-  const orders = await listOrdersForUser(user.id);
+  const orders = await listOrdersForUser(session.id);
   return jsonWithHeaders(orders);
 });

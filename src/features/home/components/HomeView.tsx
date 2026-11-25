@@ -10,15 +10,16 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { DecryptedText } from '@/components/ui/DecryptedText';
+import { DecryptedText } from './DecryptedText';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
-import { FocusPullCarousel } from '@/components/ui/FocusPullCarousel';
+import { FocusPullCarousel } from './FocusPullCarousel';
 import { CpuIcon, GpuCardIcon } from '@/components/ui/Icons';
 import { WIDE_CONTAINER_CLASS } from '@/features/layout/layout-width';
-import { usePreloaderReady } from '@/features/layout/SitePreloader';
+import { usePreloaderReady } from '@/features/layout/components/SitePreloader';
+import { prefersReducedMotionNow, usePrefersReducedMotion } from '@/lib/client-hooks';
 import { resetLandingScrollIfNeeded } from '@/lib/landing-scroll';
 import { HERO_VIDEO_PATH } from '@/shared/constants';
 import { VI_MESSAGES } from '@/shared/messages/vi';
@@ -27,31 +28,13 @@ import type { useHomeController } from '../useHomeController';
 
 export type HomeViewProps = ReturnType<typeof useHomeController>;
 
-function subscribeReducedMotion(onStoreChange: () => void): () => void {
-  const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
-  mql.addEventListener('change', onStoreChange);
-  return () => mql.removeEventListener('change', onStoreChange);
-}
-
-function getReducedMotionSnapshot(): boolean {
-  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-function getReducedMotionServerSnapshot(): boolean {
-  return false;
-}
-
 export function HomeView({ state, actions }: HomeViewProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const heroWrapperRef = useRef<HTMLDivElement>(null);
   const frontLayerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const prefersReduced = useSyncExternalStore(
-    subscribeReducedMotion,
-    getReducedMotionSnapshot,
-    getReducedMotionServerSnapshot,
-  );
+  const prefersReduced = usePrefersReducedMotion();
   const isPreloaderReady = usePreloaderReady();
   const [tickerPauseOverride, setTickerPauseOverride] = useState<boolean | null>(null);
   const [carouselOriginMs, setCarouselOriginMs] = useState<number | null>(null);
@@ -98,7 +81,7 @@ export function HomeView({ state, actions }: HomeViewProps) {
     if (
       typeof window === 'undefined' ||
       CSS.supports('(animation-timeline: view()) and (animation-range: entry)') ||
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      prefersReducedMotionNow()
     ) {
       return;
     }

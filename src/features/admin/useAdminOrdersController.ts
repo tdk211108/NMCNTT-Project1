@@ -3,8 +3,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
 import type { AdminOrderListItem } from '@/shared/types';
+import { AUTH_SESSION_QUERY_KEY } from '@/features/auth/useAuthSession';
 import { handleAdminApiError } from './admin-error';
-import { ADMIN_SESSION_QUERY_KEY } from './useAdminSession';
 
 export function useAdminOrdersController() {
   const queryClient = useQueryClient();
@@ -16,7 +16,7 @@ export function useAdminOrdersController() {
         return await apiFetch<AdminOrderListItem[]>('/api/admin/orders');
       } catch (err) {
         handleAdminApiError(err, () =>
-          queryClient.invalidateQueries({ queryKey: ADMIN_SESSION_QUERY_KEY }),
+          queryClient.invalidateQueries({ queryKey: AUTH_SESSION_QUERY_KEY }),
         );
         throw err;
       }

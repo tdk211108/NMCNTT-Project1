@@ -10,7 +10,7 @@ import {
   getAdminProductCategory,
   softDeleteAdminProduct,
   updateAdminProduct,
-} from '@/server/services/admin-catalog.service';
+} from '@/server/services/admin-products.service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

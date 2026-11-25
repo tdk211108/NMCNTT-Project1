@@ -1,8 +1,9 @@
 export const STORE_DISPLAY_NAME = 'CoreRaster';
 
 export const CART_STORAGE_KEY = 'pcstore.cart.v1';
-export const COMPARE_STORAGE_KEY = 'pcstore.compare.v1';
 export const CHECKOUT_ATTEMPT_KEY = 'pcstore.checkout.attempt';
+export const DEMO_NOTICE_STORAGE_KEY = 'coreraster.demo_notice_seen.v1';
+export const CART_ADVISORY_DISMISSED_KEY = 'coreraster.cart_advisory_dismissed.v1';
 export const ORDER_TOKEN_KEY_PREFIX = 'pcstore.order.';
 export const ORDER_TOKEN_KEY_SUFFIX = '.token';
 
@@ -16,7 +17,6 @@ export const COMPARE_MIN_ITEMS = 2;
 export const COMPARE_MAX_ITEMS = 3;
 
 export const CATALOG_MAX_RESULTS = 500;
-export const FEATURED_PER_CATEGORY = 8;
 export const LANDING_FEATURED_CPU_IDS = [
   'cpu-intel-core-i5-14600k',
   'cpu-amd-ryzen-7-9800x3d',
@@ -67,7 +67,6 @@ export const COMBO_MIN_BUDGET_VND = 5_000_000;
 export const COMBO_MAX_BUDGET_VND = 500_000_000;
 export const COMBO_STRETCH_MAX_RATIO = 0.05;
 export const COMBO_STRETCH_MIN_SCORE_GAIN_RATIO = 0.08;
-export const COMBO_MAX_RESULTS = 3;
 export const COMBO_BUDGET_PRESETS_VND = [
   15_000_000,
   20_000_000,
@@ -83,6 +82,9 @@ export const UPGRADE_GPU_TBP_HIGH_DELTA_W = 50;
 export const UPGRADE_GPU_TBP_LOW_DELTA_W = 20;
 export const UPGRADE_GPU_LARGE_LENGTH_MM = 300;
 export const UPGRADE_GPU_THICK_SLOT = 3.0;
+export const CART_GPU_STANDALONE_WARN_TBP_W = 250;
+export const CART_CPU_HIGH_POWER_W = 200;
+export const CART_PAIR_SCORE_GAP_WARN = 35;
 export const UPGRADE_CPU_BUDGET_PRESETS_VND = [
   5_000_000,
   8_000_000,
@@ -129,7 +131,11 @@ export const BRAND_LOGO_MARK_LIGHT_PATH = '/icons/logo-mark-light.png';
 export const MUSIC_PLAYER_ICON_PATH = '/icons/music.svg';
 export const PLACEHOLDER_IMAGE_PATH = '/icons/placeholder-product.svg';
 export const HERO_VIDEO_PATH = '/ROG-Matrix-GeForce-SnapYT.App.webm';
+export const APPLE_PAY_SFX_PATH = '/applepay.mp3';
 export const PRELOADER_FAILSAFE_TIMEOUT_MS = 12_000;
+
+export const DEMO_NOTICE_SECONDS = 5;
+export const DEMO_NOTICE_DURATION_MS = DEMO_NOTICE_SECONDS * 1000;
 
 export const REVIEW_COUNTDOWN_SECONDS = 5;
 

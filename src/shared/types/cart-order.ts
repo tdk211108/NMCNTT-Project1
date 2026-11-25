@@ -18,6 +18,41 @@ export interface CartLine {
   priceChange: { fromVnd: number; toVnd: number } | null;
 }
 
+export type CartAdvisoryCode =
+  | 'multi_cpu_conflict'
+  | 'cpu_ram_platform'
+  | 'psu_recommendation'
+  | 'gpu_large_size'
+  | 'pair_imbalance';
+
+export type CartAdvisorySeverity = 'high' | 'medium' | 'info';
+
+export interface CartAdvisoryItem {
+  code: CartAdvisoryCode;
+  severity: CartAdvisorySeverity;
+  sockets?: string[];
+  ramKind?: 'ddr5_only' | 'ddr4_and_ddr5' | 'ddr4_only';
+  psuTierW?: number | null;
+  psuExactW?: number | null;
+  psuExceedsMaxTier?: boolean;
+  wattageW?: number;
+  productName?: string;
+  lengthMm?: number;
+  slotThickness?: number;
+  cpuScore?: number;
+  gpuScore?: number;
+  count?: number;
+  actionHref?: string;
+  actionKind?: 'psu' | 'combo';
+}
+
+export interface CartAdvisorySummary {
+  items: CartAdvisoryItem[];
+  recommendedPsuTierW: number | null;
+  recommendedPsuExactW: number | null;
+  psuExceedsMaxTier: boolean;
+}
+
 export interface CartQuote {
   lines: CartLine[];
   removed: RemovedItem[];
@@ -26,6 +61,7 @@ export interface CartQuote {
   shippingFeeVnd: 0 | 50000;
   freeShipping: boolean;
   totalVnd: number;
+  advisories?: CartAdvisorySummary;
 }
 
 export interface CustomerInput {

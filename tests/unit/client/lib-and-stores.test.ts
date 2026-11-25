@@ -27,15 +27,20 @@ import {
   UI_SFX_STORAGE_KEY,
   getUiSfxServerSnapshot,
   parseStoredUiSfx,
+  playOrderDeliveredSfx,
   playUiSound,
+  preloadOrderDeliveredSfx,
   readUiSfxEnabled,
+  resetUiSfxCachesForTest,
   setUiSfxEnabled,
+  shouldTriggerOrderDeliveredSfx,
   warmUiAudio,
 } from '@/lib/ui-sound';
+import { createOptimisticDeliveredBoard } from '@/features/orders/optimistic-board';
 import { useCartStore } from '@/features/cart/store';
-import { BRAND_LOGO_PATH } from '@/shared/constants';
+import { APPLE_PAY_SFX_PATH, BRAND_LOGO_PATH } from '@/shared/constants';
 import { VI_MESSAGES } from '@/shared/messages/vi';
-import { cartStoredStateSchema, compareStoredStateSchema } from '@/shared/schemas';
+import { cartStoredStateSchema } from '@/shared/schemas';
 
 describe('client lib/format, lib/safe-storage and lib/api-client', () => {
   beforeEach(() => {
@@ -79,18 +84,6 @@ describe('client lib/format, lib/safe-storage and lib/api-client', () => {
       JSON.stringify({ state: { items: [{ productId: 'BAD!ID', quantity: 999 }] }, version: 1 }),
     );
     expect(cartPersist.getItem('bad-schema')).toBeNull();
-
-    const validCompare = createValidatedLocalPersistStorage(compareStoredStateSchema);
-    validCompare.setItem('good-compare', {
-      state: { category: 'cpu', productIds: ['cpu-a', 'cpu-b'] },
-      version: 1,
-    });
-    expect(validCompare.getItem('good-compare')).toEqual({
-      state: { category: 'cpu', productIds: ['cpu-a', 'cpu-b'] },
-      version: 1,
-    });
-    validCompare.removeItem('good-compare');
-    expect(validCompare.getItem('good-compare')).toBeNull();
   });
 
   it('maps aborted or timed-out fetch requests to a 408 ApiClientError in Vietnamese', async () => {
@@ -267,6 +260,130 @@ describe('client cart store', () => {
     expect(() => playUiSound('toggle', { force: true })).not.toThrow();
     expect(() => playUiSound('success', { force: true })).not.toThrow();
     expect(() => playUiSound('modal', { force: true })).not.toThrow();
+  });
+
+  it('triggers /applepay.mp3 delivery chime only on completion transitions and respects UI SFX state', async () => {
+    expect(shouldTriggerOrderDeliveredSfx(0, { stage: 1, isCompleted: false })).toBe(false);
+    expect(shouldTriggerOrderDeliveredSfx(2, { stage: 3, isCompleted: false })).toBe(false);
+    expect(shouldTriggerOrderDeliveredSfx(3, { stage: 4, isCompleted: true })).toBe(true);
+    expect(shouldTriggerOrderDeliveredSfx(2, { stage: 4, isCompleted: true })).toBe(true);
+    expect(shouldTriggerOrderDeliveredSfx(4, { stage: 4, isCompleted: true })).toBe(false);
+
+    resetUiSfxCachesForTest();
+    try {
+      await expect(playOrderDeliveredSfx({ force: true })).resolves.toBeUndefined();
+
+      const disabledStorage = { getItem: () => 'off' };
+      const fetchSpy = vi.fn();
+      vi.stubGlobal('fetch', fetchSpy);
+      await playOrderDeliveredSfx({ storage: disabledStorage });
+      expect(fetchSpy).not.toHaveBeenCalled();
+
+      const startMock = vi.fn();
+      const setGainMock = vi.fn();
+      const samples = new Float32Array(1000);
+      samples[450] = 0.25;
+      const decodeMock = vi.fn(async () => ({
+        duration: 1.4,
+        sampleRate: 10000,
+        numberOfChannels: 1,
+        length: samples.length,
+        getChannelData: () => samples,
+      }) as unknown as AudioBuffer);
+      const fakeSource = {
+        buffer: null as AudioBuffer | null,
+        connect: vi.fn(),
+        start: startMock,
+      };
+      const fakeGain = {
+        gain: { setValueAtTime: setGainMock },
+        connect: vi.fn(),
+      };
+      const createBufferMock = vi.fn(() => ({
+        getChannelData: () => new Float32Array(16),
+      }));
+
+      class FakeAudioContext {
+        state: AudioContextState = 'running';
+        sampleRate = 44100;
+        currentTime = 1.25;
+        destination = {} as AudioDestinationNode;
+        createBuffer = createBufferMock;
+        createBufferSource = () => fakeSource as unknown as AudioBufferSourceNode;
+        createGain = () => fakeGain as unknown as GainNode;
+        decodeAudioData = decodeMock;
+        resume = vi.fn(async () => {});
+      }
+
+      const audioFetchSpy = vi.fn(async () => ({
+        ok: true,
+        arrayBuffer: async () => new Uint8Array([1, 2, 3, 4]).buffer,
+      }));
+      vi.stubGlobal('window', {
+        AudioContext: FakeAudioContext,
+      });
+      vi.stubGlobal('fetch', audioFetchSpy);
+
+      preloadOrderDeliveredSfx();
+      await playOrderDeliveredSfx({ storage: { getItem: () => 'on' } });
+      await playOrderDeliveredSfx({ storage: { getItem: () => 'on' } });
+      expect(audioFetchSpy).toHaveBeenCalledTimes(1);
+      expect(audioFetchSpy).toHaveBeenCalledWith(APPLE_PAY_SFX_PATH);
+      expect(decodeMock).toHaveBeenCalledTimes(1);
+      expect(startMock).toHaveBeenCalledTimes(2);
+      // Skips leading silence (~45ms - 2ms safety margin = 0.043s) for instant chime transient.
+      expect(startMock).toHaveBeenNthCalledWith(1, 0, expect.closeTo(0.043, 3));
+      expect(startMock).toHaveBeenNthCalledWith(2, 0, expect.closeTo(0.043, 3));
+      expect(setGainMock).toHaveBeenCalledWith(0.85, 1.25);
+
+      const optimisticBoard = createOptimisticDeliveredBoard(
+        {
+          orderId: 'PC-TEST000001',
+          stage: 3,
+          isCompleted: false,
+          stages: [
+            { stage: 0, label: 'Đã đặt hàng', reachedAt: '2026-11-25T10:00:00.000Z' },
+            { stage: 1, label: 'Đang chuẩn bị hàng', reachedAt: '2026-11-25T10:01:00.000Z' },
+            { stage: 2, label: 'Đang vận chuyển', reachedAt: '2026-11-25T10:02:00.000Z' },
+            { stage: 3, label: 'Đang giao hàng', reachedAt: '2026-11-25T10:03:00.000Z' },
+            { stage: 4, label: 'Giao hàng thành công', reachedAt: null },
+          ],
+          customer: { fullName: 'Test User', phoneMasked: '090****123', addressLine: 'HCM', note: null },
+          items: [],
+          subtotalVnd: 1000000,
+          shippingFeeVnd: 0,
+          totalQuantity: 1,
+          totalVnd: 1000000,
+          paymentMethod: 'cod',
+          paymentReference: 'TT123',
+          createdAt: '2026-11-25T10:00:00.000Z',
+        },
+        '2026-11-25T10:04:00.000Z',
+      );
+      expect(optimisticBoard.stage).toBe(4);
+      expect(optimisticBoard.isCompleted).toBe(true);
+      expect(optimisticBoard.stages[4]?.reachedAt).toBe('2026-11-25T10:04:00.000Z');
+
+      // Falls back to HTMLAudio when AudioContext is unavailable.
+      resetUiSfxCachesForTest();
+      const htmlPlayMock = vi.fn(async () => {});
+      const htmlAudioCtorSpy = vi.fn();
+      class FakeAudio {
+        volume = 1;
+        play = htmlPlayMock;
+        constructor(src?: string) {
+          htmlAudioCtorSpy(src);
+        }
+      }
+      vi.stubGlobal('window', {});
+      vi.stubGlobal('Audio', FakeAudio);
+      await playOrderDeliveredSfx({ storage: { getItem: () => 'on' } });
+      expect(htmlAudioCtorSpy).toHaveBeenCalledWith(APPLE_PAY_SFX_PATH);
+      expect(htmlPlayMock).toHaveBeenCalledTimes(1);
+    } finally {
+      resetUiSfxCachesForTest();
+      vi.unstubAllGlobals();
+    }
   });
 
   it('dispatches all toast tones through react-hot-toast safely in Node', () => {

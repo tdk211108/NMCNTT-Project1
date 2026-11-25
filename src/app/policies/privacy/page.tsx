@@ -19,25 +19,25 @@ export default function PrivacyPolicyPage() {
           <tbody>
             <tr className="border-b border-border">
               <th className="w-44 bg-surface-subtle px-3 py-2 align-top font-medium text-ink-muted">
-                Dữ liệu tiếp nhận
+                {VI_MESSAGES.policies.privacyDataCollectedLabel}
               </th>
               <td className="px-3 py-2 text-ink">{VI_MESSAGES.policies.privacyDataCollected}</td>
             </tr>
             <tr className="border-b border-border">
               <th className="bg-surface-subtle px-3 py-2 align-top font-medium text-ink-muted">
-                Mục đích sử dụng
+                {VI_MESSAGES.policies.privacyPurposeLabel}
               </th>
               <td className="px-3 py-2 text-ink">{VI_MESSAGES.policies.privacyPurpose}</td>
             </tr>
             <tr className="border-b border-border">
               <th className="bg-surface-subtle px-3 py-2 align-top font-medium text-ink-muted">
-                Cookie và lưu trữ
+                {VI_MESSAGES.policies.privacyCookiesLabel}
               </th>
               <td className="px-3 py-2 text-ink">{VI_MESSAGES.policies.privacyCookies}</td>
             </tr>
             <tr>
               <th className="bg-surface-subtle px-3 py-2 align-top font-medium text-ink-muted">
-                Yêu cầu xóa dữ liệu
+                {VI_MESSAGES.policies.privacyDeletionLabel}
               </th>
               <td className="px-3 py-2 text-ink">{VI_MESSAGES.policies.privacyDeletion}</td>
             </tr>

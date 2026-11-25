@@ -1,21 +1,21 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, useSyncExternalStore } from 'react';
+import { useState } from 'react';
 import { showToast } from '@/components/ui/toast-store';
 import { ApiClientError, apiFetch } from '@/lib/api-client';
+import { useIsClient } from '@/lib/client-hooks';
 import { useAuthSession } from '@/features/auth/useAuthSession';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type { OrderBoard, OrderWithToken } from '@/shared/types';
 import { clearOrderToken, loadOrderToken, saveOrderToken } from './order-tokens';
-
-const subscribeNoop = () => () => {};
+import { useAdvanceOrderStage } from './useAdvanceOrderStage';
 
 export function useOrderBoardController(orderId: string) {
   const queryClient = useQueryClient();
   const { state: authState } = useAuthSession();
 
-  const isClient = useSyncExternalStore(subscribeNoop, () => true, () => false);
+  const isClient = useIsClient();
   const [tokenOverride, setTokenOverride] = useState<string | null | undefined>(undefined);
   const [lookupPhone, setLookupPhone] = useState('');
 
@@ -57,37 +57,11 @@ export function useOrderBoardController(orderId: string) {
     },
   });
 
-  const advanceMutation = useMutation({
-    mutationFn: (expectedStage: number) =>
-      apiFetch<OrderBoard>(`/api/orders/${encodeURIComponent(orderId)}/advance`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        json: { expectedStage },
-      }),
-    onSuccess: (updatedBoard) => {
-      queryClient.setQueryData(queryKey, updatedBoard);
-    },
-    onError: (err) => {
-      if (err instanceof ApiClientError) {
-        if (err.code === 'STALE_STAGE') {
-          const freshBoard = err.details?.order as OrderBoard | undefined;
-          if (freshBoard) {
-            queryClient.setQueryData(queryKey, freshBoard);
-          } else {
-            queryClient.invalidateQueries({ queryKey });
-          }
-          return;
-        }
-        if (err.code === 'UNAUTHORIZED') {
-          clearOrderToken(orderId);
-          setTokenOverride(null);
-          return;
-        }
-      }
-      showToast(
-        err instanceof Error ? err.message : VI_MESSAGES.common.unexpectedError,
-        'error',
-      );
+  const { isAdvancing, advanceStage } = useAdvanceOrderStage({
+    activeBoard: boardQuery.data ?? null,
+    onUnauthorized: (id) => {
+      clearOrderToken(id);
+      setTokenOverride(null);
     },
   });
 
@@ -97,11 +71,8 @@ export function useOrderBoardController(orderId: string) {
     ((!token && !authState.isAuthenticated) ||
       (boardQuery.error instanceof ApiClientError && boardQuery.error.code === 'UNAUTHORIZED'));
 
-  async function copyOrderId() {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      await navigator.clipboard.writeText(orderId);
-      showToast(VI_MESSAGES.orders.copiedOrderId, 'success');
-    }
+  function copyOrderId() {
+    showToast(VI_MESSAGES.orders.copiedOrderId, 'success');
   }
 
   return {
@@ -114,14 +85,11 @@ export function useOrderBoardController(orderId: string) {
       isLookingUp: reauthLookupMutation.isPending,
       lookupError: reauthLookupMutation.error?.message ?? null,
       fetchError: !unauthorizedOrMissingToken ? (boardQuery.error?.message ?? null) : null,
-      isAdvancing: advanceMutation.isPending,
+      isAdvancing,
     },
     actions: {
       onCopyOrderId: copyOrderId,
-      onAdvanceStage: () => {
-        if (!boardQuery.data || advanceMutation.isPending) return;
-        advanceMutation.mutate(boardQuery.data.stage);
-      },
+      onAdvanceStage: () => advanceStage(boardQuery.data, token, queryKey),
       onChangeLookupPhone: (value: string) => {
         setLookupPhone(value);
         reauthLookupMutation.reset();

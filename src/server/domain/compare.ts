@@ -11,8 +11,14 @@ import type {
   ChipVendor,
   CompareInvalidReason,
   CompareRow,
+  GpuVendor,
   HighlightRule,
 } from '@/shared/types';
+import {
+  formatCpuCoresThreads,
+  formatViNumber,
+  resolveSingleGpuCoresLabel,
+} from './format';
 
 export interface CompareCpuInput {
   id: string;
@@ -68,7 +74,7 @@ export type ValidateCompareResult =
 
 /**
  * Parses and deduplicates `?ids=` in validation order:
- * non-empty check -> valid product ID format -> max 3 items.
+ * non-empty check -> max 3 items -> valid product ID format.
  */
 export function parseCompareIds(rawIds: string | null | undefined): ParseCompareIdsResult {
   const deduped: string[] = [];
@@ -122,15 +128,6 @@ export function validateCompareProducts(
   }
 
   return { ok: true, category: ordered[0].category, products: ordered };
-}
-
-function formatViNumber(value: number, fractionDigits?: number): string {
-  return value.toLocaleString(
-    'vi-VN',
-    fractionDigits === undefined
-      ? undefined
-      : { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits },
-  );
 }
 
 function buildTextRow(key: string, label: string, unit: string | null, values: string[]): CompareRow {
@@ -193,25 +190,16 @@ function buildSharedLeadRows(products: readonly CompareProductInput[]): CompareR
 }
 
 function formatCoresThreads(cpu: CompareCpuInput): string {
-  const base = `${cpu.coresTotal} nhân / ${cpu.threadsTotal} luồng`;
-  if (cpu.pCores !== null && cpu.eCores !== null) {
-    return `${base} (${cpu.pCores} P-Core, ${cpu.eCores} E-Core)`;
-  }
-  return base;
+  return formatCpuCoresThreads(cpu.coresTotal, cpu.threadsTotal, cpu.pCores, cpu.eCores);
 }
 
 function resolveGpuCoresLabel(gpus: readonly CompareGpuInput[]): string {
+  const order: GpuVendor[] = ['nvidia', 'amd', 'intel'];
   const vendors = new Set(gpus.map((g) => g.vendor));
-  if (vendors.size === 1) {
-    if (vendors.has('nvidia')) return 'CUDA Cores';
-    if (vendors.has('intel')) return 'Shading Units';
-    return 'Stream Processors';
-  }
-  const parts: string[] = [];
-  if (vendors.has('nvidia')) parts.push('CUDA Cores');
-  if (vendors.has('amd')) parts.push('Stream Processors');
-  if (vendors.has('intel')) parts.push('Shading Units');
-  return parts.join(' / ');
+  return order
+    .filter((v) => vendors.has(v))
+    .map(resolveSingleGpuCoresLabel)
+    .join(' / ');
 }
 
 export function buildCompareRows(

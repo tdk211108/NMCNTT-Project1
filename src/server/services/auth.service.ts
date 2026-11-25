@@ -176,7 +176,7 @@ export async function upsertOAuthUser(
         .insert(users)
         .values({
           displayName: profile.displayName,
-          email: profile.email,
+          email: profile.provider === 'google' && profile.emailVerified ? profile.email : null,
           avatarUrl: profile.avatarUrl,
         })
         .returning();

@@ -24,7 +24,6 @@ export const VI_MESSAGES = {
     compareMenuDesc: 'Đặt tối đa 3 mẫu CPU hoặc GPU cạnh nhau để đối chiếu thông số.',
     cart: 'Giỏ hàng',
     orderLookup: 'Tra cứu đơn hàng',
-    myOrders: 'Đơn hàng của tôi',
     login: 'Đăng nhập',
     logout: 'Đăng xuất',
     adminMode: 'Quản trị',
@@ -58,8 +57,13 @@ export const VI_MESSAGES = {
     musicDefaultArtist: 'CoreRaster OST',
     expandSearchOpenAria: 'Mở khung tìm kiếm nhanh',
     expandSearchCloseAria: 'Thu gọn tìm kiếm',
+    primaryNavAria: 'Điều hướng chính',
+    compactNavAria: 'Điều hướng nhanh',
+    floatingNavAria: 'Điều hướng cố định',
+    githubText: 'GitHub',
   },
   common: {
+    notificationsAria: 'Thông báo',
     loading: 'Đang tải dữ liệu...',
     backToStore: 'Quay lại cửa hàng',
     inStock: 'Còn hàng',
@@ -81,7 +85,6 @@ export const VI_MESSAGES = {
     requestTimeoutError: 'Kết nối máy chủ quá thời gian chờ, vui lòng thử lại.',
     copyAction: 'Sao chép',
     copiedAction: 'Đã chép',
-    addedShort: 'Đã thêm',
     previousPage: 'Trước',
     nextPage: 'Sau',
     paginationAria: 'Phân trang danh mục',
@@ -93,10 +96,6 @@ export const VI_MESSAGES = {
     heroSubtitle: 'Uncompromising performance. Precision-engineered computing.',
     heroRetailerLabel: 'CPU & GPU RETAILER',
     heroCrtChannelLabel: 'CH.01 // MATRIX RTX 5090',
-    heroCrtStatusLive: 'REC',
-    heroCrtStatusPaused: 'HOLD',
-    crtPauseVideo: 'Tạm dừng video showcase',
-    crtPlayVideo: 'Phát video showcase',
     tickerLine:
       'CORERASTER // CRIMSON MATRIX HARDWARE DIVISION // ROG MATRIX 30TH CALIBRATION // CHÍNH HÃNG FULL BOX // BẢO HÀNH 36 THÁNG',
     tickerPause: 'Dừng dải thông số chạy',
@@ -108,15 +107,11 @@ export const VI_MESSAGES = {
       category === 'cpu' ? 'Trình chiếu CPU nổi bật' : 'Trình chiếu GPU nổi bật',
     sliderPauseAutoplayAria: 'Tạm dừng tự động chạy slide',
     sliderResumeAutoplayAria: 'Tiếp tục tự động chạy slide',
-    sliderDotAria: (index: number, total: number, name: string) =>
-      `Xem sản phẩm ${index} trên ${total}: ${name}`,
     sliderSlideStatus: (index: number, total: number, name: string) =>
       `Đang hiển thị sản phẩm ${index} trên ${total}: ${name}`,
     sliderSlideLabel: (index: number, total: number, name: string) =>
       `${index} / ${total}: ${name}`,
-    browseCpuTitle: 'Danh mục CPU',
     browseCpuDesc: 'Bộ vi xử lý Intel Core và AMD Ryzen chính hãng Full Box.',
-    browseGpuTitle: 'Danh mục GPU',
     browseGpuDesc: 'Card đồ họa NVIDIA GeForce, AMD Radeon và Intel Arc từ các hãng AIB chính hãng.',
     featuredCpuTitle: 'CPU nổi bật',
     featuredGpuTitle: 'GPU nổi bật',
@@ -168,15 +163,13 @@ export const VI_MESSAGES = {
     filterAibLabel: 'Hãng sản xuất card (AIB)',
     filterSocketLabel: 'Chuẩn Socket',
     sortLabel: 'Sắp xếp',
+    filterSidebarAria: 'Bộ lọc sản phẩm',
     clearFilters: 'Xóa bộ lọc',
     productCountLabel: (count: number) => `${count} sản phẩm`,
-    detailPriceLabel: 'Giá niêm yết',
     detailStockLabel: 'Tình trạng',
     detailWarrantyLabel: 'Bảo hành',
     detailPackagingLabel: 'Quy cách',
     detailScoreLabel: 'Điểm PassMark chuẩn hóa',
-    detailSeriesLabel: 'Dòng GPU cơ sở',
-    detailBackToCategory: 'Xem thêm sản phẩm cùng danh mục',
     productDetailMetaTitle: 'Chi tiết sản phẩm',
     productNotFound: 'Sản phẩm không tồn tại hoặc đã ngừng kinh doanh.',
   },
@@ -189,8 +182,6 @@ export const VI_MESSAGES = {
     },
     compare: {
       title: 'So sánh thông số kỹ thuật',
-      sameCategoryOnly: 'Chỉ so sánh được các sản phẩm cùng loại',
-      maxReached: 'Bạn chỉ có thể so sánh tối đa 3 sản phẩm.',
       clearAll: 'Xóa lựa chọn',
       addThirdColumn: 'Thêm cột so sánh thứ 3',
       removeColumn: 'Xóa cột',
@@ -217,12 +208,7 @@ export const VI_MESSAGES = {
       subtitle:
         'Tôn vinh các mẫu CPU và GPU dẫn đầu về sức mạnh, hiệu năng trên giá, tiết kiệm điện và thông số kỷ lục. Sản phẩm đạt nhiều giải sẽ được gộp chung trên cùng một thẻ.',
       categoryLabel: 'Danh mục',
-      bestValueBadge: 'Đáng tiền nhất',
       emptyBudget: 'Không có sản phẩm phù hợp với bộ lọc hoặc mức ngân sách đã chọn.',
-      allVendors: 'Tất cả hãng',
-      maxBudgetLabel: 'Ngân sách tối đa (VND)',
-      invalidBudgetError: 'Ngân sách tối đa phải là số nguyên dương.',
-      submitLabel: 'Cập nhật vinh danh',
       evaluatedSummary: (winnerCount: number, awardTotal: number, evaluatedCount: number) =>
         `${winnerCount} sản phẩm đạt ${awardTotal} danh hiệu từ ${evaluatedCount} mẫu đủ điều kiện`,
       multiAwardTag: (count: number) => `ĐA DANH HIỆU // x${count}`,
@@ -255,14 +241,6 @@ export const VI_MESSAGES = {
         most_vram: 'Dung lượng bộ nhớ đồ họa VRAM lớn nhất.',
         most_compact: 'Chiều dài và độ dày khe cắm gọn gàng nhất cho case nhỏ.',
         largest_gpu: 'Kích thước tản nhiệt dài và dày bề thế nhất trong danh sách.',
-      },
-      columns: {
-        rank: 'Hạng',
-        product: 'Sản phẩm',
-        vendor: 'Hãng',
-        price: 'Giá bán',
-        score: 'Điểm chuẩn hóa (PassMark)',
-        perfPerPrice: 'Hiệu năng / Giá',
       },
     },
     psu: {
@@ -324,13 +302,32 @@ export const VI_MESSAGES = {
         `Tỷ lệ phân bổ thực tế: ${gpuPct}% GPU / ${cpuPct}% CPU`,
       addBothToCart: 'Thêm cả cặp vào giỏ',
       calculatePsuAction: 'Tính công suất PSU',
-      viewDetailAction: 'Xem chi tiết',
+      presetChipLabel: (millions: number) => `${millions} triệu`,
+      pointsSuffix: (pointsText: string) => `${pointsText} điểm`,
+      cpuSummaryLine: (socket: string, cores: number, threads: number) =>
+        `${socket} · ${cores}/${threads} luồng`,
+      gpuSummaryLine: (vramGb: number, tbpW: number) => `${vramGb} GB VRAM · ${tbpW} W TBP`,
       minBudgetTitle: 'Ngân sách hiện tại thấp hơn cặp linh kiện rẻ nhất phù hợp',
       minBudgetDesc: (minPriceFormatted: string, cpuName: string, gpuName: string) =>
         `Cặp CPU và GPU rẻ nhất khớp bộ lọc hiện có giá ${minPriceFormatted} (${cpuName} đi kèm ${gpuName}).`,
       applyMinBudgetButton: 'Đặt ngân sách theo mức tối thiểu này',
       budgetScopeNote:
         'Ngân sách và tổng giá trên chỉ tính riêng CPU và GPU bán lẻ tại CoreRaster, chưa bao gồm bo mạch chủ, RAM, nguồn, tản nhiệt và vỏ máy.',
+    },
+    specs: {
+      socket: 'Socket',
+      coresThreads: 'Nhân/Luồng',
+      psuMax: 'PSU Max',
+      l3Cache: 'L3 Cache',
+      ram: 'RAM',
+      vram: 'VRAM',
+      tbp: 'TBP',
+      length: 'Dài',
+      thickness: 'Độ dày',
+      slotUnit: 'slot',
+      passmarkPrefix: 'PassMark',
+      scoreAndPerfPerPrice: (scoreText: string, pppText: string) =>
+        `${scoreText} điểm (${pppText}/tr)`,
     },
     upgrade: {
       title: 'Tư vấn nâng cấp CPU và GPU',
@@ -360,6 +357,11 @@ export const VI_MESSAGES = {
       sourceStoreBadge: 'Đang bán tại cửa hàng',
       sourceLegacyBadge: 'Linh kiện đời cũ',
       missingPassmarkBadge: 'Chưa có điểm PassMark đối chiếu',
+      noScoreShort: 'Chưa có điểm',
+      vramMeta: (vramGb: number) => `${vramGb} GB VRAM`,
+      cpuLegacyMissingScoreMeta: (socket: string | null) =>
+        socket ? `${socket} · Chưa có điểm` : 'Chưa có điểm',
+      gpuLegacyMissingScoreMeta: (vramGb: number) => `${vramGb} GB · Chưa có điểm`,
       missingPassmarkNote:
         'Linh kiện gốc chưa có điểm PassMark trong dữ liệu tham khảo nên hệ thống hiển thị theo tương thích và ngân sách, tạm ẩn chỉ số phần trăm tăng hiệu năng.',
       topTierTitle: 'Linh kiện của bạn đã đạt ngưỡng phân khúc cao nhất',
@@ -393,7 +395,6 @@ export const VI_MESSAGES = {
       checkPsuAction: 'Kiểm tra PSU',
       compareDirectAction: 'So sánh trực tiếp',
       viewDetailAction: 'Xem chi tiết',
-      compatibilityHeading: 'Cảnh báo tương thích và lưu ý kỹ thuật',
       warnings: {
         socket_change: (fromSocket: string, toSocket: string) =>
           fromSocket
@@ -421,17 +422,17 @@ export const VI_MESSAGES = {
   cart: {
     title: 'Giỏ hàng của bạn',
     empty: 'Giỏ hàng đang trống.',
+    emptyCartRedirectNotice:
+      'Giỏ hàng hiện đang trống, vui lòng chọn sản phẩm trước khi tiến hành đặt hàng.',
     proceedToCheckout: 'Tiến hành đặt hàng',
     removeConfirmTitle: 'Xóa sản phẩm khỏi giỏ hàng?',
     removeConfirmBody: 'Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng không?',
-    priceUpdatedNotice: 'Giá của một số sản phẩm trong giỏ đã được cập nhật theo giá mới nhất từ cửa hàng.',
     priceChangedItemToast: (name: string, oldPrice: string, newPrice: string) =>
       `Giá của ${name} đã được cập nhật từ ${oldPrice} thành ${newPrice}.`,
     removedUnavailableItemToast: (name: string | null) =>
       name
         ? `${name} đã ngừng kinh doanh và được xóa khỏi giỏ hàng.`
         : 'Một sản phẩm không còn tồn tại đã được xóa khỏi giỏ hàng.',
-    removedUnavailableNotice: 'Một số sản phẩm không còn kinh doanh đã được tự động gỡ khỏi giỏ hàng.',
     maxItemsReachedToast: 'Giỏ hàng chỉ chứa tối đa 20 sản phẩm khác nhau.',
     maxQtyReachedToast: 'Số lượng tối đa cho mỗi sản phẩm là 100.',
     subtotal: 'Tạm tính',
@@ -440,9 +441,50 @@ export const VI_MESSAGES = {
     totalQuantityLabel: 'Tổng số lượng sản phẩm',
     unitPriceLabel: 'Đơn giá',
     quantityLabel: 'Số lượng',
+    decreaseQtyAria: (name: string) => `Giảm số lượng ${name}`,
+    increaseQtyAria: (name: string) => `Tăng số lượng ${name}`,
     lineTotalLabel: 'Thành tiền',
     removeButton: 'Xóa',
     freeShippingHint: `Đặt từ ${FREE_SHIPPING_MIN_QTY} sản phẩm để được miễn phí vận chuyển.`,
+    taxIncludedNote: 'Ghi chú: Giá đã bao gồm thuế.',
+    advisories: {
+      heading: 'Lưu ý kỹ thuật',
+      dismissAction: 'Thu gọn',
+      reopenAction: 'Xem lại',
+      pillSummary: (count: number, psuTierW: number | null, exceedsMax: boolean) =>
+        exceedsMax
+          ? `Lưu ý kỹ thuật (${count}) · Nguồn > 1200 W`
+          : psuTierW !== null
+            ? `Lưu ý kỹ thuật (${count}) · Nguồn ${psuTierW} W`
+            : `Lưu ý kỹ thuật (${count})`,
+      actionPsu: 'Kiểm tra PSU',
+      actionCombo: 'Xem gợi ý Combo',
+      multiCpuSockets: (sockets: string[]) =>
+        `Giỏ đang có nhiều CPU khác socket (${sockets.join(', ')}), không thể lắp chung một mainboard.`,
+      multiCpuCount: (count: number) =>
+        `Giỏ đang có ${count} CPU, hãy kiểm tra lại số lượng nếu bạn chỉ build 1 máy.`,
+      cpuRamPlatform: (
+        socket: string,
+        ramKind: 'ddr5_only' | 'ddr4_and_ddr5' | 'ddr4_only',
+      ) =>
+        ramKind === 'ddr5_only'
+          ? `CPU ${socket} chỉ hỗ trợ mainboard ${socket} và RAM DDR5.`
+          : ramKind === 'ddr4_and_ddr5'
+            ? `CPU ${socket} hỗ trợ mainboard DDR4 hoặc DDR5, cần chọn RAM đúng chuẩn bo mạch.`
+            : `CPU ${socket} sử dụng mainboard ${socket} và RAM DDR4.`,
+      psuExceedsMax: (exactW: number) =>
+        `Nguồn đề xuất vượt mức 1200 W (ước tính ${exactW} W).`,
+      psuTier: (tierW: number, exactW: number) =>
+        `Khuyến nghị nguồn PSU tối thiểu ${tierW} W (ước tính ${exactW} W).`,
+      psuGpuOnly: (name: string, wattageW: number) =>
+        `${name} tiêu thụ tới ${wattageW} W, cần kiểm tra nguồn PSU tương xứng với CPU.`,
+      psuCpuOnly: (name: string, wattageW: number) =>
+        `${name} ăn điện đỉnh tới ${wattageW} W, nên chuẩn bị tản nhiệt và PSU đủ tải.`,
+      gpuLargeSize: (name: string, lengthMm: number, slotThickness: string) =>
+        `${name} dài ${lengthMm} mm (${slotThickness} slot), hãy đo khoảng trống vỏ case.`,
+      pairImbalance: (cpuScore: number, gpuScore: number) =>
+        `Cặp CPU (${cpuScore} điểm) và GPU (${gpuScore} điểm) chênh hiệu năng lớn, có thể cân đối lại.`,
+    },
   },
   checkout: {
     title: 'Thông tin đặt hàng',
@@ -480,6 +522,7 @@ export const VI_MESSAGES = {
     cardHolderLabel: 'Tên chủ thẻ',
     cardExpiryLabel: 'Ngày hết hạn',
     cardCvvLabel: 'Mã bảo mật CVV',
+    qrImageAlt: 'QR chuyển khoản mô phỏng',
     missingAttemptNotice: 'Phiên thanh toán đã hết hạn hoặc chưa được khởi tạo.',
     validation: {
       fullName: 'Họ và tên phải từ 2 đến 50 ký tự.',
@@ -535,6 +578,7 @@ export const VI_MESSAGES = {
     columns: {
       orderId: 'Mã đơn hàng',
       createdAt: 'Ngày đặt',
+      product: 'Sản phẩm',
       quantity: 'Số lượng',
       total: 'Tổng thanh toán',
       status: 'Trạng thái',
@@ -576,6 +620,8 @@ export const VI_MESSAGES = {
     paymentShippingBody: `Cửa hàng hỗ trợ thanh toán khi nhận hàng (COD), chuyển khoản ngân hàng qua mã QR và thẻ quốc tế trong môi trường mô phỏng. Phí vận chuyển được tính thống nhất trên toàn quốc theo số lượng sản phẩm trong đơn: miễn phí vận chuyển khi đặt từ ${FREE_SHIPPING_MIN_QTY} sản phẩm trở lên, và áp dụng mức phí đồng giá ${formatVndPlain(STANDARD_SHIPPING_FEE_VND)} cho đơn hàng gồm 1 sản phẩm.`,
     paymentShippingDetails:
       'Địa chỉ giao hàng sử dụng danh mục hành chính 2 cấp gồm Tỉnh hoặc Thành phố và Phường, Xã hoặc Đặc khu kèm địa chỉ chi tiết số nhà và tên đường.',
+    shippingFeeUnderMinRow: (minQty: number) => `Đơn có dưới ${minQty} sản phẩm`,
+    shippingFeeFromMinRow: (minQty: number) => `Đơn có từ ${minQty} sản phẩm trở lên`,
     contactTitle: 'Thông tin liên hệ và hỗ trợ',
     contactBody:
       'Mọi thắc mắc về cấu hình CPU, GPU, đơn hàng đã đặt hoặc yêu cầu tư vấn kỹ thuật xin vui lòng liên hệ trực tiếp qua nút hỗ trợ Zalo ở góc dưới bên phải màn hình hoặc tham khảo mã nguồn dự án tại liên kết GitHub ở chân trang.',
@@ -584,12 +630,16 @@ export const VI_MESSAGES = {
     privacyTitle: 'Chính sách quyền riêng tư',
     privacyIntro:
       'CoreRaster tôn trọng quyền riêng tư của người dùng và chỉ thu thập thông tin tối thiểu cần thiết để vận hành đăng nhập tài khoản, xử lý đơn hàng và tra cứu trạng thái đơn hàng trực tuyến.',
+    privacyDataCollectedLabel: 'Dữ liệu tiếp nhận',
     privacyDataCollected:
       'Khi đăng nhập bằng Google hoặc Facebook, hệ thống chỉ tiếp nhận tên hiển thị, địa chỉ email (nếu nhà cung cấp trả về), ảnh đại diện và mã định danh tài khoản OAuth để tạo hồ sơ người dùng. Với tài khoản đăng ký trực tiếp, hệ thống lưu tên đăng nhập, tên hiển thị và mật khẩu được băm một chiều bằng thuật toán scrypt. Khi đặt hàng, hệ thống lưu họ tên người nhận, số điện thoại liên hệ, địa chỉ giao hàng và ghi chú đơn hàng.',
+    privacyPurposeLabel: 'Mục đích sử dụng',
     privacyPurpose:
       'Dữ liệu chỉ được dùng để xác thực phiên đăng nhập, hiển thị lịch sử đơn hàng của bạn, xuất trình thông tin đơn hàng theo yêu cầu và liên hệ giao nhận. CoreRaster không bán, cho thuê hay chia sẻ dữ liệu cá nhân của người dùng cho bên thứ ba phục vụ quảng cáo.',
+    privacyCookiesLabel: 'Cookie và lưu trữ',
     privacyCookies:
       'Website sử dụng cookie phiên bảo mật HTTP-only phục vụ duy trì đăng nhập và lưu giỏ hàng, danh sách so sánh tạm thời trên trình duyệt (localStorage). Số điện thoại được ẩn bớt khi hiển thị công khai trên bảng đơn hàng và thông tin thẻ ở bước thanh toán mô phỏng không được gửi về máy chủ.',
+    privacyDeletionLabel: 'Yêu cầu xóa dữ liệu',
     privacyDeletion:
       'Để yêu cầu kiểm tra, xuất hoặc xóa hoàn toàn tài khoản cùng dữ liệu liên kết Google và Facebook, vui lòng nhắn qua nút hỗ trợ Zalo ở góc dưới bên phải màn hình hoặc gửi yêu cầu tại kho lưu trữ GitHub ở chân trang kèm tên đăng nhập, địa chỉ email OAuth và mã đơn hàng liên quan (nếu có). Quản trị viên sẽ xử lý xóa hồ sơ và ngắt liên kết OAuth theo yêu cầu.',
   },
@@ -606,7 +656,6 @@ export const VI_MESSAGES = {
   },
   admin: {
     loginTitle: 'Đăng nhập chế độ Quản trị',
-    passwordLabel: 'Mật khẩu quản trị',
     loginSubmit: 'Đăng nhập',
     logout: 'Đăng xuất',
     loginRequiredNotice: 'Vui lòng đăng nhập chế độ Quản trị để tiếp tục thao tác.',
@@ -642,5 +691,23 @@ export const VI_MESSAGES = {
     statusCatalog: 'Đang đồng bộ danh mục và nhạc nền...',
     statusMedia: 'Đang đệm video showcase và âm thanh...',
     statusReady: 'Hệ thống đã sẵn sàng',
+  },
+  demoNotice: {
+    badgeVi: 'CẢNH BÁO DỰ ÁN',
+    badgeEn: 'PROJECT NOTICE',
+    titleVi: 'Website Đồ án môn học tại HCMUS',
+    titleEn: 'HCMUS Academic Project Notice',
+    bodyVi:
+      'CoreRaster chỉ là Đồ án 1 môn Nhập môn CNTT tại HCMUS. Trang web không bán hàng thật, vui lòng không chuyển khoản hay thanh toán thật.',
+    bodyEn:
+      'CoreRaster is strictly a student project for Project 1 (Intro to IT) at HCMUS. No real products are sold here; please do not make bank transfers or real payments.',
+    unlockingVi: (seconds: number) => `Mở nút đóng sau ${seconds}s`,
+    unlockingEn: (seconds: number) => `Close unlocks in ${seconds}s`,
+    unlockedVi: 'Đã mở nút đóng',
+    unlockedEn: 'Ready to close',
+    closeButtonLockedVi: (seconds: number) => `Đóng sau ${seconds}s`,
+    closeButtonLockedEn: (seconds: number) => `Close in ${seconds}s`,
+    closeButtonVi: 'Tôi đã hiểu, đóng',
+    closeButtonEn: 'I understand, close',
   },
 } as const;

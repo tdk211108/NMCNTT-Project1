@@ -19,7 +19,7 @@ export type ComboAdvisorViewProps = ReturnType<typeof useComboAdvisorController>
 const PURPOSES: readonly ComboPurpose[] = ['gaming_aaa', 'esport', 'work_ai'];
 
 function formatPresetChipLabel(amountVnd: number): string {
-  return `${Math.round(amountVnd / 1_000_000)} triệu`;
+  return VI_MESSAGES.tools.combo.presetChipLabel(Math.round(amountVnd / 1_000_000));
 }
 
 function ComboCard({
@@ -120,12 +120,16 @@ function ComboCard({
                 </span>
                 <span className="font-mono text-ink-muted tabular-nums">
                   {combo.cpu.score.normalized !== null
-                    ? `${formatNumberVi(combo.cpu.score.normalized, 1)} điểm`
+                    ? VI_MESSAGES.tools.combo.pointsSuffix(formatNumberVi(combo.cpu.score.normalized, 1))
                     : formatNumberVi(combo.cpu.score.raw)}
                 </span>
               </div>
               <p className="font-mono text-xs text-ink-muted">
-                {combo.cpu.socket} · {combo.cpu.coresTotal}/{combo.cpu.threadsTotal} luồng
+                {VI_MESSAGES.tools.combo.cpuSummaryLine(
+                  combo.cpu.socket,
+                  combo.cpu.coresTotal,
+                  combo.cpu.threadsTotal,
+                )}
               </p>
             </div>
           </div>
@@ -159,12 +163,12 @@ function ComboCard({
                 </span>
                 <span className="font-mono text-ink-muted tabular-nums">
                   {combo.gpu.score.normalized !== null
-                    ? `${formatNumberVi(combo.gpu.score.normalized, 1)} điểm`
+                    ? VI_MESSAGES.tools.combo.pointsSuffix(formatNumberVi(combo.gpu.score.normalized, 1))
                     : formatNumberVi(combo.gpu.score.raw)}
                 </span>
               </div>
               <p className="font-mono text-xs text-ink-muted">
-                {combo.gpu.vramGb} GB VRAM · {combo.gpu.tbpW} W TBP
+                {VI_MESSAGES.tools.combo.gpuSummaryLine(combo.gpu.vramGb, combo.gpu.tbpW)}
               </p>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { hashAdminPassword } from '../src/server/auth/password';
+import { hashPassword } from '../src/server/auth/password';
 
 async function main(): Promise<void> {
   const password = process.argv[2];
@@ -7,7 +7,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const hash = await hashAdminPassword(password);
+  const hash = await hashPassword(password);
   console.log(hash);
 }
 

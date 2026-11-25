@@ -3,7 +3,7 @@ import 'server-only';
 import { SignJWT, jwtVerify } from 'jose';
 import type { NextRequest } from 'next/server';
 import { ORDER_TOKEN_TTL_HOURS } from '@/shared/constants';
-import { getJwtSecretKey } from './admin-session';
+import { getJwtSecretKey } from './session';
 
 const ORDER_AUDIENCE = 'order';
 

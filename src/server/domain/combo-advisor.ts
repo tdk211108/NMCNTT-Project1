@@ -14,6 +14,7 @@ import type {
   CpuVendor,
   GpuVendor,
 } from '@/shared/types';
+import { roundTo, selectRepresentativeGpuList } from './format';
 import { estimatePsuWattage } from './psu';
 import { calculatePerfPerPrice } from './scoring';
 
@@ -105,11 +106,6 @@ export interface RecommendCombosOutput {
   cheapestReferenceCombo: ComboReferencePair | null;
 }
 
-function roundTo(value: number, decimals: number): number {
-  const factor = 10 ** decimals;
-  return Math.round((value + 1e-12) * factor) / factor;
-}
-
 function computePurposeBonus(gpu: ComboGpuVariantInput, purpose: ComboPurpose): number {
   if (purpose === 'work_ai') {
     const vramBonus =
@@ -130,23 +126,7 @@ function computePurposeBonus(gpu: ComboGpuVariantInput, purpose: ComboPurpose): 
 export function selectRepresentativeGpus(
   variants: readonly ComboGpuVariantInput[],
 ): ComboGpuVariantInput[] {
-  const bestBySeries = new Map<string, ComboGpuVariantInput>();
-  for (const variant of variants) {
-    const existing = bestBySeries.get(variant.seriesId);
-    if (!existing) {
-      bestBySeries.set(variant.seriesId, variant);
-      continue;
-    }
-    const isCheaper = variant.priceVnd < existing.priceVnd;
-    const isNonLimitedTie =
-      variant.priceVnd === existing.priceVnd &&
-      !variant.isLimitedEdition &&
-      existing.isLimitedEdition;
-    if (isCheaper || isNonLimitedTie) {
-      bestBySeries.set(variant.seriesId, variant);
-    }
-  }
-  return [...bestBySeries.values()];
+  return selectRepresentativeGpuList(variants);
 }
 
 function evaluatePair(

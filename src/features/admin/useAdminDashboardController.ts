@@ -6,8 +6,8 @@ import { showToast } from '@/components/ui/toast-store';
 import { apiFetch } from '@/lib/api-client';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type { AdminResetResponse } from '@/shared/types';
+import { AUTH_SESSION_QUERY_KEY } from '@/features/auth/useAuthSession';
 import { handleAdminApiError } from './admin-error';
-import { ADMIN_SESSION_QUERY_KEY } from './useAdminSession';
 
 export function useAdminDashboardController() {
   const queryClient = useQueryClient();
@@ -31,7 +31,7 @@ export function useAdminDashboardController() {
     },
     onError: (err) =>
       handleAdminApiError(err, () =>
-        queryClient.invalidateQueries({ queryKey: ADMIN_SESSION_QUERY_KEY }),
+        queryClient.invalidateQueries({ queryKey: AUTH_SESSION_QUERY_KEY }),
       ),
   });
 

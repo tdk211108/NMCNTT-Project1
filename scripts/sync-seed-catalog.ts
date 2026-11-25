@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, notInArray, sql } from 'drizzle-orm';
 import { createDbConnection } from '../src/server/db/client';
 import { cpuSpecs, gpuSeries, gpuVariants, legacyCpus, products } from '../src/server/db/schema';
 import { RETAIL_GPU_SERIES_SEEDS } from '../src/server/db/seed/data/gpu-series';
@@ -6,8 +6,15 @@ import { GPU_VARIANT_SEEDS } from '../src/server/db/seed/data/gpu-variants';
 import { LEGACY_CPU_SEEDS } from '../src/server/db/seed/data/legacy-cpus';
 import { LEGACY_GPU_SERIES_SEEDS } from '../src/server/db/seed/data/legacy-gpus';
 import { RETAIL_CPU_SEEDS } from '../src/server/db/seed/data/retail-cpus';
-import { buildSeedImageUrl, resolveSeedStorageConfig } from '../src/server/db/seed/seed-catalog';
-import { SEED_IMAGE_PREFIX } from '../src/shared/constants';
+import {
+  buildCpuSpecSeedRows,
+  buildGpuVariantSeedRows,
+  buildLegacyCpuSeedRows,
+  buildLegacyGpuSeriesSeedRows,
+  buildProductSeedRows,
+  buildRetailGpuSeriesSeedRows,
+  resolveSeedStorageConfig,
+} from '../src/server/db/seed/seed-catalog';
 import { loadProjectEnv } from './lib/load-env';
 
 /**
@@ -31,99 +38,73 @@ async function main(): Promise<void> {
   try {
     const now = new Date();
     await db.transaction(async (tx) => {
+      // Remove stale seed legacy entries first so items promoted to retail never overlap legacy tables.
+      const activeLegacyCpuIds = LEGACY_CPU_SEEDS.map((c) => c.id);
+      const activeLegacyGpuIds = LEGACY_GPU_SERIES_SEEDS.map((s) => s.id);
+
+      await tx
+        .delete(legacyCpus)
+        .where(
+          activeLegacyCpuIds.length > 0
+            ? and(eq(legacyCpus.isSeed, true), notInArray(legacyCpus.id, activeLegacyCpuIds))
+            : eq(legacyCpus.isSeed, true),
+        );
+
+      await tx
+        .delete(gpuSeries)
+        .where(
+          activeLegacyGpuIds.length > 0
+            ? and(
+                eq(gpuSeries.isSeed, true),
+                eq(gpuSeries.kind, 'legacy'),
+                notInArray(gpuSeries.id, activeLegacyGpuIds),
+              )
+            : and(eq(gpuSeries.isSeed, true), eq(gpuSeries.kind, 'legacy')),
+        );
+
       // Never update `kind` on conflict because DB trigger forbids mutating gpu_series.kind.
-      for (const s of RETAIL_GPU_SERIES_SEEDS) {
-        await tx
-          .insert(gpuSeries)
-          .values({
-            id: s.id,
-            kind: s.kind,
-            name: s.name,
-            vendor: s.vendor,
-            vramGb: s.vramGb,
-            tbpW: s.tbpW,
-            cores: s.cores,
-            baseClockMhz: s.baseClockMhz,
-            boostClockMhz: s.boostClockMhz,
-            memoryType: s.memoryType,
-            busWidthBit: s.busWidthBit,
-            passmarkRaw: s.passmarkRaw,
-            passmarkSource: s.passmarkSource,
-            isSeed: true,
-          })
-          .onConflictDoUpdate({
-            target: gpuSeries.id,
-            set: {
-              name: s.name,
-              vendor: s.vendor,
-              vramGb: s.vramGb,
-              tbpW: s.tbpW,
-              cores: s.cores,
-              baseClockMhz: s.baseClockMhz,
-              boostClockMhz: s.boostClockMhz,
-              memoryType: s.memoryType,
-              busWidthBit: s.busWidthBit,
-              passmarkRaw: s.passmarkRaw,
-              passmarkSource: s.passmarkSource,
-              updatedAt: now,
-            },
-            setWhere: eq(gpuSeries.isSeed, true),
-          });
-      }
+      await tx
+        .insert(gpuSeries)
+        .values(buildRetailGpuSeriesSeedRows())
+        .onConflictDoUpdate({
+          target: gpuSeries.id,
+          set: {
+            name: sql`excluded.name`,
+            vendor: sql`excluded.vendor`,
+            vramGb: sql`excluded.vram_gb`,
+            tbpW: sql`excluded.tbp_w`,
+            cores: sql`excluded.cores`,
+            baseClockMhz: sql`excluded.base_clock_mhz`,
+            boostClockMhz: sql`excluded.boost_clock_mhz`,
+            memoryType: sql`excluded.memory_type`,
+            busWidthBit: sql`excluded.bus_width_bit`,
+            passmarkRaw: sql`excluded.passmark_raw`,
+            passmarkSource: sql`excluded.passmark_source`,
+            updatedAt: now,
+          },
+          setWhere: eq(gpuSeries.isSeed, true),
+        });
 
-      for (const s of LEGACY_GPU_SERIES_SEEDS) {
-        await tx
-          .insert(gpuSeries)
-          .values({
-            id: s.id,
-            kind: s.kind,
-            name: s.name,
-            vendor: s.vendor,
-            vramGb: s.vramGb,
-            tbpW: s.tbpW,
-            passmarkRaw: s.passmarkRaw ?? null,
-            passmarkSource: s.passmarkRaw != null ? (s.passmarkSource ?? 'PassMark') : null,
-            isSeed: true,
-          })
-          .onConflictDoUpdate({
-            target: gpuSeries.id,
-            set: {
-              name: s.name,
-              vendor: s.vendor,
-              vramGb: s.vramGb,
-              tbpW: s.tbpW,
-              passmarkRaw: s.passmarkRaw ?? null,
-              passmarkSource: s.passmarkRaw != null ? (s.passmarkSource ?? 'PassMark') : null,
-              updatedAt: now,
-            },
-            setWhere: eq(gpuSeries.isSeed, true),
-          });
-      }
-
-      const productRows = [
-        ...RETAIL_CPU_SEEDS.map((c) => ({
-          id: c.id,
-          category: 'cpu' as const,
-          name: c.name,
-          priceVnd: c.priceVnd,
-          imageUrl: buildSeedImageUrl(c.imageFile, storage),
-          imageStoragePath: `${SEED_IMAGE_PREFIX}${c.imageFile}`,
-          isSeed: true,
-        })),
-        ...GPU_VARIANT_SEEDS.map((v) => ({
-          id: v.id,
-          category: 'gpu' as const,
-          name: v.name,
-          priceVnd: v.priceVnd,
-          imageUrl: buildSeedImageUrl(v.imageFile, storage),
-          imageStoragePath: `${SEED_IMAGE_PREFIX}${v.imageFile}`,
-          isSeed: true,
-        })),
-      ];
+      await tx
+        .insert(gpuSeries)
+        .values(buildLegacyGpuSeriesSeedRows())
+        .onConflictDoUpdate({
+          target: gpuSeries.id,
+          set: {
+            name: sql`excluded.name`,
+            vendor: sql`excluded.vendor`,
+            vramGb: sql`excluded.vram_gb`,
+            tbpW: sql`excluded.tbp_w`,
+            passmarkRaw: sql`excluded.passmark_raw`,
+            passmarkSource: sql`excluded.passmark_source`,
+            updatedAt: now,
+          },
+          setWhere: eq(gpuSeries.isSeed, true),
+        });
 
       await tx
         .insert(products)
-        .values(productRows)
+        .values(buildProductSeedRows(storage))
         .onConflictDoUpdate({
           target: products.id,
           set: {
@@ -138,29 +119,7 @@ async function main(): Promise<void> {
 
       await tx
         .insert(cpuSpecs)
-        .values(
-          RETAIL_CPU_SEEDS.map((c) => ({
-            productId: c.id,
-            category: 'cpu' as const,
-            vendor: c.vendor,
-            architecture: c.architecture,
-            socket: c.socket,
-            processNode: c.processNode,
-            coresTotal: c.coresTotal,
-            threadsTotal: c.threadsTotal,
-            pCores: c.pCores,
-            eCores: c.eCores,
-            baseClockGhz: c.baseClockGhz,
-            boostClockGhz: c.boostClockGhz,
-            cacheText: c.cacheText,
-            l3CacheMb: c.l3CacheMb,
-            tdpW: c.tdpW,
-            psuPowerW: c.psuPowerW,
-            ramSupport: c.ramSupport,
-            passmarkRaw: c.passmarkRaw,
-            passmarkSource: c.passmarkSource,
-          })),
-        )
+        .values(buildCpuSpecSeedRows())
         .onConflictDoUpdate({
           target: cpuSpecs.productId,
           set: {
@@ -182,24 +141,12 @@ async function main(): Promise<void> {
             passmarkRaw: sql`excluded.passmark_raw`,
             passmarkSource: sql`excluded.passmark_source`,
           },
+          setWhere: sql`EXISTS (SELECT 1 FROM products WHERE products.id = ${cpuSpecs.productId} AND products.is_seed = true)`,
         });
 
       await tx
         .insert(gpuVariants)
-        .values(
-          GPU_VARIANT_SEEDS.map((v) => ({
-            productId: v.id,
-            category: 'gpu' as const,
-            seriesId: v.seriesId,
-            seriesKind: 'retail' as const,
-            aibBrand: v.aibBrand,
-            isLimitedEdition: v.isLimitedEdition ?? false,
-            lengthMm: v.lengthMm,
-            slotThickness: v.slotThickness,
-            hdmiCount: v.hdmiCount,
-            dpCount: v.dpCount,
-          })),
-        )
+        .values(buildGpuVariantSeedRows())
         .onConflictDoUpdate({
           target: gpuVariants.productId,
           set: {
@@ -211,24 +158,12 @@ async function main(): Promise<void> {
             hdmiCount: sql`excluded.hdmi_count`,
             dpCount: sql`excluded.dp_count`,
           },
+          setWhere: sql`EXISTS (SELECT 1 FROM products WHERE products.id = ${gpuVariants.productId} AND products.is_seed = true)`,
         });
 
       await tx
         .insert(legacyCpus)
-        .values(
-          LEGACY_CPU_SEEDS.map((c) => ({
-            id: c.id,
-            name: c.name,
-            vendor: c.vendor,
-            socket: c.socket,
-            coresTotal: c.coresTotal,
-            threadsTotal: c.threadsTotal,
-            psuPowerW: c.psuPowerW,
-            passmarkRaw: c.passmarkRaw ?? null,
-            passmarkSource: c.passmarkRaw != null ? (c.passmarkSource ?? 'PassMark') : null,
-            isSeed: true,
-          })),
-        )
+        .values(buildLegacyCpuSeedRows())
         .onConflictDoUpdate({
           target: legacyCpus.id,
           set: {

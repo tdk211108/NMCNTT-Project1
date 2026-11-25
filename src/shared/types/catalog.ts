@@ -83,11 +83,6 @@ export interface RemovedItem {
   name: string | null;
 }
 
-export interface ResolveResponse {
-  active: Pick<ProductCard, 'id' | 'name' | 'category' | 'priceVnd' | 'imageUrl'>[];
-  removed: RemovedItem[];
-}
-
 export interface MusicTrack {
   id: string;
   title: string;

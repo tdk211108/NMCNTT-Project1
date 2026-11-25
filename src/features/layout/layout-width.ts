@@ -10,10 +10,6 @@ export function isCatalogContainerRoute(pathname: string | null | undefined): bo
   );
 }
 
-export function isWideContainerRoute(pathname: string | null | undefined): boolean {
-  return pathname === '/' || isCatalogContainerRoute(pathname);
-}
-
 export function getChromeContainerClass(): string {
   return WIDE_CONTAINER_CLASS;
 }

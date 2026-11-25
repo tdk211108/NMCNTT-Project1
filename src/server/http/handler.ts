@@ -3,6 +3,7 @@ import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { ZodError } from 'zod';
 import { MAX_JSON_BYTES } from '@/shared/constants';
+import type { SessionUser } from '@/shared/types';
 import { requireAdmin, requireSession } from '../auth/session';
 import { assertSameOrigin } from '../security/origin-check';
 import { AppError, isDatabaseConnectionError, zodErrorToDetails } from './errors';
@@ -49,22 +50,27 @@ export function jsonWithHeaders(
 
 export function withHandler<TContext = unknown>(
   options: HandlerOptions,
-  fn: (request: NextRequest, context: TContext) => Promise<NextResponse>,
+  fn: (
+    request: NextRequest,
+    context: TContext,
+    session: SessionUser | null,
+  ) => Promise<NextResponse>,
 ): (request: NextRequest, context: TContext) => Promise<NextResponse> {
   const cacheControl = options.cacheControl ?? 'no-store';
 
   return async (request: NextRequest, context: TContext) => {
     try {
+      let session: SessionUser | null = null;
       if (options.requireAdmin) {
-        await requireAdmin(request);
+        session = await requireAdmin(request);
       } else if (options.requireAuth) {
-        await requireSession(request);
+        session = await requireSession(request);
       }
       if (options.requireSameOrigin) {
         assertSameOrigin(request);
       }
 
-      const response = await fn(request, context);
+      const response = await fn(request, context, session);
       if (!response.headers.has('Cache-Control')) {
         response.headers.set('Cache-Control', cacheControl);
       }

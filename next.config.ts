@@ -9,6 +9,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   devIndicators: false,
+  outputFileTracingExcludes: {
+    '/api/music': ['./public/music/**'],
+  },
   async headers() {
     return [
       {

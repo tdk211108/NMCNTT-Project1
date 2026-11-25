@@ -43,11 +43,11 @@ describe('Seed datasets and Drizzle schema integrity', () => {
   });
 
   it('has expected baseline counts and stays within catalog ceiling', () => {
-    expect(RETAIL_CPU_SEEDS).toHaveLength(64);
-    expect(RETAIL_GPU_SERIES_SEEDS).toHaveLength(16);
-    expect(GPU_VARIANT_SEEDS).toHaveLength(219);
-    expect(LEGACY_CPU_SEEDS).toHaveLength(61);
-    expect(LEGACY_GPU_SERIES_SEEDS).toHaveLength(81);
+    expect(RETAIL_CPU_SEEDS).toHaveLength(88);
+    expect(RETAIL_GPU_SERIES_SEEDS).toHaveLength(21);
+    expect(GPU_VARIANT_SEEDS).toHaveLength(232);
+    expect(LEGACY_CPU_SEEDS).toHaveLength(37);
+    expect(LEGACY_GPU_SERIES_SEEDS).toHaveLength(76);
     expect(RETAIL_CPU_SEEDS.length + GPU_VARIANT_SEEDS.length).toBeLessThanOrEqual(
       CATALOG_MAX_RESULTS,
     );
@@ -203,7 +203,7 @@ describe('Seed datasets and Drizzle schema integrity', () => {
     ];
     expect(new Set(seriesNames).size).toBe(seriesNames.length);
 
-    const seedImagesDir = path.resolve(process.cwd(), 'seed-images');
+    const seedImagesDir = path.resolve(process.cwd(), 'data', 'seed', 'images');
     const diskImages = readdirSync(seedImagesDir).sort();
     const expectedImages = [
       ...RETAIL_CPU_SEEDS.map((c) => c.imageFile),

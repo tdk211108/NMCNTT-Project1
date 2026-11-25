@@ -22,7 +22,8 @@ import { generateOrderId } from '../domain/order-id';
 import { AppError, extractPgError } from '../http/errors';
 import { derivePaymentReference } from '../payments/demo-bank';
 import { checkRateLimit, recordAuthFailure } from '../security/rate-limit';
-import { validateCheckoutAndQuote, type ValidatedCheckoutCustomer } from './checkout.service';
+import { quoteCart } from './cart.service';
+import { validateCheckoutCustomer, type ValidatedCheckoutCustomer } from './checkout.service';
 
 const MAX_ORDER_ID_RETRIES = 5;
 
@@ -179,11 +180,11 @@ export async function createOrder(
     });
   }
 
-  // Run static field + address checks before opening a transaction.
-  const preValidated = await validateCheckoutAndQuote(request, db);
+  // Validate static customer & address constraints without touching product availability yet.
+  const customer = validateCheckoutCustomer(request);
   const requestHash = computeCanonicalRequestHash(
     request.items,
-    preValidated.customer,
+    customer,
     request.paymentMethod,
   );
 
@@ -199,7 +200,16 @@ export async function createOrder(
           return { board: replayedExisting, replayed: true };
         }
 
-        const { quote, customer } = await validateCheckoutAndQuote(request, tx);
+        const quote = await quoteCart(
+          request.items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+          tx,
+        );
+        if (quote.removed.length > 0) {
+          throw new AppError('PRODUCT_UNAVAILABLE', {
+            details: { items: quote.removed },
+          });
+        }
+
         const orderId = generateId();
         const paymentReference = derivePaymentReference(request.idempotencyKey);
 

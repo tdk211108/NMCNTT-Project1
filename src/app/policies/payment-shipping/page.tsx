@@ -23,7 +23,7 @@ export default function PaymentShippingPolicyPage() {
           <tbody>
             <tr className="border-b border-border">
               <th className="bg-surface-subtle px-3 py-2 font-medium text-ink-muted">
-                Đơn có dưới {FREE_SHIPPING_MIN_QTY} sản phẩm
+                {VI_MESSAGES.policies.shippingFeeUnderMinRow(FREE_SHIPPING_MIN_QTY)}
               </th>
               <td className="px-3 py-2 font-mono tabular-nums text-ink">
                 {formatVnd(STANDARD_SHIPPING_FEE_VND)}
@@ -31,7 +31,7 @@ export default function PaymentShippingPolicyPage() {
             </tr>
             <tr>
               <th className="bg-surface-subtle px-3 py-2 font-medium text-ink-muted">
-                Đơn có từ {FREE_SHIPPING_MIN_QTY} sản phẩm trở lên
+                {VI_MESSAGES.policies.shippingFeeFromMinRow(FREE_SHIPPING_MIN_QTY)}
               </th>
               <td className="px-3 py-2 font-semibold text-success">
                 {VI_MESSAGES.common.freeShippingLabel}

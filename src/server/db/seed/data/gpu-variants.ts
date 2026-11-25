@@ -1362,4 +1362,82 @@ export const GPU_VARIANT_SEEDS: readonly GpuVariantSeed[] = [
     priceVnd: 7250000, lengthMm: 272, slotThickness: 2, hdmiCount: 1,
     dpCount: 3, imageFile: "gpu-intel-arc-b580-limited-edition-12gb.webp", sourceUrl: "https://www.newegg.com/intel-arc-b580-limited-edition-graphics-card-battlemage-12gb-192-bit-gddr6-pci-express-4-0-x8-31p06hb0ba/p/N82E16814883006",
   },
+  // Source: https://tinhocngoisao.com/products/vga-asus-rtx-3060-12g-gddr6-dual-oc-edition-v2-dual-rtx3060-o12g-v2
+  {
+    id: "gpu-asus-dual-rtx-3060-12gb-oc-v2", seriesId: "gs-rtx-3060-12gb", name: "ASUS Dual GeForce RTX 3060 OC Edition 12GB V2", aibBrand: "ASUS",
+    priceVnd: 10290000, lengthMm: 200, slotThickness: 2, hdmiCount: 1,
+    dpCount: 3, imageFile: "gpu-asus-dual-rtx-3060-12gb-oc-v2.webp", sourceUrl: "https://tinhocngoisao.com/products/vga-asus-rtx-3060-12g-gddr6-dual-oc-edition-v2-dual-rtx3060-o12g-v2",
+  },
+  // Source: https://memoryzone.com.vn/vga-gigabyte-geforce-rtx-3060-windforce-oc-12g-gddr6
+  {
+    id: "gpu-gigabyte-rtx-3060-windforce-oc-12gb", seriesId: "gs-rtx-3060-12gb", name: "GIGABYTE GeForce RTX 3060 WINDFORCE OC 12GB", aibBrand: "GIGABYTE",
+    priceVnd: 10500000, lengthMm: 198, slotThickness: 2, hdmiCount: 2,
+    dpCount: 2, imageFile: "gpu-gigabyte-rtx-3060-windforce-oc-12gb.webp", sourceUrl: "https://memoryzone.com.vn/vga-gigabyte-geforce-rtx-3060-windforce-oc-12g-gddr6",
+  },
+  // Source: https://memoryzone.com.vn/vga-msi-geforce-rtx-3060-ventus-2x-12gb-oc-gddr6
+  {
+    id: "gpu-msi-rtx-3060-ventus-2x-12gb-oc", seriesId: "gs-rtx-3060-12gb", name: "MSI GeForce RTX 3060 VENTUS 2X 12GB OC", aibBrand: "MSI",
+    priceVnd: 10500000, lengthMm: 235, slotThickness: 2, hdmiCount: 1,
+    dpCount: 3, imageFile: "gpu-msi-rtx-3060-ventus-2x-12gb-oc.webp", sourceUrl: "https://memoryzone.com.vn/vga-msi-geforce-rtx-3060-ventus-2x-12gb-oc-gddr6",
+  },
+  // Source: https://tinhocngoisao.com/products/card-man-hinh-vga-asus-dual-geforce-rtx-3050-oc-edition-6gb-gddr6-90yv0k60-m0na00
+  {
+    id: "gpu-asus-dual-rtx-3050-6gb-oc", seriesId: "gs-rtx-3050-6gb", name: "ASUS Dual GeForce RTX 3050 OC Edition 6GB", aibBrand: "ASUS",
+    priceVnd: 5700000, lengthMm: 201, slotThickness: 2, hdmiCount: 1,
+    dpCount: 1, imageFile: "gpu-asus-dual-rtx-3050-6gb-oc.webp", sourceUrl: "https://tinhocngoisao.com/products/card-man-hinh-vga-asus-dual-geforce-rtx-3050-oc-edition-6gb-gddr6-90yv0k60-m0na00",
+  },
+  // Source: https://tinhocngoisao.com/products/card-man-hinh-vga-gigabyte-geforce-rtx-3050-windforce-oc-6g
+  {
+    id: "gpu-gigabyte-rtx-3050-windforce-oc-6gb", seriesId: "gs-rtx-3050-6gb", name: "GIGABYTE GeForce RTX 3050 WINDFORCE OC 6GB", aibBrand: "GIGABYTE",
+    priceVnd: 5700000, lengthMm: 191, slotThickness: 2, hdmiCount: 2,
+    dpCount: 2, imageFile: "gpu-gigabyte-rtx-3050-windforce-oc-6gb.webp", sourceUrl: "https://tinhocngoisao.com/products/card-man-hinh-vga-gigabyte-geforce-rtx-3050-windforce-oc-6g",
+  },
+  // Source: https://memoryzone.com.vn/vga-msi-geforce-rtx-3050-ventus-2x-e-6g-oc-gddr6
+  {
+    id: "gpu-msi-rtx-3050-ventus-2x-e-6gb-oc", seriesId: "gs-rtx-3050-6gb", name: "MSI GeForce RTX 3050 VENTUS 2X E 6G OC", aibBrand: "MSI",
+    priceVnd: 5690000, lengthMm: 189, slotThickness: 2, hdmiCount: 2,
+    dpCount: 1, imageFile: "gpu-msi-rtx-3050-ventus-2x-e-6gb-oc.webp", sourceUrl: "https://memoryzone.com.vn/vga-msi-geforce-rtx-3050-ventus-2x-e-6g-oc-gddr6",
+  },
+  // Source: https://tinhocngoisao.com/products/card-man-hinh-vga-gigabyte-geforce-rtx-3050-windforce-oc-v2-8g
+  {
+    id: "gpu-gigabyte-rtx-3050-windforce-oc-8gb", seriesId: "gs-rtx-3050-8gb", name: "GIGABYTE GeForce RTX 3050 WINDFORCE OC 8GB", aibBrand: "GIGABYTE",
+    priceVnd: 7190000, lengthMm: 244, slotThickness: 2, hdmiCount: 2,
+    dpCount: 2, imageFile: "gpu-gigabyte-rtx-3050-windforce-oc-8gb.webp", sourceUrl: "https://tinhocngoisao.com/products/card-man-hinh-vga-gigabyte-geforce-rtx-3050-windforce-oc-v2-8g",
+  },
+  // Source: https://hotgear.vn/products/msi-geforce-rtx-3050-ventus-2x-xs-8g-oc
+  {
+    id: "gpu-msi-rtx-3050-ventus-2x-xs-8gb-oc", seriesId: "gs-rtx-3050-8gb", name: "MSI GeForce RTX 3050 VENTUS 2X XS 8G OC", aibBrand: "MSI",
+    priceVnd: 7290000, lengthMm: 205, slotThickness: 2.2, hdmiCount: 1,
+    dpCount: 1, imageFile: "gpu-msi-rtx-3050-ventus-2x-xs-8gb-oc.webp", sourceUrl: "https://hotgear.vn/products/msi-geforce-rtx-3050-ventus-2x-xs-8g-oc",
+  },
+  // Source: https://tinhocngoisao.com/products/card-man-hinh-asus-dual-radeon-rx-7600-evo-oc-edition-8gb-gddr6
+  {
+    id: "gpu-asus-dual-rx-7600-evo-oc-8gb", seriesId: "gs-rx-7600", name: "ASUS Dual Radeon RX 7600 EVO OC Edition 8GB", aibBrand: "ASUS",
+    priceVnd: 7790000, lengthMm: 229, slotThickness: 2.5, hdmiCount: 1,
+    dpCount: 3, imageFile: "gpu-asus-dual-rx-7600-evo-oc-8gb.webp", sourceUrl: "https://tinhocngoisao.com/products/card-man-hinh-asus-dual-radeon-rx-7600-evo-oc-edition-8gb-gddr6",
+  },
+  // Source: https://tinhocngoisao.com/products/card-man-hinh-vga-gigabyte-radeon-rx-7600-gaming-oc-8g
+  {
+    id: "gpu-gigabyte-rx-7600-gaming-oc-8gb", seriesId: "gs-rx-7600", name: "GIGABYTE Radeon RX 7600 GAMING OC 8GB", aibBrand: "GIGABYTE",
+    priceVnd: 7990000, lengthMm: 282, slotThickness: 2, hdmiCount: 2,
+    dpCount: 2, imageFile: "gpu-gigabyte-rx-7600-gaming-oc-8gb.webp", sourceUrl: "https://tinhocngoisao.com/products/card-man-hinh-vga-gigabyte-radeon-rx-7600-gaming-oc-8g",
+  },
+  // Source: https://hotgear.vn/products/card-man-hinh-sapphire-pulse-rx7600-gaming-oc-8gb
+  {
+    id: "gpu-sapphire-pulse-rx-7600-8gb-oc", seriesId: "gs-rx-7600", name: "Sapphire PULSE AMD Radeon RX 7600 8GB OC", aibBrand: "Sapphire",
+    priceVnd: 7590000, lengthMm: 240, slotThickness: 2, hdmiCount: 1,
+    dpCount: 3, imageFile: "gpu-sapphire-pulse-rx-7600-8gb-oc.webp", sourceUrl: "https://hotgear.vn/products/card-man-hinh-sapphire-pulse-rx7600-gaming-oc-8gb",
+  },
+  // Source: https://hotgear.vn/products/asus-dual-radeon-rx-6500-xt-oc-edition
+  {
+    id: "gpu-asus-dual-rx-6500-xt-oc-4gb", seriesId: "gs-rx-6500-xt", name: "ASUS Dual Radeon RX 6500 XT OC Edition 4GB", aibBrand: "ASUS",
+    priceVnd: 3990000, lengthMm: 201, slotThickness: 2, hdmiCount: 1,
+    dpCount: 1, imageFile: "gpu-asus-dual-rx-6500-xt-oc-4gb.webp", sourceUrl: "https://hotgear.vn/products/asus-dual-radeon-rx-6500-xt-oc-edition",
+  },
+  // Source: https://tinhocngoisao.com/products/card-man-hinh-vga-gigabyte-radeon-rx-6500-xt-eagle-4g
+  {
+    id: "gpu-gigabyte-rx-6500-xt-eagle-4gb", seriesId: "gs-rx-6500-xt", name: "GIGABYTE Radeon RX 6500 XT EAGLE 4GB", aibBrand: "GIGABYTE",
+    priceVnd: 4390000, lengthMm: 192, slotThickness: 2, hdmiCount: 1,
+    dpCount: 1, imageFile: "gpu-gigabyte-rx-6500-xt-eagle-4gb.webp", sourceUrl: "https://tinhocngoisao.com/products/card-man-hinh-vga-gigabyte-radeon-rx-6500-xt-eagle-4g",
+  },
 ];

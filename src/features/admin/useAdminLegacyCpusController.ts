@@ -6,8 +6,8 @@ import { showToast } from '@/components/ui/toast-store';
 import { apiFetch } from '@/lib/api-client';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type { AdminLegacyCpuItem, CpuVendor } from '@/shared/types';
+import { AUTH_SESSION_QUERY_KEY } from '@/features/auth/useAuthSession';
 import { handleAdminApiError } from './admin-error';
-import { ADMIN_SESSION_QUERY_KEY } from './useAdminSession';
 
 export interface LegacyCpuFormState {
   mode: 'create' | 'edit';
@@ -62,7 +62,7 @@ export function useAdminLegacyCpusController() {
   });
 
   const invalidateSession = () =>
-    queryClient.invalidateQueries({ queryKey: ADMIN_SESSION_QUERY_KEY });
+    queryClient.invalidateQueries({ queryKey: AUTH_SESSION_QUERY_KEY });
 
   const saveMutation = useMutation({
     mutationFn: async (current: LegacyCpuFormState) => {

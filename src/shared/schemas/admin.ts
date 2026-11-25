@@ -16,10 +16,6 @@ export const imageRefSchema = z.discriminatedUnion('kind', [
 
 const priceVndSchema = z.number().int().positive().max(MAX_PRICE_VND);
 
-export const adminLoginSchema = z.object({
-  password: z.string().min(1).max(200),
-});
-
 const cpuFieldsShape = {
   name: z.string().transform(normalizeWhitespaceNfc).pipe(z.string().min(2).max(150)),
   priceVnd: priceVndSchema,
@@ -221,7 +217,6 @@ export type AdminCpuInput = z.infer<typeof adminCpuInputSchema>;
 export type AdminCpuPatch = z.infer<typeof adminCpuPatchSchema>;
 export type AdminGpuVariantInput = z.infer<typeof adminGpuVariantInputSchema>;
 export type AdminGpuVariantPatch = z.infer<typeof adminGpuVariantPatchSchema>;
-export type AdminCreateProductInput = z.infer<typeof adminCreateProductSchema>;
 export type AdminGpuSeriesInput = z.infer<typeof adminGpuSeriesInputSchema>;
 export type AdminGpuSeriesPatch = z.infer<typeof adminGpuSeriesPatchSchema>;
 export type AdminLegacyCpuInput = z.infer<typeof adminLegacyCpuInputSchema>;

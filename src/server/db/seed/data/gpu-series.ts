@@ -115,4 +115,39 @@ export const RETAIL_GPU_SERIES_SEEDS: readonly RetailGpuSeriesSeed[] = [
     memoryType: "GDDR6", busWidthBit: 160, tbpW: 150, passmarkRaw: 14214,
     passmarkSource: "PassMark", sourceUrl: "https://www.videocardbenchmark.net/gpu.php?gpu=Intel+Arc+B570&id=5652",
   },
+  // Source: https://www.videocardbenchmark.net/gpu.php?gpu=GeForce+RTX+3060+12GB&id=4345
+  {
+    id: "gs-rtx-3060-12gb", kind: "retail", name: "NVIDIA GeForce RTX 3060 12GB", vendor: "nvidia",
+    vramGb: 12, cores: 3584, baseClockMhz: 1320, boostClockMhz: 1777,
+    memoryType: "GDDR6", busWidthBit: 192, tbpW: 170, passmarkRaw: 16694,
+    passmarkSource: "PassMark", sourceUrl: "https://www.videocardbenchmark.net/gpu.php?gpu=GeForce+RTX+3060+12GB&id=4345",
+  },
+  // Source: https://www.videocardbenchmark.net/gpu.php?gpu=GeForce+RTX+3050+6GB&id=5069
+  {
+    id: "gs-rtx-3050-6gb", kind: "retail", name: "NVIDIA GeForce RTX 3050 6GB", vendor: "nvidia",
+    vramGb: 6, cores: 2304, baseClockMhz: 1042, boostClockMhz: 1470,
+    memoryType: "GDDR6", busWidthBit: 96, tbpW: 70, passmarkRaw: 10738,
+    passmarkSource: "PassMark", sourceUrl: "https://www.videocardbenchmark.net/gpu.php?gpu=GeForce+RTX+3050+6GB&id=5069",
+  },
+  // Source: https://www.videocardbenchmark.net/gpu.php?gpu=GeForce+RTX+3050+8GB&id=4495
+  {
+    id: "gs-rtx-3050-8gb", kind: "retail", name: "NVIDIA GeForce RTX 3050 8GB", vendor: "nvidia",
+    vramGb: 8, cores: 2560, baseClockMhz: 1552, boostClockMhz: 1777,
+    memoryType: "GDDR6", busWidthBit: 128, tbpW: 130, passmarkRaw: 11863,
+    passmarkSource: "PassMark", sourceUrl: "https://www.videocardbenchmark.net/gpu.php?gpu=GeForce+RTX+3050+8GB&id=4495",
+  },
+  // Source: https://www.videocardbenchmark.net/gpu.php?gpu=Radeon+RX+7600&id=4832
+  {
+    id: "gs-rx-7600", kind: "retail", name: "AMD Radeon RX 7600", vendor: "amd",
+    vramGb: 8, cores: 2048, baseClockMhz: 2250, boostClockMhz: 2655,
+    memoryType: "GDDR6", busWidthBit: 128, tbpW: 165, passmarkRaw: 16430,
+    passmarkSource: "PassMark", sourceUrl: "https://www.videocardbenchmark.net/gpu.php?gpu=Radeon+RX+7600&id=4832",
+  },
+  // Source: https://www.videocardbenchmark.net/gpu.php?gpu=Radeon+RX+6500+XT&id=4488
+  {
+    id: "gs-rx-6500-xt", kind: "retail", name: "AMD Radeon RX 6500 XT", vendor: "amd",
+    vramGb: 4, cores: 1024, baseClockMhz: 2310, boostClockMhz: 2815,
+    memoryType: "GDDR6", busWidthBit: 64, tbpW: 107, passmarkRaw: 9619,
+    passmarkSource: "PassMark", sourceUrl: "https://www.videocardbenchmark.net/gpu.php?gpu=Radeon+RX+6500+XT&id=4488",
+  },
 ];

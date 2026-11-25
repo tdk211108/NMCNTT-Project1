@@ -8,19 +8,17 @@ import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
 import { useAuthSession } from '@/features/auth/useAuthSession';
-import { useAdminSession } from '../useAdminSession';
 
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { state, actions } = useAdminSession();
-  const { state: authState } = useAuthSession();
+  const { state, actions } = useAuthSession();
 
   if (state.isLoading) {
     return <Spinner />;
   }
 
   if (!state.isAdmin) {
-    if (authState.isAuthenticated) {
+    if (state.isAuthenticated) {
       return (
         <EmptyState
           title={VI_MESSAGES.admin.loginTitle}
@@ -38,7 +36,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         title={VI_MESSAGES.admin.loginTitle}
         description={VI_MESSAGES.admin.loginRequiredNotice}
         action={
-          <Button variant="primary" onClick={actions.openLoginModal}>
+          <Button variant="primary" onClick={() => actions.openAuthModal({ tab: 'login' })}>
             {VI_MESSAGES.admin.loginSubmit}
           </Button>
         }

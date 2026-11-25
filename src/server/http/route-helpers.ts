@@ -30,6 +30,16 @@ export function parseStrictIntParam(value: string | null): number | undefined {
   return Number(value.trim());
 }
 
+export function parseStrictBoolParam(value: string | null): boolean | string | undefined {
+  if (value === null || value.trim() === '') {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  if (trimmed === 'true') return true;
+  if (trimmed === 'false') return false;
+  return trimmed;
+}
+
 export function parseStrictIntListParam(value: string | null): number[] | undefined {
   const parts = parseCommaListParam(value);
   if (!parts) {

@@ -1,51 +1,60 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { apiFetch } from '@/lib/api-client';
+import { useState, useSyncExternalStore } from 'react';
+import { safeSessionStorage } from '@/lib/safe-storage';
 import { useAuthSession } from '@/features/auth/useAuthSession';
-import { CART_MAX_QTY } from '@/shared/constants';
+import { CART_ADVISORY_DISMISSED_KEY, CART_MAX_QTY } from '@/shared/constants';
 import { VI_MESSAGES } from '@/shared/messages/vi';
-import type { CartQuote } from '@/shared/types';
+import type { CartAdvisorySummary } from '@/shared/types';
 import { useCartStore } from './store';
+import { useCartQuote } from './useCartQuote';
+
+const ADVISORY_EVENT = 'coreraster:cart-advisory-dismiss-change';
+
+const EMPTY_ADVISORIES: CartAdvisorySummary = {
+  items: [],
+  recommendedPsuTierW: null,
+  recommendedPsuExactW: null,
+  psuExceedsMaxTier: false,
+};
+
+function subscribeAdvisoryDismissed(onStoreChange: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener(ADVISORY_EVENT, onStoreChange);
+  return () => window.removeEventListener(ADVISORY_EVENT, onStoreChange);
+}
+
+function getAdvisoryDismissedSnapshot(): boolean {
+  return safeSessionStorage.getItem(CART_ADVISORY_DISMISSED_KEY) === '1';
+}
+
+function getAdvisoryDismissedServerSnapshot(): boolean {
+  return false;
+}
+
+function writeAdvisoryDismissed(dismissed: boolean): void {
+  safeSessionStorage.setItem(CART_ADVISORY_DISMISSED_KEY, dismissed ? '1' : '0');
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(ADVISORY_EVENT));
+  }
+}
 
 export function useCartController(notice?: string | null) {
   const router = useRouter();
   const { state: authState, actions: authActions } = useAuthSession();
-  const items = useCartStore((s) => s.items);
-  const hasHydrated = useCartStore((s) => s.hasHydrated);
   const setQuantity = useCartStore((s) => s.setQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
-  const applyServerQuote = useCartStore((s) => s.applyServerQuote);
 
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
   const [draftQtyById, setDraftQtyById] = useState<Record<string, string>>({});
+  const isAdvisoryDismissed = useSyncExternalStore(
+    subscribeAdvisoryDismissed,
+    getAdvisoryDismissedSnapshot,
+    getAdvisoryDismissedServerSnapshot,
+  );
 
-  const quotePayload = items.map((item) => ({
-    productId: item.productId,
-    quantity: item.quantity,
-    knownUnitPriceVnd: item.lastKnownUnitPriceVnd,
-  }));
-
-  const quoteQuery = useQuery({
-    queryKey: ['cart', 'quote', quotePayload],
-    queryFn: () =>
-      apiFetch<CartQuote>('/api/cart/quote', {
-        method: 'POST',
-        json: { items: quotePayload },
-      }),
-    enabled: hasHydrated,
-    staleTime: 0,
-  });
-
-  useEffect(() => {
-    if (quoteQuery.data) {
-      applyServerQuote(quoteQuery.data);
-    }
-  }, [quoteQuery.data, applyServerQuote]);
-
-  const quote = quoteQuery.data ?? null;
+  const { items, hasHydrated, quoteQuery, quote } = useCartQuote('cart');
   const lines = quote?.lines ?? [];
 
   function handleQtyInputChange(productId: string, rawValue: string) {
@@ -86,7 +95,7 @@ export function useCartController(notice?: string | null) {
   return {
     state: {
       hasHydrated,
-      showEmptyNotice: notice === 'empty-cart' || (hasHydrated && items.length === 0),
+      showEmptyNotice: notice === 'empty-cart',
       isEmpty: hasHydrated && items.length === 0,
       lines,
       draftQtyById,
@@ -95,11 +104,15 @@ export function useCartController(notice?: string | null) {
       freeShipping: quote?.freeShipping ?? false,
       totalVnd: quote?.totalVnd ?? 0,
       totalQuantity: quote?.totalQuantity ?? 0,
+      advisories: quote?.advisories ?? EMPTY_ADVISORIES,
+      isAdvisoryDismissed,
       pendingRemoveId,
       isLoading: !hasHydrated || (items.length > 0 && quoteQuery.isLoading),
       errorMessage: quoteQuery.error?.message ?? null,
     },
     actions: {
+      onDismissAdvisory: () => writeAdvisoryDismissed(true),
+      onReopenAdvisory: () => writeAdvisoryDismissed(false),
       onIncrement: (productId: string, currentQty: number) =>
         setQuantity(productId, currentQty + 1),
       onDecrement: (productId: string, currentQty: number) => {

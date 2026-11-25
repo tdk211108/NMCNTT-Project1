@@ -5,24 +5,16 @@ import { useRef } from 'react';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Button } from '@/components/ui/Button';
 import { CatalogPagination } from '@/components/ui/CatalogPagination';
-import { ComboboxSelect, type ComboboxSelectOption } from '@/components/ui/ComboboxSelect';
+import { ComboboxSelect } from '@/components/ui/ComboboxSelect';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { ProductCard } from '@/features/catalog/components/ProductCard';
-import { paginateItems } from '@/features/catalog/useCatalogController';
+import { paginateItems, PRODUCT_SORT_OPTIONS } from '@/lib/pagination';
 import { SEARCH_RESULTS_PAGE_SIZE } from '@/shared/constants';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
-import type { ProductSort } from '@/shared/types';
 import type { SearchTab, useSearchResultsController } from '../useSearchResultsController';
 
 export type SearchResultsViewProps = ReturnType<typeof useSearchResultsController>;
-
-const SEARCH_SORT_OPTIONS: readonly ComboboxSelectOption<ProductSort>[] = [
-  { value: 'default', label: VI_MESSAGES.catalog.sortDefault },
-  { value: 'price_asc', label: VI_MESSAGES.catalog.sortPriceAsc },
-  { value: 'price_desc', label: VI_MESSAGES.catalog.sortPriceDesc },
-  { value: 'score_desc', label: VI_MESSAGES.catalog.sortScoreDesc },
-];
 
 export function SearchResultsView({ state, actions }: SearchResultsViewProps) {
   const cpuSectionRef = useRef<HTMLElement>(null);
@@ -70,7 +62,7 @@ export function SearchResultsView({ state, actions }: SearchResultsViewProps) {
             <ComboboxSelect
               label={VI_MESSAGES.catalog.sortLabel}
               value={state.sort}
-              options={SEARCH_SORT_OPTIONS}
+              options={PRODUCT_SORT_OPTIONS}
               testId={TEST_IDS.search.sortSelect}
               onChange={(nextSort) => actions.onChangeSort(nextSort)}
             />

@@ -2,6 +2,7 @@ import { productListQuerySchema } from '@/shared/schemas';
 import { jsonWithHeaders, withHandler } from '@/server/http/handler';
 import {
   parseCommaListParam,
+  parseStrictBoolParam,
   parseStrictIntListParam,
   parseStrictIntParam,
 } from '@/server/http/route-helpers';
@@ -36,24 +37,6 @@ export const GET = withHandler({}, async (request) => {
   const sp = request.nextUrl.searchParams;
   const rawQ = sp.get('q')?.trim();
   const rawSeriesId = sp.get('seriesId')?.trim();
-  const rawLimited = sp.get('limitedEdition');
-  const limitedEdition =
-    rawLimited === null
-      ? undefined
-      : rawLimited === 'true'
-        ? true
-        : rawLimited === 'false'
-          ? false
-          : rawLimited;
-  const rawPerVendor = sp.get('perVendor');
-  const perVendor =
-    rawPerVendor === null
-      ? undefined
-      : rawPerVendor === 'true'
-        ? true
-        : rawPerVendor === 'false'
-          ? false
-          : rawPerVendor;
 
   const query = productListQuerySchema.parse({
     category: sp.get('category') ?? undefined,
@@ -64,12 +47,12 @@ export const GET = withHandler({}, async (request) => {
     aibBrand: parseCommaListParam(sp.get('aibBrand')),
     socket: parseCommaListParam(sp.get('socket')),
     seriesId: rawSeriesId && rawSeriesId.length > 0 ? rawSeriesId : undefined,
-    limitedEdition,
+    limitedEdition: parseStrictBoolParam(sp.get('limitedEdition')),
     sort: sp.get('sort') ?? undefined,
     q: rawQ && rawQ.length > 0 ? rawQ : undefined,
     page: parseStrictIntParam(sp.get('page')),
     pageSize: parseStrictIntParam(sp.get('pageSize')),
-    perVendor,
+    perVendor: parseStrictBoolParam(sp.get('perVendor')),
     vendorPages: parseVendorPagesParam(sp.get('vendorPage')),
   });
 

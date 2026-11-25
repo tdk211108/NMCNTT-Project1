@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { NextRequest } from 'next/server';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { hashPassword } from '@/server/auth/password';
 import { signSessionToken } from '@/server/auth/session';
 import type { DbClient } from '@/server/db/client';
@@ -15,27 +15,18 @@ import {
 import { createOrder, listOrdersForUser } from '@/server/services/order.service';
 import { resetSampleData } from '@/server/services/reset.service';
 import { AUTH_SESSION_COOKIE } from '@/shared/constants';
-import {
-  closeTestDb,
-  getTestDb,
-  resetAndSeedTestDb,
-  TEST_STORAGE_CONFIG,
-} from '../../helpers/test-db';
+import { TEST_STORAGE_CONFIG, setupTestDbLifecycle } from '../../helpers/test-db';
 
 let db: DbClient;
 
-beforeAll(async () => {
-  db = await getTestDb();
-  process.env.ADMIN_PASSWORD = await hashPassword('admin-secret-123');
-});
-
-beforeEach(async () => {
-  await resetAndSeedTestDb(db);
-  await db.delete(users);
-});
-
-afterAll(async () => {
-  await closeTestDb();
+setupTestDbLifecycle({
+  onBeforeAll: async (client) => {
+    db = client;
+    process.env.ADMIN_PASSWORD = await hashPassword('admin-secret-123');
+  },
+  onBeforeEach: async (client) => {
+    await client.delete(users);
+  },
 });
 
 describe('services/auth & user-scoped orders (Postgres 16)', () => {

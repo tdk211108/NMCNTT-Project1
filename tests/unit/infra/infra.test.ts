@@ -1,12 +1,15 @@
+import { readdirSync } from 'node:fs';
+import path from 'node:path';
 import { NextRequest } from 'next/server';
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
+  createAdminSessionUser,
   isAdminRequest,
   readCookieFromRequest,
   requireAdmin,
-  signAdminSessionToken,
-  verifyAdminSessionToken,
-} from '@/server/auth/admin-session';
+  signSessionToken,
+  verifySessionToken,
+} from '@/server/auth/session';
 import {
   extractBearerToken,
   signOrderAccessToken,
@@ -21,6 +24,7 @@ import { buildPublicObjectUrl, sniffImageMagicBytes } from '@/server/storage/sup
 import { AUTH_SESSION_COOKIE, ORDER_ID_ALPHABET } from '@/shared/constants';
 import { z } from 'zod';
 import { createDbConnection } from '@/server/db/client';
+import { BUNDLED_MUSIC_FILES, listLocalMusicTracks } from '@/server/services/music.service';
 import { ensureTestAuthSecret } from '../../helpers/test-db';
 
 beforeAll(() => {
@@ -29,13 +33,13 @@ beforeAll(() => {
 
 describe('infra/auth & security', () => {
   it('signs and verifies admin session JWT and rejects order tokens', async () => {
-    const adminToken = await signAdminSessionToken();
+    const adminToken = await signSessionToken(createAdminSessionUser());
     const orderToken = await signOrderAccessToken('PC-7K3M9QX2TB');
 
-    expect(await verifyAdminSessionToken(adminToken)).toBe(true);
-    expect(await verifyAdminSessionToken('')).toBe(false);
-    expect(await verifyAdminSessionToken(orderToken)).toBe(false);
-    expect(await verifyAdminSessionToken(`${adminToken}corrupt`)).toBe(false);
+    expect((await verifySessionToken(adminToken))?.role).toBe('admin');
+    expect(await verifySessionToken('')).toBeNull();
+    expect(await verifySessionToken(orderToken)).toBeNull();
+    expect(await verifySessionToken(`${adminToken}corrupt`)).toBeNull();
 
     expect(await verifyOrderAccessToken(orderToken, 'PC-7K3M9QX2TB')).toBe(true);
     expect(await verifyOrderAccessToken(orderToken, 'PC-OTHERORDER')).toBe(false);
@@ -44,7 +48,7 @@ describe('infra/auth & security', () => {
   });
 
   it('extracts cookies, bearer tokens, and checks requireAdmin', async () => {
-    const token = await signAdminSessionToken();
+    const token = await signSessionToken(createAdminSessionUser());
     const reqWithCookie = new NextRequest('https://shop.example.com/api/admin/products', {
       headers: {
         cookie: `other=1; ${AUTH_SESSION_COOKIE}=${encodeURIComponent(token)}`,
@@ -55,7 +59,7 @@ describe('infra/auth & security', () => {
     expect(readCookieFromRequest(reqWithCookie, AUTH_SESSION_COOKIE)).toBe(token);
     expect(extractBearerToken(reqWithCookie)).toBe('order-jwt-123');
     expect(await isAdminRequest(reqWithCookie)).toBe(true);
-    await expect(requireAdmin(reqWithCookie)).resolves.toBeUndefined();
+    await expect(requireAdmin(reqWithCookie)).resolves.toMatchObject({ role: 'admin' });
 
     const anonReq = new NextRequest('https://shop.example.com/api/admin/products');
     expect(await isAdminRequest(anonReq)).toBe(false);
@@ -126,6 +130,9 @@ describe('infra/address, demo-bank, storage, errors', () => {
 
     const instructions = await buildBankInstructions(ref1, 500000);
     expect(instructions.transferMemo).toContain(ref1);
+    expect(instructions.bankName.toLowerCase()).not.toContain('techcore');
+    expect(instructions.accountHolder.toLowerCase()).not.toContain('techcore');
+    expect(instructions.transferMemo.toLowerCase()).not.toContain('techcore');
     expect(instructions.qrImageDataUrl.startsWith('data:image/png;base64,')).toBe(true);
   });
 
@@ -167,6 +174,18 @@ describe('infra/address, demo-bank, storage, errors', () => {
     expect(extractPgError(wrapped)).toEqual({ code: '23505', constraint: 'orders_pkey' });
     expect(isDatabaseConnectionError({ cause: { code: 'ECONNREFUSED' } })).toBe(true);
     expect(isDatabaseConnectionError(new Error('other'))).toBe(false);
+  });
+
+  it('keeps BUNDLED_MUSIC_FILES synced with public/music audio assets', async () => {
+    const musicDir = path.join(process.cwd(), 'public', 'music');
+    const diskAudio = readdirSync(musicDir).filter((name) => name.endsWith('.m4a'));
+    expect([...BUNDLED_MUSIC_FILES].sort()).toEqual(diskAudio.sort());
+
+    const tracks = await listLocalMusicTracks();
+    expect(tracks).toHaveLength(diskAudio.length);
+
+    const missingTracks = await listLocalMusicTracks(path.join(process.cwd(), 'public', '__missing_music__'));
+    expect(missingTracks).toEqual([]);
   });
 
   it('configures Supavisor-safe pool defaults with pipelining disabled', async () => {

@@ -63,45 +63,10 @@ export const LEGACY_CPU_SEEDS: readonly LegacyCpuSeed[] = [
     id: "C12", name: "Intel Core i5-8400", vendor: "intel", socket: "LGA1151",
     coresTotal: 6, threadsTotal: 6, psuPowerW: 81, passmarkRaw: 9236, passmarkSource: "PassMark", sourceUrl: "https://www.techpowerup.com/cpu-specs/core-i5-8400.c1964",
   },
-  // Source: https://www.techpowerup.com/cpu-specs/ryzen-9-5950x.c2364
-  {
-    id: "C13", name: "AMD Ryzen 9 5950X", vendor: "amd", socket: "AM4",
-    coresTotal: 16, threadsTotal: 32, psuPowerW: 142, passmarkRaw: 45227, passmarkSource: "PassMark", sourceUrl: "https://www.techpowerup.com/cpu-specs/ryzen-9-5950x.c2364",
-  },
-  // Source: https://www.techpowerup.com/cpu-specs/ryzen-9-5900x.c2363
-  {
-    id: "C14", name: "AMD Ryzen 9 5900X", vendor: "amd", socket: "AM4",
-    coresTotal: 12, threadsTotal: 24, psuPowerW: 142, passmarkRaw: 38880, passmarkSource: "PassMark", sourceUrl: "https://www.techpowerup.com/cpu-specs/ryzen-9-5900x.c2363",
-  },
   // Source: https://www.techpowerup.com/cpu-specs/ryzen-7-5800x3d.c2532
   {
     id: "C15", name: "AMD Ryzen 7 5800X3D", vendor: "amd", socket: "AM4",
     coresTotal: 8, threadsTotal: 16, psuPowerW: 142, passmarkRaw: 28292, passmarkSource: "PassMark", sourceUrl: "https://www.techpowerup.com/cpu-specs/ryzen-7-5800x3d.c2532",
-  },
-  // Source: https://www.techpowerup.com/cpu-specs/ryzen-7-5800x.c2362
-  {
-    id: "C16", name: "AMD Ryzen 7 5800X", vendor: "amd", socket: "AM4",
-    coresTotal: 8, threadsTotal: 16, psuPowerW: 142, passmarkRaw: 27649, passmarkSource: "PassMark", sourceUrl: "https://www.techpowerup.com/cpu-specs/ryzen-7-5800x.c2362",
-  },
-  // Source: https://www.techpowerup.com/cpu-specs/ryzen-7-5700x.c2755
-  {
-    id: "C17", name: "AMD Ryzen 7 5700X", vendor: "amd", socket: "AM4",
-    coresTotal: 8, threadsTotal: 16, psuPowerW: 88, passmarkRaw: 26536, passmarkSource: "PassMark", sourceUrl: "https://www.techpowerup.com/cpu-specs/ryzen-7-5700x.c2755",
-  },
-  // Source: https://www.techpowerup.com/cpu-specs/ryzen-5-5600x.c2365
-  {
-    id: "C18", name: "AMD Ryzen 5 5600X", vendor: "amd", socket: "AM4",
-    coresTotal: 6, threadsTotal: 12, psuPowerW: 88, passmarkRaw: 21820, passmarkSource: "PassMark", sourceUrl: "https://www.techpowerup.com/cpu-specs/ryzen-5-5600x.c2365",
-  },
-  // Source: https://www.techpowerup.com/cpu-specs/ryzen-5-5600.c2743
-  {
-    id: "C19", name: "AMD Ryzen 5 5600", vendor: "amd", socket: "AM4",
-    coresTotal: 6, threadsTotal: 12, psuPowerW: 88, passmarkRaw: 21489, passmarkSource: "PassMark", sourceUrl: "https://www.techpowerup.com/cpu-specs/ryzen-5-5600.c2743",
-  },
-  // Source: https://www.tomshardware.com/pc-components/cpus/100-budget-cpu-shootout-ddr4
-  {
-    id: "C20", name: "AMD Ryzen 5 5500", vendor: "amd", socket: "AM4",
-    coresTotal: 6, threadsTotal: 12, psuPowerW: 88, passmarkRaw: 19246, passmarkSource: "PassMark", sourceUrl: "https://www.tomshardware.com/pc-components/cpus/100-budget-cpu-shootout-ddr4",
   },
   // Source: https://www.techpowerup.com/cpu-specs/ryzen-7-3700x.c2130
   {
@@ -128,90 +93,10 @@ export const LEGACY_CPU_SEEDS: readonly LegacyCpuSeed[] = [
     id: "C25", name: "AMD Ryzen 7 5700X3D", vendor: "amd", socket: "AM4",
     coresTotal: 8, threadsTotal: 16, psuPowerW: 142, passmarkRaw: 26307, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=AMD+Ryzen+7+5700X3D&id=5884",
   },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=AMD+Ryzen+5+5600G&id=4325
-  {
-    id: "C26", name: "AMD Ryzen 5 5600G", vendor: "amd", socket: "AM4",
-    coresTotal: 6, threadsTotal: 12, psuPowerW: 88, passmarkRaw: 19614, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=AMD+Ryzen+5+5600G&id=4325",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=AMD+Ryzen+7+5700G&id=4323
-  {
-    id: "C27", name: "AMD Ryzen 7 5700G", vendor: "amd", socket: "AM4",
-    coresTotal: 8, threadsTotal: 16, psuPowerW: 88, passmarkRaw: 24203, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=AMD+Ryzen+7+5700G&id=4323",
-  },
   // Source: https://www.cpubenchmark.net/cpu.php?cpu=AMD+Ryzen+5+3500X&id=3592
   {
     id: "C28", name: "AMD Ryzen 5 3500X", vendor: "amd", socket: "AM4",
     coresTotal: 6, threadsTotal: 6, psuPowerW: 88, passmarkRaw: 13160, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=AMD+Ryzen+5+3500X&id=3592",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i5-13600K&id=5008
-  {
-    id: "C29", name: "Intel Core i5-13600K", vendor: "intel", socket: "LGA1700",
-    coresTotal: 14, threadsTotal: 20, psuPowerW: 181, passmarkRaw: 37427, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i5-13600K&id=5008",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i5-13600KF&id=5059
-  {
-    id: "C30", name: "Intel Core i5-13600KF", vendor: "intel", socket: "LGA1700",
-    coresTotal: 14, threadsTotal: 20, psuPowerW: 181, passmarkRaw: 37285, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i5-13600KF&id=5059",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i7-13700K&id=5060
-  {
-    id: "C31", name: "Intel Core i7-13700K", vendor: "intel", socket: "LGA1700",
-    coresTotal: 16, threadsTotal: 24, psuPowerW: 253, passmarkRaw: 45565, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i7-13700K&id=5060",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i7-13700KF&id=5061
-  {
-    id: "C32", name: "Intel Core i7-13700KF", vendor: "intel", socket: "LGA1700",
-    coresTotal: 16, threadsTotal: 24, psuPowerW: 253, passmarkRaw: 45485, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i7-13700KF&id=5061",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i9-13900K&id=5022
-  {
-    id: "C33", name: "Intel Core i9-13900K", vendor: "intel", socket: "LGA1700",
-    coresTotal: 24, threadsTotal: 32, psuPowerW: 253, passmarkRaw: 58021, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i9-13900K&id=5022",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i9-13900KF&id=5055
-  {
-    id: "C34", name: "Intel Core i9-13900KF", vendor: "intel", socket: "LGA1700",
-    coresTotal: 24, threadsTotal: 32, psuPowerW: 253, passmarkRaw: 57388, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i9-13900KF&id=5055",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i5-13500&id=4993
-  {
-    id: "C35", name: "Intel Core i5-13500", vendor: "intel", socket: "LGA1700",
-    coresTotal: 14, threadsTotal: 20, psuPowerW: 154, passmarkRaw: 30620, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i5-13500&id=4993",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i3-13100F&id=5156
-  {
-    id: "C36", name: "Intel Core i3-13100F", vendor: "intel", socket: "LGA1700",
-    coresTotal: 4, threadsTotal: 8, psuPowerW: 89, passmarkRaw: 14650, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i3-13100F&id=5156",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i5-12600K&id=4603
-  {
-    id: "C37", name: "Intel Core i5-12600K", vendor: "intel", socket: "LGA1700",
-    coresTotal: 10, threadsTotal: 16, psuPowerW: 150, passmarkRaw: 27502, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i5-12600K&id=4603",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i5-12600KF&id=4625
-  {
-    id: "C38", name: "Intel Core i5-12600KF", vendor: "intel", socket: "LGA1700",
-    coresTotal: 10, threadsTotal: 16, psuPowerW: 150, passmarkRaw: 27496, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i5-12600KF&id=4625",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i7-12700K&id=4609
-  {
-    id: "C39", name: "Intel Core i7-12700K", vendor: "intel", socket: "LGA1700",
-    coresTotal: 12, threadsTotal: 20, psuPowerW: 190, passmarkRaw: 34222, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i7-12700K&id=4609",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i7-12700KF&id=4608
-  {
-    id: "C40", name: "Intel Core i7-12700KF", vendor: "intel", socket: "LGA1700",
-    coresTotal: 12, threadsTotal: 20, psuPowerW: 190, passmarkRaw: 33869, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i7-12700KF&id=4608",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i9-12900K&id=4597
-  {
-    id: "C41", name: "Intel Core i9-12900K", vendor: "intel", socket: "LGA1700",
-    coresTotal: 16, threadsTotal: 24, psuPowerW: 241, passmarkRaw: 41085, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i9-12900K&id=4597",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i5-12400&id=4677
-  {
-    id: "C42", name: "Intel Core i5-12400", vendor: "intel", socket: "LGA1700",
-    coresTotal: 6, threadsTotal: 12, psuPowerW: 117, passmarkRaw: 18838, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i5-12400&id=4677",
   },
   // Source: https://www.cpubenchmark.net/cpu.php?cpu=Intel+Core+i3-9100F+%40+3.60GHz&id=3461
   {
@@ -287,11 +172,6 @@ export const LEGACY_CPU_SEEDS: readonly LegacyCpuSeed[] = [
   {
     id: "C57", name: "AMD Ryzen 3 3300X", vendor: "amd", socket: "AM4",
     coresTotal: 4, threadsTotal: 8, psuPowerW: 88, passmarkRaw: 12578, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=AMD+Ryzen+3+3300X&id=3716",
-  },
-  // Source: https://www.cpubenchmark.net/cpu.php?cpu=AMD+Ryzen+5+4500&id=4816
-  {
-    id: "C58", name: "AMD Ryzen 5 4500", vendor: "amd", socket: "AM4",
-    coresTotal: 6, threadsTotal: 12, psuPowerW: 88, passmarkRaw: 15915, passmarkSource: "PassMark", sourceUrl: "https://www.cpubenchmark.net/cpu.php?cpu=AMD+Ryzen+5+4500&id=4816",
   },
   // Source: https://www.cpubenchmark.net/cpu.php?cpu=AMD+Ryzen+5+4600G&id=3807
   {

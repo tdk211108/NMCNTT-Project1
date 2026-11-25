@@ -8,6 +8,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
+import { prefersReducedMotionNow } from '@/lib/client-hooks';
 import { PLACEHOLDER_IMAGE_PATH } from '@/shared/constants';
 
 export interface ProductImageProps {
@@ -59,7 +60,7 @@ function canUseInteractiveZoom(event: ReactPointerEvent<HTMLDivElement>): boolea
   }
   return (
     window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
-    !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    !prefersReducedMotionNow()
   );
 }
 

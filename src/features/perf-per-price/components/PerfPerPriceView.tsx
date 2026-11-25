@@ -109,7 +109,10 @@ function AwardWinnerCard({
               </span>
               <span className="font-mono text-xs tabular-nums text-ink-muted">
                 {winner.score.normalized !== null
-                  ? `${formatNumberVi(winner.score.normalized, 1)} điểm (${formatNumberVi(winner.perfPerPrice, 2)}/tr)`
+                  ? VI_MESSAGES.tools.specs.scoreAndPerfPerPrice(
+                      formatNumberVi(winner.score.normalized, 1),
+                      formatNumberVi(winner.perfPerPrice, 2),
+                    )
                   : formatNumberVi(winner.score.raw)}
               </span>
             </div>
@@ -144,21 +147,21 @@ function AwardWinnerCard({
           {winner.category === 'cpu' ? (
             <>
               <div>
-                <span className="text-ink-muted">Socket: </span>
+                <span className="text-ink-muted">{VI_MESSAGES.tools.specs.socket}: </span>
                 <span className="font-semibold text-ink">{winner.specs.socket}</span>
               </div>
               <div>
-                <span className="text-ink-muted">Nhân/Luồng: </span>
+                <span className="text-ink-muted">{VI_MESSAGES.tools.specs.coresThreads}: </span>
                 <span className="font-semibold text-ink">
                   {winner.specs.coresTotal}/{winner.specs.threadsTotal}
                 </span>
               </div>
               <div>
-                <span className="text-ink-muted">PSU Max: </span>
+                <span className="text-ink-muted">{VI_MESSAGES.tools.specs.psuMax}: </span>
                 <span className="font-semibold text-ink">{winner.specs.psuPowerW} W</span>
               </div>
               <div>
-                <span className="text-ink-muted">L3 Cache: </span>
+                <span className="text-ink-muted">{VI_MESSAGES.tools.specs.l3Cache}: </span>
                 <span className="font-semibold text-ink">
                   {formatNumberVi(
                     winner.specs.l3CacheMb ?? 0,
@@ -171,21 +174,22 @@ function AwardWinnerCard({
           ) : (
             <>
               <div>
-                <span className="text-ink-muted">VRAM: </span>
+                <span className="text-ink-muted">{VI_MESSAGES.tools.specs.vram}: </span>
                 <span className="font-semibold text-ink">{winner.specs.vramGb} GB</span>
               </div>
               <div>
-                <span className="text-ink-muted">TBP: </span>
+                <span className="text-ink-muted">{VI_MESSAGES.tools.specs.tbp}: </span>
                 <span className="font-semibold text-ink">{winner.specs.tbpW} W</span>
               </div>
               <div>
-                <span className="text-ink-muted">Dài: </span>
+                <span className="text-ink-muted">{VI_MESSAGES.tools.specs.length}: </span>
                 <span className="font-semibold text-ink">{winner.specs.lengthMm} mm</span>
               </div>
               <div>
-                <span className="text-ink-muted">Độ dày: </span>
+                <span className="text-ink-muted">{VI_MESSAGES.tools.specs.thickness}: </span>
                 <span className="font-semibold text-ink">
-                  {formatNumberVi(winner.specs.slotThickness ?? 0, 1)} slot
+                  {formatNumberVi(winner.specs.slotThickness ?? 0, 1)}{' '}
+                  {VI_MESSAGES.tools.specs.slotUnit}
                 </span>
               </div>
             </>

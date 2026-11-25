@@ -3,7 +3,7 @@ import { jsonWithHeaders, parseJsonBody, withHandler } from '@/server/http/handl
 import {
   createAdminLegacyCpu,
   listAdminLegacyCpus,
-} from '@/server/services/admin-catalog.service';
+} from '@/server/services/admin-legacy-cpus.service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

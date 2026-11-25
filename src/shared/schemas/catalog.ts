@@ -21,10 +21,6 @@ export const categorySchema = z.enum(['cpu', 'gpu']);
 export const chipVendorSchema = z.enum(['intel', 'amd', 'nvidia']);
 export const productSortSchema = z.enum(['default', 'price_asc', 'price_desc', 'score_desc']);
 
-export const resolveProductsSchema = z.object({
-  ids: z.array(productIdSchema).max(20),
-});
-
 export const searchSuggestQuerySchema = z.object({
   q: z.string().trim().min(SEARCH_SUGGEST_MIN_LEN).max(SEARCH_SUGGEST_MAX_LEN),
 });

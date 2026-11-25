@@ -118,6 +118,3 @@ export async function verifyPassword(password: string, storedHash: string): Prom
 
   return timingSafeEqual(derived, parsed.hash);
 }
-
-export const hashAdminPassword = hashPassword;
-export const verifyAdminPassword = verifyPassword;

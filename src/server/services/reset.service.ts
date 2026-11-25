@@ -4,7 +4,11 @@ import { sql } from 'drizzle-orm';
 import type { AdminResetResponse } from '@/shared/types';
 import { getDb, type DbClient } from '../db/client';
 import { orders } from '../db/schema';
-import { seedCatalog, type SeedStorageConfig } from '../db/seed/seed-catalog';
+import {
+  seedCatalog,
+  TRUNCATE_SAMPLE_TABLES_SQL,
+  type SeedStorageConfig,
+} from '../db/seed/seed-catalog';
 import { purgeAllUploadedImages, type StoragePurgeResult } from '../storage/supabase-storage';
 
 export async function resetSampleData(
@@ -17,9 +21,7 @@ export async function resetSampleData(
       .select({ count: sql<number>`count(*)::int` })
       .from(orders);
 
-    await tx.execute(
-      sql`TRUNCATE TABLE order_status_events, order_items, orders, gpu_variants, cpu_specs, products, gpu_series, legacy_cpus, auth_failures CASCADE`,
-    );
+    await tx.execute(sql.raw(TRUNCATE_SAMPLE_TABLES_SQL));
 
     const seeded = await seedCatalog(tx, storageOverride);
 

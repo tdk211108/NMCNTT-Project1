@@ -4,7 +4,7 @@ import { jsonWithHeaders, parseJsonBody, withHandler } from '@/server/http/handl
 import {
   createAdminGpuSeries,
   listAdminGpuSeries,
-} from '@/server/services/admin-catalog.service';
+} from '@/server/services/admin-gpu-series.service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

@@ -96,7 +96,7 @@ export function PaymentView({ state, actions }: PaymentViewProps) {
         <Card className="flex flex-col items-center gap-4">
           <img
             src={prepared.bankInstructions.qrImageDataUrl}
-            alt="QR chuyển khoản mô phỏng"
+            alt={VI_MESSAGES.checkout.qrImageAlt}
             data-testid={TEST_IDS.checkout.paymentQrImage}
             className="h-56 w-56 rounded-control border-2 border-border-strong bg-white p-2"
           />

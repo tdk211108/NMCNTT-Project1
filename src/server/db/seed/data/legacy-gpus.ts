@@ -63,16 +63,6 @@ export const LEGACY_GPU_SERIES_SEEDS: readonly LegacyGpuSeriesSeed[] = [
     id: "G12", kind: "legacy", name: "NVIDIA RTX 3060 Ti", vendor: "nvidia",
     vramGb: 8, tbpW: 200, passmarkRaw: 20205, passmarkSource: "PassMark", sourceUrl: "https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3060-3060ti/",
   },
-  // Source: https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3060-3060ti/
-  {
-    id: "G13", kind: "legacy", name: "NVIDIA RTX 3060", vendor: "nvidia",
-    vramGb: 12, tbpW: 170, passmarkRaw: 16694, passmarkSource: "PassMark", sourceUrl: "https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3060-3060ti/",
-  },
-  // Source: https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3050/
-  {
-    id: "G14", kind: "legacy", name: "NVIDIA RTX 3050", vendor: "nvidia",
-    vramGb: 8, tbpW: 130, passmarkRaw: 11863, passmarkSource: "PassMark", sourceUrl: "https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3050/",
-  },
   // Source: https://www.nvidia.com/content/nvidiaGDC/zz/en_ZZ/geforce/graphics-cards/rtx-2080-ti.html
   {
     id: "G15", kind: "legacy", name: "NVIDIA RTX 2080 Ti", vendor: "nvidia",
@@ -127,11 +117,6 @@ export const LEGACY_GPU_SERIES_SEEDS: readonly LegacyGpuSeriesSeed[] = [
   {
     id: "G25", kind: "legacy", name: "AMD RX 7700 XT", vendor: "amd",
     vramGb: 12, tbpW: 245, passmarkRaw: 22790, passmarkSource: "PassMark", sourceUrl: "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7700-xt.html",
-  },
-  // Source: https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7600.html
-  {
-    id: "G26", kind: "legacy", name: "AMD RX 7600", vendor: "amd",
-    vramGb: 8, tbpW: 165, passmarkRaw: 16430, passmarkSource: "PassMark", sourceUrl: "https://www.amd.com/en/products/graphics/desktops/radeon/7000-series/amd-radeon-rx-7600.html",
   },
   // Source: https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6900-xt.html
   {
@@ -197,11 +182,6 @@ export const LEGACY_GPU_SERIES_SEEDS: readonly LegacyGpuSeriesSeed[] = [
   {
     id: "G39", kind: "legacy", name: "NVIDIA RTX 3060 8GB", vendor: "nvidia",
     vramGb: 8, tbpW: 170, passmarkRaw: 15238, passmarkSource: "PassMark", sourceUrl: "https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3060-3060ti/",
-  },
-  // Source: https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3050/
-  {
-    id: "G40", kind: "legacy", name: "NVIDIA RTX 3050 6GB", vendor: "nvidia",
-    vramGb: 6, tbpW: 70, passmarkRaw: 10738, passmarkSource: "PassMark", sourceUrl: "https://www.nvidia.com/en-us/geforce/graphics-cards/30-series/rtx-3050/",
   },
   // Source: https://www.nvidia.com/en-us/geforce/graphics-cards/16-series/
   {
@@ -317,11 +297,6 @@ export const LEGACY_GPU_SERIES_SEEDS: readonly LegacyGpuSeriesSeed[] = [
   {
     id: "G63", kind: "legacy", name: "AMD RX 6700", vendor: "amd",
     vramGb: 10, tbpW: 175, passmarkRaw: 18839, passmarkSource: "PassMark", sourceUrl: "https://www.videocardbenchmark.net/gpu.php?gpu=Radeon+RX+6700&id=4564",
-  },
-  // Source: https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6500-xt.html
-  {
-    id: "G64", kind: "legacy", name: "AMD RX 6500 XT", vendor: "amd",
-    vramGb: 4, tbpW: 107, passmarkRaw: 9619, passmarkSource: "PassMark", sourceUrl: "https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6500-xt.html",
   },
   // Source: https://www.amd.com/en/products/graphics/desktops/radeon/6000-series/amd-radeon-rx-6400.html
   {

@@ -3,7 +3,7 @@ import 'server-only';
 import { createHmac } from 'node:crypto';
 import { ipAddress } from '@vercel/functions';
 import type { NextRequest } from 'next/server';
-import { getAuthSecretString } from '../auth/admin-session';
+import { getAuthSecretString } from '../auth/session';
 
 export function getClientIp(request: NextRequest): string {
   const fromVercel = ipAddress(request);

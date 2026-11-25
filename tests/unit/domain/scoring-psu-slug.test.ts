@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   calculatePerfPerPrice,
-  normalizeScore,
   rankByPerfPerPrice,
 } from '@/server/domain/scoring';
 import { estimatePsuWattage } from '@/server/domain/psu';
@@ -12,13 +11,7 @@ import {
 } from '@/server/domain/slug';
 
 describe('domain/scoring, psu, slug', () => {
-  it('normalizes PassMark scores and computes performance-per-price rankings', () => {
-    expect(normalizeScore(100, null)).toBeNull();
-    expect(normalizeScore(100, 0)).toBeNull();
-    expect(normalizeScore(0, 50000)).toBeNull();
-    expect(normalizeScore(50000, 50000)).toBe(100);
-    expect(normalizeScore(25000, 50000)).toBe(50);
-
+  it('computes performance-per-price rankings', () => {
     expect(calculatePerfPerPrice(87.3, 10_000_000)).toBe(8.73);
 
     const ranked = rankByPerfPerPrice(

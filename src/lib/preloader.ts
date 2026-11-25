@@ -313,10 +313,15 @@ export async function preloadEssentialAssets({
     return audioHandle.promise;
   });
 
-  videoHandle = waitForVideoReady(HERO_VIDEO_PATH, prefersReducedMotion, (ratio) => {
-    weights.video = Math.max(weights.video, ratio);
+  if (pathname === '/') {
+    videoHandle = waitForVideoReady(HERO_VIDEO_PATH, prefersReducedMotion, (ratio) => {
+      weights.video = Math.max(weights.video, ratio);
+      emit();
+    });
+  } else {
+    weights.video = 1;
     emit();
-  });
+  }
 
   const allWork = Promise.allSettled([corePromise, dataAndAudioPromise, videoHandle.promise]);
   const failsafe = new Promise<void>((resolve) => {

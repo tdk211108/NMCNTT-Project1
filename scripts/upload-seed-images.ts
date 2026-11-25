@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm';
 import { createDbConnection } from '../src/server/db/client';
 import { products } from '../src/server/db/schema';
 import { buildSeedImageUrl } from '../src/server/db/seed/seed-catalog';
+import { resolveStorageConfig } from '../src/server/storage/supabase-storage';
 import { SEED_IMAGE_PREFIX } from '../src/shared/constants';
 import { loadProjectEnv } from './lib/load-env';
 
@@ -100,26 +101,20 @@ async function syncSeedProductUrls(
 async function main(): Promise<void> {
   loadProjectEnv();
 
-  const supabaseUrl = (process.env.SUPABASE_URL ?? '').trim().replace(/\/+$/, '');
-  const secretKey = (process.env.SUPABASE_SECRET_KEY ?? '').trim();
-  const bucket = (process.env.SUPABASE_STORAGE_BUCKET ?? 'product-images').trim();
-
-  if (!supabaseUrl || !secretKey) {
-    throw new Error('SUPABASE_URL and SUPABASE_SECRET_KEY must be set in .env.');
-  }
+  const { supabaseUrl, secretKey, bucket } = resolveStorageConfig();
 
   const supabase = createClient(supabaseUrl, secretKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const seedDir = path.join(process.cwd(), 'seed-images');
+  const seedDir = path.join(process.cwd(), 'data', 'seed', 'images');
   const entries = (await readdir(seedDir, { withFileTypes: true }))
     .filter((entry) => entry.isFile())
     .map((entry) => entry.name)
     .sort();
 
   if (entries.length === 0) {
-    throw new Error('No files found inside seed-images/.');
+    throw new Error('No files found inside data/seed/images/.');
   }
 
   const hashes: Record<string, string> = {};
