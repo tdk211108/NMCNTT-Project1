@@ -3,16 +3,19 @@ import { OAUTH_TX_COOKIE } from '@/shared/constants';
 import { oauthProviderSchema } from '@/shared/schemas';
 import {
   buildOAuthCallbackUrl,
+  clearFacebookPendingCookie,
   clearOAuthTxCookie,
   exchangeFacebookCode,
   exchangeGoogleCode,
   getOAuthCredentials,
   sanitizeNextPath,
+  setFacebookPendingCookie,
+  signFacebookPendingToken,
   verifyOAuthTxToken,
 } from '@/server/auth/oauth';
 import { readCookieFromRequest, setSessionCookie, signSessionToken } from '@/server/auth/session';
 import { resolveDeploymentOrigin } from '@/server/security/origin-check';
-import { upsertOAuthUser } from '@/server/services/auth.service';
+import { resolveFacebookOAuthLogin, upsertOAuthUser } from '@/server/services/auth.service';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -81,11 +84,36 @@ export async function GET(
             credentials,
           });
 
-    const user = await upsertOAuthUser(profile);
-    const sessionToken = await signSessionToken(user);
+    if (provider === 'google') {
+      const user = await upsertOAuthUser(profile);
+      const sessionToken = await signSessionToken(user);
 
-    const response = redirectWithClearedTx(new URL(tx.next, origin));
-    setSessionCookie(response, sessionToken, user.role);
+      const response = redirectWithClearedTx(new URL(tx.next, origin));
+      setSessionCookie(response, sessionToken, user.role);
+      clearFacebookPendingCookie(response);
+      return response;
+    }
+
+    const resolution = await resolveFacebookOAuthLogin(profile);
+    if (resolution.status === 'authenticated') {
+      const sessionToken = await signSessionToken(resolution.user);
+      const response = redirectWithClearedTx(new URL(tx.next, origin));
+      setSessionCookie(response, sessionToken, resolution.user.role);
+      clearFacebookPendingCookie(response);
+      return response;
+    }
+
+    const pendingToken = await signFacebookPendingToken({
+      providerAccountId: profile.providerAccountId,
+      displayName: profile.displayName,
+      avatarUrl: profile.avatarUrl,
+      next: tx.next,
+    });
+    const verifyUrl = new URL(tx.next, origin);
+    verifyUrl.searchParams.set('authStep', 'facebook_email');
+
+    const response = redirectWithClearedTx(verifyUrl);
+    setFacebookPendingCookie(response, pendingToken);
     return response;
   } catch (error) {
     console.error(`[oauth/${provider}] callback failed:`, error);

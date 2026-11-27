@@ -249,7 +249,8 @@ pc-hardware-store/
 │   └── vendor-address-data.ts        # refreshes src/data/vn-admin-units.json from upstream
 ├── public/
 │   ├── logo.png                      # 1200x1200 OpenGraph brand artwork
-│   └── icons/ (zalo.svg, facebook.svg, github.svg, music.svg, logo-mark.png, logo-mark-light.png, placeholder-product.svg)
+│   ├── fb.svg, zalo.svg              # Facebook & Zalo floating action artwork
+│   └── icons/ (github.svg, music.svg, logo-mark.png, logo-mark-light.png, placeholder-product.svg)
 ├── tests/
 │   ├── helpers/                      # test-db.ts: local Postgres schema reset + pool helper
 │   ├── unit/                         # vitest (fileParallelism: false): domain/, infra/, services/, client/, root unit tests
@@ -1050,25 +1051,34 @@ Conventions: JSON over HTTPS. Success returns the documented body, errors return
 | `GET /api/address/provinces` | none | `{ code, name }[]` (sorted with Vietnamese collation) | none |
 | `GET /api/address/provinces/{code}/wards` | none | `{ code, name }[]` | 404 |
 
-Default sort (`sort=default`): vendor, then normalized score descending. The UI groups cards into vendor sections only in default sort, and shows a flat list for any explicit sort **[Call]**. Full-text search (`/search?q=`) queries `GET /api/products?category=cpu&q=...` and `GET /api/products?category=gpu&q=...` in parallel, keeping `category` required on `GET /api/products` **[Call]**. There is no pagination: the catalog is under 200 rows, and the API caps results at 200.
+Default sort (`sort=default`): vendor, then normalized score descending. The UI groups cards into vendor sections only in default sort, and shows a flat list for any explicit sort **[Call]**. Full-text search (`/search?q=`) queries `GET /api/products?category=cpu&q=...` and `GET /api/products?category=gpu&q=...` in parallel, keeping `category` required on `GET /api/products` **[Call]**. `GET /api/products` caps raw fetches at `CATALOG_MAX_RESULTS` (`500`) and supports server-side pagination via `page` / `pageSize` (GPU `40`/page, Search `12`/page) or per-vendor CPU slicing via `perVendor=true` & `vendorPage` (`16`/vendor/page), returning `vendorTotals` and `pagination`.
 
-### 9.2 Auth, cart, checkout, orders
+### 9.2 Auth, profile, cart, checkout, orders
 
 | Method and path | Input | Output | Errors |
 | --- | --- | --- | --- |
 | `GET /api/auth/session` | none | `AuthSessionResponse` (`{ user, providers }`) | never 401 |
 | `POST /api/auth/login` | `{ username, password }` + same-origin | 200 `{ user }` + sets `auth_session` cookie (`admin` if `username === 'admin'`) | 401 `UNAUTHORIZED`, 429 `RATE_LIMITED` |
-| `POST /api/auth/register` | `{ username, displayName, password }` + same-origin | 201 `{ user }` + sets `auth_session` cookie | 400 `VALIDATION_ERROR`, 409 `USERNAME_TAKEN`, 429 |
+| `POST /api/auth/register/request-otp` | `{ username, displayName, email, password }` + same-origin | 200 `OtpRequestResponse` | 400 `VALIDATION_ERROR`, 409 `USERNAME_TAKEN` / `EMAIL_TAKEN`, 429 |
+| `POST /api/auth/register/verify-otp` | `{ username, displayName, email, password, code }` + same-origin | 201 `{ user }` + sets `auth_session` cookie | 400 `OTP_INVALID` / `OTP_EXPIRED`, 409 `USERNAME_TAKEN` / `EMAIL_TAKEN`, 429 |
+| `POST /api/auth/forgot-password/request-otp` | `{ email }` + same-origin | 200 `OtpRequestResponse` | 400 `VALIDATION_ERROR` / `OAUTH_ONLY_ACCOUNT`, 429 |
+| `POST /api/auth/forgot-password/reset` | `{ email, code, newPassword }` + same-origin | 200 `{ ok: true }` | 400 `OTP_INVALID` / `OTP_EXPIRED` / `OAUTH_ONLY_ACCOUNT`, 429 |
 | `POST /api/auth/logout` | same-origin | 204 (clears `auth_session` & `admin_session`) | 403 `FORBIDDEN_ORIGIN` |
 | `GET /api/auth/oauth/{provider}` | `?next=` | 302 to Google/Facebook + `oauth_tx` cookie | redirects `?authError=` on missing config |
-| `GET /api/auth/oauth/{provider}/callback` | `code`, `state` | 302 to `next` + sets `auth_session` cookie | redirects `?authError=` on cancel/invalid state |
+| `GET /api/auth/oauth/{provider}/callback` | `code`, `state` | 302 to `next` + sets `auth_session` cookie (or `fb_pending` when Facebook lacks verified email) | redirects `?authError=` on cancel/invalid state |
+| `GET / DELETE /api/auth/oauth/facebook/pending` | cookie `fb_pending` (same-origin on `DELETE`) | `{ pending }` or `{ ok: true }` | 403 `FORBIDDEN_ORIGIN` (`DELETE`) |
+| `POST /api/auth/oauth/facebook/request-otp` | cookie `fb_pending` + `{ email }` + same-origin | 200 `OtpRequestResponse` | 401 `UNAUTHORIZED`, 400, 429 |
+| `POST /api/auth/oauth/facebook/verify-otp` | cookie `fb_pending` + `{ email, code }` + same-origin | 200 `{ user, next }` + sets `auth_session` & clears `fb_pending` | 401 `UNAUTHORIZED`, 400 `OTP_INVALID` / `OTP_EXPIRED`, 429 |
+| `GET /api/profile` | customer `auth_session` | `ProfileResponse` (`{ profile, orderStats, orders }`) | 401 `UNAUTHORIZED` |
+| `POST /api/profile/password` | `{ currentPassword, newPassword }` + customer `auth_session` + same-origin | 200 `{ ok: true }` | 400 `INVALID_CURRENT_PASSWORD` / `OAUTH_ONLY_ACCOUNT`, 401, 429 |
 | `POST /api/cart/quote` | `{ items: CartItemInput[] }` (0 to 20) | `CartQuote` (an empty list returns zero totals) | 400 `VALIDATION_ERROR`, 400 `CART_LIMIT_EXCEEDED` |
 | `POST /api/checkout/prepare` | `CheckoutRequest` (auth session + same-origin) | `PrepareResponse` | 401 `UNAUTHORIZED`, 400 `EMPTY_CART`, 400 `VALIDATION_ERROR` (+ `details.fieldErrors`), 409 `PRODUCT_UNAVAILABLE` |
 | `POST /api/orders` | `CheckoutRequest` + header `Idempotency-Key` (auth session + same-origin) | 201 `OrderWithToken` (linked to `user_id`), or 200 replay | 401 `UNAUTHORIZED`, 400, 409 `PRODUCT_UNAVAILABLE`, 409 `IDEMPOTENCY_KEY_REUSED` |
 | `GET /api/orders/mine` | auth session | `CustomerOrderSummary[]` (newest first, max 100) | 401 `UNAUTHORIZED` |
 | `POST /api/orders/lookup` | `{ orderId, phone }` (`orderId` trimmed and upper-cased, phone normalized) | `OrderWithToken` (phone masked) | 404 `ORDER_NOT_FOUND` ("Không tìm thấy đơn hàng với thông tin này", identical for every mismatch), 429 `RATE_LIMITED` |
 | `GET /api/orders/{orderId}` | auth session (`admin` or owning `user_id`) **or** `Authorization: Bearer <orderToken>` | `OrderBoard` | 401 `UNAUTHORIZED` (missing/expired/wrong order), 404 |
-| `POST /api/orders/{orderId}/advance` | `{ expectedStage }`, same auth as above | `OrderBoard` | 409 `STALE_STAGE` (+ current board), 409 `ORDER_COMPLETED`, 401 |
+| `POST /api/orders/{orderId}/advance` | `{ expectedStage }`, same-origin + same auth as above | `OrderBoard` | 409 `STALE_STAGE` / `ORDER_CANCELLED` / `ORDER_COMPLETED` (+ current board), 401 |
+| `POST /api/orders/{orderId}/cancel` | same-origin + same auth as above (stage 0 only) | `OrderBoard` | 409 `ORDER_CANCELLED` / `ORDER_CANCEL_NOT_ALLOWED` (+ current board), 401, 404 |
 
 ### 9.3 Admin (all require the admin cookie; mutations also require a same-origin `Origin`)
 

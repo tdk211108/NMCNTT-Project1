@@ -54,14 +54,18 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
-        <nav aria-label="Điều hướng quản trị" className="flex flex-wrap items-center gap-2.5">
+      <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <nav
+          aria-label="Điều hướng quản trị"
+          className="mtx-no-scrollbar flex items-center gap-2.5 overflow-x-auto pb-1 sm:flex-wrap sm:pb-0"
+        >
           {navItems.map((item) => {
             const active = pathname === item.href;
             const { classes } = getButtonClassNames({
               size: 'sm',
               variant: active ? 'primary' : 'outline',
               cyber: true,
+              className: 'shrink-0 whitespace-nowrap',
             });
             return (
               <Link

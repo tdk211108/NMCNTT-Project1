@@ -1,3 +1,5 @@
+'use client';
+
 import {
   ArrowRight,
   Check,
@@ -8,6 +10,8 @@ import {
   Truck,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
+import { AlertDialog } from '@/components/ui/AlertDialog';
 import { AnimatedCopyButton } from '@/components/ui/AnimatedCopyButton';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Badge, Card } from '@/components/ui/Card';
@@ -27,8 +31,10 @@ export type OrderBoardViewProps = ReturnType<typeof useOrderBoardController>;
 export interface OrderBoardPanelProps {
   board: OrderBoard;
   isAdvancing: boolean;
+  isCancelling?: boolean;
   onCopyOrderId: () => void | Promise<void>;
   onAdvanceStage: () => void;
+  onCancelOrder?: () => void | Promise<void>;
   compactHeading?: boolean;
 }
 
@@ -43,10 +49,14 @@ const STAGE_ICONS = [
 export function OrderBoardPanel({
   board,
   isAdvancing,
+  isCancelling = false,
   onCopyOrderId,
   onAdvanceStage,
+  onCancelOrder,
   compactHeading = false,
 }: OrderBoardPanelProps) {
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -80,16 +90,19 @@ export function OrderBoardPanel({
         <div className="grid grid-cols-1 gap-0 sm:grid-cols-5">
           {board.stages.map((entry, idx) => {
             const reached = entry.reachedAt !== null;
-            const current = entry.stage === board.stage;
+            const current = !board.isCancelled && entry.stage === board.stage;
             const hasNext = idx < board.stages.length - 1;
             const nextReached = hasNext && board.stages[idx + 1]?.reachedAt !== null;
             const StageIcon = STAGE_ICONS[entry.stage] ?? Check;
 
-            const iconBoxClasses = current
-              ? 'border-border-strong bg-primary text-primary-fg mtx-shadow-sm'
-              : reached
-                ? 'border-border-strong bg-success text-success-fg'
-                : 'border-border-strong bg-surface-elevated text-ink-muted';
+            const iconBoxClasses =
+              board.isCancelled && entry.stage === 0
+                ? 'border-danger bg-danger/15 text-danger'
+                : current
+                  ? 'border-border-strong bg-primary text-primary-fg mtx-shadow-sm'
+                  : reached
+                    ? 'border-border-strong bg-success text-success-fg'
+                    : 'border-border-strong bg-surface-elevated text-ink-muted';
 
             return (
               <div
@@ -150,7 +163,16 @@ export function OrderBoardPanel({
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-border pt-3">
-          {board.isCompleted ? (
+          {board.isCancelled ? (
+            <Badge
+              variant="danger"
+              data-testid={TEST_IDS.orders.cancelledMessage}
+              className="px-3 py-1.5 text-sm"
+            >
+              {VI_MESSAGES.orders.cancelledBanner}
+              {board.cancelledAt ? ` (${formatDateTimeVi(board.cancelledAt)})` : ''}
+            </Badge>
+          ) : board.isCompleted ? (
             <Badge
               variant="success"
               data-testid={TEST_IDS.orders.completedMessage}
@@ -159,19 +181,60 @@ export function OrderBoardPanel({
               {VI_MESSAGES.orders.completedMessage}
             </Badge>
           ) : (
-            <Button
-              variant="demo"
-              sfx={board.stage === 3 ? 'none' : undefined}
-              isLoading={isAdvancing}
-              data-testid={TEST_IDS.orders.demoAdvance}
-              onClick={onAdvanceStage}
-            >
-              <span>{VI_MESSAGES.orders.demoAdvanceButton}</span>
-              <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
-            </Button>
+            <>
+              <Button
+                variant="demo"
+                sfx={board.stage === 3 ? 'none' : undefined}
+                isLoading={isAdvancing}
+                disabled={isCancelling}
+                className="w-full sm:w-auto"
+                data-testid={TEST_IDS.orders.demoAdvance}
+                onClick={onAdvanceStage}
+              >
+                <span>{VI_MESSAGES.orders.demoAdvanceButton}</span>
+                <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+              </Button>
+              {board.canCancel && onCancelOrder ? (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  cyber={false}
+                  isLoading={isCancelling}
+                  disabled={isAdvancing}
+                  className="min-h-10 w-full sm:w-auto"
+                  data-testid={TEST_IDS.orders.cancelButton}
+                  onClick={() => setConfirmCancelOpen(true)}
+                >
+                  {VI_MESSAGES.orders.cancelButton}
+                </Button>
+              ) : null}
+            </>
           )}
         </div>
       </Card>
+
+      {board.canCancel && onCancelOrder ? (
+        <AlertDialog
+          open={confirmCancelOpen}
+          title={VI_MESSAGES.orders.cancelConfirmTitle}
+          description={VI_MESSAGES.orders.cancelConfirmBody}
+          confirmLabel={VI_MESSAGES.orders.cancelConfirmAction}
+          cancelLabel={VI_MESSAGES.common.close}
+          variant="danger"
+          isConfirming={isCancelling}
+          confirmTestId={TEST_IDS.orders.cancelConfirm}
+          cancelTestId={TEST_IDS.orders.cancelDismiss}
+          onConfirm={async () => {
+            await onCancelOrder();
+            setConfirmCancelOpen(false);
+          }}
+          onCancel={() => {
+            if (!isCancelling) {
+              setConfirmCancelOpen(false);
+            }
+          }}
+        />
+      ) : null}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="flex flex-col gap-2 text-sm lg:col-span-1">
@@ -200,49 +263,73 @@ export function OrderBoardPanel({
 
         <Card className="flex flex-col gap-3 lg:col-span-2">
           <h2 className="font-display text-base font-bold text-ink">{VI_MESSAGES.orders.itemsHeading}</h2>
-          <ResponsiveTableWrapper label={VI_MESSAGES.orders.itemsHeading}>
-            <table className="w-full min-w-[460px] border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b-2 border-border bg-surface-subtle">
-                  <th className="px-3 py-2 font-semibold text-ink-muted">
-                    {VI_MESSAGES.orders.columns.product}
-                  </th>
-                  <th className="px-3 py-2 font-semibold text-ink-muted">
-                    {VI_MESSAGES.cart.unitPriceLabel}
-                  </th>
-                  <th className="px-3 py-2 font-semibold text-ink-muted">
-                    {VI_MESSAGES.cart.quantityLabel}
-                  </th>
-                  <th className="px-3 py-2 font-semibold text-ink-muted">
-                    {VI_MESSAGES.cart.lineTotalLabel}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {board.items.map((item, idx) => (
-                  <tr key={idx} className="border-b border-border last:border-b-0">
-                    <td className="px-3 py-2 font-medium text-ink">
-                      <div className="flex items-center gap-2.5">
-                        <ProductImage
-                          src={item.imageUrl}
-                          alt={item.productName}
-                          className="h-11 w-11 shrink-0 border border-border-strong object-contain p-0.5"
-                        />
-                        <span>{item.productName}</span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 font-mono tabular-nums text-ink-muted">
-                      {formatVnd(item.unitPriceVnd)}
-                    </td>
-                    <td className="px-3 py-2 font-mono tabular-nums text-ink">{item.quantity}</td>
-                    <td className="px-3 py-2 font-mono font-semibold tabular-nums text-ink">
-                      {formatVnd(item.lineTotalVnd)}
-                    </td>
+
+          <div className="divide-y divide-border rounded-card border-2 border-border-strong bg-surface-subtle/50 sm:hidden">
+            {board.items.map((item, idx) => (
+              <div key={idx} className="flex items-start gap-3 p-3 text-sm">
+                <ProductImage
+                  src={item.imageUrl}
+                  alt={item.productName}
+                  className="h-12 w-12 shrink-0 border border-border-strong object-contain p-0.5"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-ink">{item.productName}</p>
+                  <div className="mt-1 flex flex-wrap items-center justify-between gap-2 font-mono text-xs tabular-nums">
+                    <span className="text-ink-muted">
+                      {formatVnd(item.unitPriceVnd)} x {item.quantity}
+                    </span>
+                    <span className="font-semibold text-ink">{formatVnd(item.lineTotalVnd)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden sm:block">
+            <ResponsiveTableWrapper label={VI_MESSAGES.orders.itemsHeading}>
+              <table className="w-full min-w-[460px] border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b-2 border-border bg-surface-subtle">
+                    <th className="px-3 py-2 font-semibold text-ink-muted">
+                      {VI_MESSAGES.orders.columns.product}
+                    </th>
+                    <th className="px-3 py-2 font-semibold text-ink-muted">
+                      {VI_MESSAGES.cart.unitPriceLabel}
+                    </th>
+                    <th className="px-3 py-2 font-semibold text-ink-muted">
+                      {VI_MESSAGES.cart.quantityLabel}
+                    </th>
+                    <th className="px-3 py-2 font-semibold text-ink-muted">
+                      {VI_MESSAGES.cart.lineTotalLabel}
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </ResponsiveTableWrapper>
+                </thead>
+                <tbody>
+                  {board.items.map((item, idx) => (
+                    <tr key={idx} className="border-b border-border last:border-b-0">
+                      <td className="px-3 py-2 font-medium text-ink">
+                        <div className="flex items-center gap-2.5">
+                          <ProductImage
+                            src={item.imageUrl}
+                            alt={item.productName}
+                            className="h-11 w-11 shrink-0 border border-border-strong object-contain p-0.5"
+                          />
+                          <span>{item.productName}</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 font-mono tabular-nums text-ink-muted">
+                        {formatVnd(item.unitPriceVnd)}
+                      </td>
+                      <td className="px-3 py-2 font-mono tabular-nums text-ink">{item.quantity}</td>
+                      <td className="px-3 py-2 font-mono font-semibold tabular-nums text-ink">
+                        {formatVnd(item.lineTotalVnd)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </ResponsiveTableWrapper>
+          </div>
 
           <div className="flex flex-col gap-1 border-t-2 border-border pt-3 text-sm">
             <div className="flex justify-between">
@@ -354,8 +441,10 @@ export function OrderBoardView({ state, actions }: OrderBoardViewProps) {
       <OrderBoardPanel
         board={state.board}
         isAdvancing={state.isAdvancing}
+        isCancelling={state.isCancelling}
         onCopyOrderId={actions.onCopyOrderId}
         onAdvanceStage={actions.onAdvanceStage}
+        onCancelOrder={actions.onCancelOrder}
       />
     </div>
   );

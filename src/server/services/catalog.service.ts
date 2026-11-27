@@ -9,8 +9,10 @@ import {
   LANDING_FEATURED_GPU_IDS,
   PACKAGING_DEFAULT,
   WARRANTY_MONTHS,
+  compareCategoryVendors,
 } from '@/shared/constants';
 import type {
+  Category,
   ChipVendor,
   CpuVendor,
   Facets,
@@ -71,18 +73,10 @@ function buildCpuSummary(row: {
 function buildGpuSummary(row: {
   vramGb: number;
   memoryType: string;
-  boostClockMhz: number;
-  tbpW: number;
 }): SpecItem[] {
   return [
     { key: 'vram', label: 'VRAM', value: `${formatViNumber(row.vramGb)} GB` },
     { key: 'memoryType', label: 'Loại bộ nhớ', value: row.memoryType },
-    {
-      key: 'boostClock',
-      label: 'Xung Boost',
-      value: `${formatViNumber(row.boostClockMhz)} MHz`,
-    },
-    { key: 'tbp', label: 'TBP', value: `${formatViNumber(row.tbpW)} W` },
   ];
 }
 
@@ -92,21 +86,31 @@ async function computeCategoryFacets(
   category: 'cpu' | 'gpu',
   db: DbClient,
 ): Promise<Facets> {
-  const rows = await db
-    .select({
-      vendor: storefrontProductsV.vendor,
-      priceVnd: storefrontProductsV.priceVnd,
-      socket: storefrontProductsV.socket,
-      vramGb: storefrontProductsV.vramGb,
-      aibBrand: storefrontProductsV.aibBrand,
-    })
-    .from(storefrontProductsV)
-    .where(eq(storefrontProductsV.category, category));
+  const [rows, shopMaxRows] = await Promise.all([
+    db
+      .select({
+        vendor: storefrontProductsV.vendor,
+        priceVnd: storefrontProductsV.priceVnd,
+        socket: storefrontProductsV.socket,
+        vramGb: storefrontProductsV.vramGb,
+        aibBrand: storefrontProductsV.aibBrand,
+      })
+      .from(storefrontProductsV)
+      .where(eq(storefrontProductsV.category, category)),
+    db
+      .select({
+        maxPrice: sql<number | null>`MAX(${storefrontProductsV.priceVnd})::int`,
+      })
+      .from(storefrontProductsV),
+  ]);
+
+  const shopMaxPriceVnd = shopMaxRows[0]?.maxPrice ?? null;
 
   if (rows.length === 0) {
     return {
       vendors: [],
       priceRange: null,
+      shopMaxPriceVnd,
       ...(category === 'cpu' ? { sockets: [] } : { vramGb: [], aibBrands: [] }),
     };
   }
@@ -128,12 +132,13 @@ async function computeCategoryFacets(
     if (row.aibBrand) aibSet.add(row.aibBrand);
   }
 
-  const vendors = [...vendorsSet].sort((a, b) => a.localeCompare(b));
+  const vendors = [...vendorsSet].sort((a, b) => compareCategoryVendors(category, a, b));
 
   if (category === 'cpu') {
     return {
       vendors,
       priceRange: { min: minPrice, max: maxPrice },
+      shopMaxPriceVnd,
       sockets: [...socketsSet].sort((a, b) => viCollator.compare(a, b)),
     };
   }
@@ -141,12 +146,25 @@ async function computeCategoryFacets(
   return {
     vendors,
     priceRange: { min: minPrice, max: maxPrice },
+    shopMaxPriceVnd,
     vramGb: [...vramSet].sort((a, b) => a - b),
     aibBrands: [...aibSet].sort((a, b) => viCollator.compare(a, b)),
   };
 }
 
-function buildSortOrder(sort: ProductListQuery['sort']) {
+function buildVendorSortExpr(category: Category) {
+  if (category === 'gpu') {
+    return sql<number>`CASE ${storefrontProductsV.vendor}
+      WHEN 'nvidia' THEN 0
+      WHEN 'amd' THEN 1
+      WHEN 'intel' THEN 2
+      ELSE 3
+    END`;
+  }
+  return asc(storefrontProductsV.vendor);
+}
+
+function buildSortOrder(sort: ProductListQuery['sort'], category: Category = 'cpu') {
   switch (sort) {
     case 'price_asc':
       return [asc(storefrontProductsV.priceVnd), asc(storefrontProductsV.id)];
@@ -161,7 +179,7 @@ function buildSortOrder(sort: ProductListQuery['sort']) {
     case 'default':
     default:
       return [
-        asc(storefrontProductsV.vendor),
+        buildVendorSortExpr(category),
         desc(storefrontProductsV.normalizedScore),
         asc(storefrontProductsV.priceVnd),
         asc(storefrontProductsV.id),
@@ -241,8 +259,6 @@ async function queryGpuCardRows(
       normalizedScore: storefrontProductsV.normalizedScore,
       vramGb: gpuSeries.vramGb,
       memoryType: gpuSeries.memoryType,
-      boostClockMhz: gpuSeries.boostClockMhz,
-      tbpW: gpuSeries.tbpW,
     })
     .from(storefrontProductsV)
     .innerJoin(gpuSeries, eq(gpuSeries.id, storefrontProductsV.seriesId))
@@ -269,8 +285,6 @@ async function queryGpuCardRows(
       summary: buildGpuSummary({
         vramGb: row.vramGb,
         memoryType: row.memoryType ?? '',
-        boostClockMhz: row.boostClockMhz ?? 0,
-        tbpW: row.tbpW,
       }),
     },
   }));
@@ -312,14 +326,14 @@ export async function listProducts(
     conditions.push(sql`${storefrontProductsV.searchText} ILIKE ${pattern}`);
   }
 
-  const orderBy = buildSortOrder(query.sort);
+  const orderBy = buildSortOrder(query.sort, query.category);
   const whereClause = and(...conditions);
   const defaultPageSize =
     query.category === 'cpu' ? CPU_PER_BRAND_PAGE_SIZE : GPU_PAGE_SIZE;
 
   if (query.perVendor) {
     const pageSize = query.pageSize ?? defaultPageSize;
-    const [facets, vendorCountRows] = await Promise.all([
+    const [facets, rawVendorCountRows] = await Promise.all([
       facetsPromise,
       db
         .select({
@@ -331,6 +345,10 @@ export async function listProducts(
         .groupBy(storefrontProductsV.vendor)
         .orderBy(asc(storefrontProductsV.vendor)),
     ]);
+
+    const vendorCountRows = [...rawVendorCountRows].sort((a, b) =>
+      compareCategoryVendors(query.category, a.vendor, b.vendor),
+    );
 
     const vendorTotals: Partial<Record<ChipVendor, number>> = {};
     let total = 0;
@@ -622,8 +640,6 @@ export async function getProductDetail(
     summary: buildGpuSummary({
       vramGb: series.vramGb,
       memoryType: series.memoryType ?? '',
-      boostClockMhz: series.boostClockMhz ?? 0,
-      tbpW: series.tbpW,
     }),
     specGroups,
     series: { id: series.id, name: series.name },

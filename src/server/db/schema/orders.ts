@@ -42,6 +42,7 @@ export const orders = pgTable(
     shippingFeeVnd: bigint('shipping_fee_vnd', { mode: 'number' }).notNull(),
     totalVnd: bigint('total_vnd', { mode: 'number' }).notNull(),
     statusStage: smallint('status_stage').notNull().default(0),
+    cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -53,6 +54,10 @@ export const orders = pgTable(
     check('orders_shipping_fee_chk', sql`${t.shippingFeeVnd} IN (0, 50000)`),
     check('orders_total_sum_chk', sql`${t.totalVnd} = ${t.subtotalVnd} + ${t.shippingFeeVnd}`),
     check('orders_status_stage_chk', sql`${t.statusStage} BETWEEN 0 AND 4`),
+    check(
+      'orders_cancelled_stage_chk',
+      sql`${t.cancelledAt} IS NULL OR ${t.statusStage} = 0`,
+    ),
     index('orders_created_at_idx').on(t.createdAt.desc()),
     index('orders_user_created_idx').on(t.userId, t.createdAt.desc()),
   ],

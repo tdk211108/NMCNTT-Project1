@@ -16,7 +16,7 @@
   --color-surface-elevated: #22252C;
 
   --color-ink: #F4F5F7;
-  --color-ink-muted: #9AA0AC;
+  --color-ink-muted: #B4BAC6;
 
   --color-border: #383C46;
   --color-border-strong: #8E939B;
@@ -169,45 +169,43 @@
 }
 
 .hero-video-mask {
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    rgba(0, 0, 0, 0.45) 5%,
-    #000000 10%
-  );
-  mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    rgba(0, 0, 0, 0.45) 5%,
-    #000000 10%
-  );
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 .hero-video-fade {
-  background-image: linear-gradient(
-    to right,
-    #000000 0%,
-    rgba(0, 0, 0, 0.88) 48%,
-    rgba(0, 0, 0, 0.45) 78%,
-    rgba(0, 0, 0, 0.15) 100%
-  );
+  background-image:
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.24) 0%,
+      rgba(0, 0, 0, 0) 24%
+    ),
+    linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.94) 0%,
+      rgba(0, 0, 0, 0.78) 32%,
+      rgba(0, 0, 0, 0.36) 58%,
+      rgba(0, 0, 0, 0.06) 82%,
+      rgba(0, 0, 0, 0) 100%
+    );
 }
 
 @media (min-width: 768px) {
   .hero-video-fade {
     background-image:
       radial-gradient(
-        ellipse 34% 36% at 18% 50%,
-        rgba(0, 0, 0, 0.9) 0%,
-        rgba(0, 0, 0, 0.56) 58%,
+        ellipse 32rem 44% at 16rem 56%,
+        rgba(0, 0, 0, 0.72) 0%,
+        rgba(0, 0, 0, 0.34) 62%,
         rgba(0, 0, 0, 0) 100%
       ),
       linear-gradient(
         to right,
-        #000000 0%,
-        #000000 16%,
-        rgba(0, 0, 0, 0.65) 21%,
-        rgba(0, 0, 0, 0) 26%
+        rgba(0, 0, 0, 0.88) 0%,
+        rgba(0, 0, 0, 0.64) min(24rem, 32vw),
+        rgba(0, 0, 0, 0.22) min(44rem, 52vw),
+        rgba(0, 0, 0, 0.04) min(62rem, 72vw),
+        rgba(0, 0, 0, 0) 100%
       );
   }
 }
@@ -293,9 +291,108 @@
   scrollbar-color: var(--color-border-strong) transparent;
 }
 
+@media (max-width: 767px) {
+  html {
+    scroll-padding-top: calc(4rem + env(safe-area-inset-top, 0px));
+    scroll-padding-bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 @media (min-width: 768px) {
   html {
     scroll-padding-top: 5rem;
+  }
+}
+
+.mtx-no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mtx-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Native top-layer swipeable mobile navigation drawer */
+.mtx-drawer {
+  --drawer-width: min(22rem, 89dvw, calc(100dvw - 20px));
+  --drawer-backdrop: 0;
+  inset: 0;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.mtx-drawer::backdrop {
+  background-color: #000000;
+  opacity: calc(var(--drawer-backdrop) * 0.72);
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.mtx-drawer-scroller {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--drawer-width) 100%;
+  overflow-x: scroll;
+  overscroll-behavior: none;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+}
+
+.mtx-drawer-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mtx-drawer-scroller {
+    scroll-behavior: smooth;
+  }
+}
+
+.mtx-drawer-scroller::after {
+  content: '';
+  scroll-snap-align: end;
+  scroll-initial-target: nearest;
+}
+
+.mtx-drawer-sheet {
+  height: 100svh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-align: start;
+}
+
+@supports (animation-timeline: scroll()) {
+  @property --drawer-backdrop {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 0;
+  }
+
+  .mtx-drawer {
+    timeline-scope: --mtx-drawer-fade;
+    animation: mtx-drawer-backdrop-fade linear both;
+    animation-timeline: --mtx-drawer-fade;
+  }
+
+  .mtx-drawer-scroller {
+    scroll-timeline: --mtx-drawer-fade x;
+  }
+
+  @keyframes mtx-drawer-backdrop-fade {
+    0% {
+      --drawer-backdrop: 1;
+    }
+    100% {
+      --drawer-backdrop: 0;
+    }
   }
 }
 
@@ -350,6 +447,11 @@ dialog::backdrop {
   overscroll-behavior: contain;
 }
 
+dialog.image-lightbox-dialog::backdrop {
+  background-color: rgba(10, 11, 14, 0.72);
+  backdrop-filter: blur(2px);
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
@@ -358,6 +460,10 @@ dialog::backdrop {
 
 .product-card-zoom-img {
   transition: transform 180ms var(--ease-out-ui);
+}
+
+.zoom-frame-interactive {
+  cursor: zoom-in;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -392,13 +498,15 @@ dialog::backdrop {
 @keyframes zalo-pulse-ring {
   0% {
     transform: scale(1);
-    opacity: 0.78;
+    opacity: 0.72;
+    animation-timing-function: cubic-bezier(0.2, 0.65, 0.4, 1);
   }
-  70% {
-    opacity: 0.24;
+  48% {
+    transform: scale(1.72);
+    opacity: 0;
   }
   100% {
-    transform: scale(1.92);
+    transform: scale(1.72);
     opacity: 0;
   }
 }
@@ -415,11 +523,12 @@ dialog::backdrop {
   }
 
   .zalo-pulse-ring {
-    animation: zalo-pulse-ring 2.8s var(--ease-out-ui) infinite;
+    opacity: 0;
+    animation: zalo-pulse-ring 2.8s linear infinite backwards;
   }
 
   .zalo-pulse-ring-delay {
-    animation-delay: 1.4s;
+    animation-delay: 0.42s;
   }
 }
 
@@ -600,10 +709,18 @@ dialog::backdrop {
 @media (max-width: 640px) {
   .fp-meta {
     grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding-inline: 0.875rem;
+  }
+
+  .fp-cap {
+    grid-column: 1 / -1;
   }
 
   .fp-count {
-    display: none;
+    display: block;
+    text-align: left;
   }
 }
 
@@ -1073,4 +1190,65 @@ dialog::backdrop {
   background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-signal) 100%);
   border-radius: 0px;
   transition: inline-size 180ms var(--ease-out-ui);
+}
+
+/* Password visibility toggle monkey (3D hands + expression, GPU transform/opacity only) */
+.monkey-hands {
+  perspective: 80px;
+}
+
+.monkey-hands-svg {
+  transform-origin: 50% 100%;
+  transition:
+    transform 200ms var(--ease-out-ui),
+    opacity 140ms var(--ease-out-ui);
+}
+
+.monkey-toggle-btn[data-visible="true"] .monkey-hands-svg {
+  transform: perspective(100px) rotateX(-85deg) translateY(4px);
+  opacity: 0;
+}
+
+.monkey-mouth-closed,
+.monkey-mouth-open {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    transform 180ms var(--ease-out-ui),
+    opacity 140ms var(--ease-out-ui);
+}
+
+.monkey-mouth-open {
+  opacity: 0;
+  transform: scale(0.85);
+}
+
+.monkey-toggle-btn[data-visible="true"] .monkey-mouth-closed {
+  opacity: 0;
+  transform: scale(0.85);
+}
+
+.monkey-toggle-btn[data-visible="true"] .monkey-mouth-open {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .monkey-hands-svg,
+  .monkey-mouth-closed,
+  .monkey-mouth-open {
+    transition: opacity 100ms linear;
+  }
+
+  .monkey-toggle-btn[data-visible="true"] .monkey-hands-svg,
+  .monkey-toggle-btn[data-visible="true"] .monkey-mouth-closed,
+  .monkey-toggle-btn[data-visible="true"] .monkey-mouth-open {
+    transform: none;
+  }
+}
+
+/* Suppress Edge/Windows native password reveal eye so only MonkeyPasswordToggle renders */
+.password-input-native::-ms-reveal,
+.password-input-native::-ms-clear {
+  display: none;
 }

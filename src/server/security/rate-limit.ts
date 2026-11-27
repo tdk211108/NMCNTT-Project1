@@ -10,7 +10,14 @@ import type { DbExecutor } from '../db/client';
 import { authFailures } from '../db/schema';
 import { AppError } from '../http/errors';
 
-export type AuthFailureScope = 'order_lookup' | 'admin_login' | 'user_login' | 'user_register';
+export type AuthFailureScope =
+  | 'order_lookup'
+  | 'admin_login'
+  | 'user_login'
+  | 'user_register'
+  | 'otp_request'
+  | 'otp_verify'
+  | 'password_change';
 
 /**
  * Sliding 15-minute rate-limit pre-check. Rejects before credential/order checks

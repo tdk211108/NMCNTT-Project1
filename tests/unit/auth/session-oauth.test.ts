@@ -3,15 +3,20 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   buildFacebookAuthUrl,
   buildGoogleAuthUrl,
+  clearFacebookPendingCookie,
   computeFacebookAppSecretProof,
   createPkcePair,
   exchangeFacebookCode,
   exchangeGoogleCode,
   sanitizeHttpsUrl,
   sanitizeNextPath,
+  setFacebookPendingCookie,
+  signFacebookPendingToken,
   signOAuthTxToken,
+  verifyFacebookPendingToken,
   verifyOAuthTxToken,
 } from '@/server/auth/oauth';
+import { generateOtpCode, hashOtpCode, verifyOtpCodeHash } from '@/server/auth/otp';
 import {
   clearSessionCookie,
   createAdminSessionUser,
@@ -22,7 +27,7 @@ import {
   signSessionToken,
   verifySessionToken,
 } from '@/server/auth/session';
-import { ADMIN_SESSION_COOKIE, AUTH_SESSION_COOKIE } from '@/shared/constants';
+import { ADMIN_SESSION_COOKIE, AUTH_SESSION_COOKIE, FB_PENDING_COOKIE } from '@/shared/constants';
 import { ensureTestAuthSecret } from '../../helpers/test-db';
 
 beforeAll(() => {
@@ -205,5 +210,36 @@ describe('auth/session & oauth helpers', () => {
       emailVerified: false,
       avatarUrl: 'https://graph.facebook.com/avatar.jpg',
     });
+  });
+
+  it('signs/verifies Facebook pending cookies and HMAC OTP hashes safely', async () => {
+    const fbToken = await signFacebookPendingToken({
+      providerAccountId: 'fb-pending-1',
+      displayName: 'Facebook User',
+      avatarUrl: 'https://graph.facebook.com/fb.jpg',
+      next: '/checkout',
+    });
+    expect(await verifyFacebookPendingToken(fbToken)).toEqual({
+      providerAccountId: 'fb-pending-1',
+      displayName: 'Facebook User',
+      avatarUrl: 'https://graph.facebook.com/fb.jpg',
+      next: '/checkout',
+    });
+    expect(await verifyFacebookPendingToken('invalid-token')).toBeNull();
+
+    const setRes = NextResponse.json({ ok: true });
+    setFacebookPendingCookie(setRes, fbToken);
+    expect(setRes.headers.get('set-cookie')).toContain(`${FB_PENDING_COOKIE}=`);
+
+    const clearedRes = NextResponse.json({ ok: true });
+    clearFacebookPendingCookie(clearedRes);
+    expect(clearedRes.headers.get('set-cookie')).toContain(`${FB_PENDING_COOKIE}=;`);
+
+    const code = generateOtpCode();
+    expect(code).toMatch(/^\d{6}$/);
+    const hash = hashOtpCode('register', 'User@Example.com', code);
+    expect(verifyOtpCodeHash('register', 'user@example.com', code, hash)).toBe(true);
+    expect(verifyOtpCodeHash('password_reset', 'user@example.com', code, hash)).toBe(false);
+    expect(verifyOtpCodeHash('register', 'user@example.com', '000000', `${hash}bad`)).toBe(false);
   });
 });

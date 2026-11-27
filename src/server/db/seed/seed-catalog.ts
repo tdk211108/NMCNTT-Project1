@@ -26,7 +26,7 @@ export interface SeedCatalogResult {
 }
 
 export const TRUNCATE_SAMPLE_TABLES_SQL =
-  'TRUNCATE TABLE order_status_events, order_items, orders, gpu_variants, cpu_specs, products, gpu_series, legacy_cpus, auth_failures CASCADE';
+  'TRUNCATE TABLE order_status_events, order_items, orders, gpu_variants, cpu_specs, products, gpu_series, legacy_cpus, auth_failures, email_otps CASCADE';
 
 export function resolveSeedStorageConfig(override?: Partial<SeedStorageConfig>): SeedStorageConfig {
   return resolvePublicStorageConfig(override);

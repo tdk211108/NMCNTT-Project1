@@ -20,6 +20,7 @@ export interface CartLine {
 
 export type CartAdvisoryCode =
   | 'multi_cpu_conflict'
+  | 'multi_gpu_conflict'
   | 'cpu_ram_platform'
   | 'psu_recommendation'
   | 'gpu_large_size'
@@ -37,6 +38,11 @@ export interface CartAdvisoryItem {
   psuExceedsMaxTier?: boolean;
   wattageW?: number;
   productName?: string;
+  cpuName?: string;
+  gpuName?: string;
+  isMultiHardware?: boolean;
+  distinctModels?: number;
+  otherCount?: number;
   lengthMm?: number;
   slotThickness?: number;
   cpuScore?: number;
@@ -128,6 +134,9 @@ export interface OrderBoard {
   stage: OrderStage;
   stages: OrderStageEntry[];
   isCompleted: boolean;
+  isCancelled: boolean;
+  cancelledAt: string | null;
+  canCancel: boolean;
   customer: {
     fullName: string;
     phoneMasked: string;
@@ -157,6 +166,8 @@ export interface CustomerOrderSummary {
   totalVnd: number;
   stage: OrderStage;
   stageLabel: string;
+  isCancelled: boolean;
+  cancelledAt: string | null;
   paymentMethod: PaymentMethod;
   createdAt: string;
 }

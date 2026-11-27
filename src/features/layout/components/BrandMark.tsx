@@ -5,9 +5,12 @@ import { VI_MESSAGES } from '@/shared/messages/vi';
 export type BrandMarkSize = 'sm' | 'md' | 'compact';
 
 const SIZE_STYLES: Record<BrandMarkSize, { frame: string; text: string }> = {
-  sm: { frame: 'h-6 w-6', text: 'text-sm' },
-  md: { frame: 'h-7 w-7 sm:h-8 sm:w-8', text: 'text-sm sm:text-lg' },
-  compact: { frame: 'h-7 w-7', text: 'text-base lg:text-lg' },
+  sm: { frame: 'h-6 w-6', text: 'text-sm tracking-wider' },
+  md: { frame: 'h-7 w-7 sm:h-8 sm:w-8', text: 'text-sm sm:text-lg tracking-wider' },
+  compact: {
+    frame: 'h-6 w-6 min-[400px]:h-7 min-[400px]:w-7',
+    text: 'text-[13px] min-[390px]:text-sm min-[430px]:text-base lg:text-lg tracking-normal min-[400px]:tracking-wider',
+  },
 };
 
 /**
@@ -26,7 +29,7 @@ export function BrandMark({
     <Link
       href="/"
       data-testid={testId}
-      className={`font-display inline-flex shrink-0 items-center gap-1.5 font-bold tracking-wider text-ink uppercase focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal sm:gap-2 ${styles.text}`}
+      className={`font-display inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap font-bold text-ink uppercase focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal sm:gap-2 ${styles.text}`}
     >
       <span
         aria-hidden="true"

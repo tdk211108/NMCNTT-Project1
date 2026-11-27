@@ -11,7 +11,7 @@ import {
 } from '@/lib/ui-sound';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type { OrderBoard } from '@/shared/types';
-import { createOptimisticDeliveredBoard } from './optimistic-board';
+import { createOptimisticDeliveredBoard, invalidateOrderLists } from './optimistic-board';
 
 interface AdvanceStageVariables {
   orderId: string;
@@ -54,6 +54,7 @@ export function useAdvanceOrderStage({
       }),
     onSuccess: (updatedBoard, vars) => {
       queryClient.setQueryData(vars.targetQueryKey, updatedBoard);
+      invalidateOrderLists(queryClient);
       onBoardUpdated?.(vars.orderId, updatedBoard);
       if (
         !vars.optimisticDelivered &&
@@ -64,20 +65,26 @@ export function useAdvanceOrderStage({
     },
     onError: (err, vars) => {
       if (err instanceof ApiClientError) {
-        if (err.code === 'STALE_STAGE') {
+        if (err.code === 'STALE_STAGE' || err.code === 'ORDER_CANCELLED') {
           const freshBoard = err.details?.order as OrderBoard | undefined;
           if (freshBoard) {
             queryClient.setQueryData(vars.targetQueryKey, freshBoard);
             onBoardUpdated?.(vars.orderId, freshBoard);
             if (
+              err.code === 'STALE_STAGE' &&
               !vars.optimisticDelivered &&
               shouldTriggerOrderDeliveredSfx(vars.expectedStage, freshBoard)
             ) {
               void playOrderDeliveredSfx();
             }
           } else {
-            queryClient.invalidateQueries({ queryKey: vars.targetQueryKey });
+            void queryClient.invalidateQueries({ queryKey: vars.targetQueryKey });
           }
+          invalidateOrderLists(queryClient);
+          if (err.code === 'STALE_STAGE') {
+            return;
+          }
+          showToast(err.message, 'error');
           return;
         }
         if (err.code === 'UNAUTHORIZED' && onUnauthorized) {

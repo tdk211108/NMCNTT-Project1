@@ -105,19 +105,27 @@ export const RATE_LIMIT_RETENTION_HOURS = 24;
 export const ADMIN_SESSION_COOKIE = 'admin_session';
 export const AUTH_SESSION_COOKIE = 'auth_session';
 export const OAUTH_TX_COOKIE = 'oauth_tx';
+export const FB_PENDING_COOKIE = 'fb_pending';
 export const ADMIN_SESSION_TTL_HOURS = 8;
 export const CUSTOMER_SESSION_TTL_DAYS = 7;
 export const OAUTH_TX_TTL_MINUTES = 10;
+export const FB_PENDING_TTL_MINUTES = 15;
 export const ORDER_TOKEN_TTL_HOURS = 24;
 
 export const USERNAME_MIN_LEN = 3;
 export const USERNAME_MAX_LEN = 30;
 export const USERNAME_REGEX = /^[a-z0-9_.-]{3,30}$/;
+export const EMAIL_MAX_LEN = 254;
 export const PASSWORD_MIN_LEN = 6;
 export const PASSWORD_MAX_LEN = 128;
 export const DISPLAY_NAME_MIN_LEN = 2;
 export const DISPLAY_NAME_MAX_LEN = 50;
 export const RESERVED_USERNAMES = ['admin', 'root', 'system', 'coreraster'] as const;
+export const OTP_CODE_LENGTH = 6;
+export const OTP_TTL_MINUTES = 10;
+export const OTP_RESEND_COOLDOWN_SECONDS = 60;
+export const OTP_MAX_ATTEMPTS = 5;
+export const DEFAULT_EMAIL_FROM = 'CoreRaster <no-reply@coreraster.me>';
 export const MY_ORDERS_MAX_ROWS = 100;
 
 export const WARRANTY_MONTHS = 36;
@@ -140,6 +148,23 @@ export const DEMO_NOTICE_DURATION_MS = DEMO_NOTICE_SECONDS * 1000;
 export const REVIEW_COUNTDOWN_SECONDS = 5;
 
 export const ORDER_STAGE_VALUES = [0, 1, 2, 3, 4] as const;
+
+export const VENDOR_ORDER_BY_CATEGORY = {
+  cpu: ['amd', 'intel'],
+  gpu: ['nvidia', 'amd', 'intel'],
+} as const;
+
+export function compareCategoryVendors(category: 'cpu' | 'gpu', a: string, b: string): number {
+  const order: readonly string[] = VENDOR_ORDER_BY_CATEGORY[category];
+  const idxA = order.indexOf(a);
+  const idxB = order.indexOf(b);
+  const rankA = idxA === -1 ? order.length : idxA;
+  const rankB = idxB === -1 ? order.length : idxB;
+  if (rankA !== rankB) {
+    return rankA - rankB;
+  }
+  return a.localeCompare(b);
+}
 
 export const SEED_IMAGE_PREFIX = 'seed/';
 export const UPLOAD_IMAGE_PREFIX = 'uploads/';

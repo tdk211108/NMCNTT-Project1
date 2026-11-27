@@ -8,6 +8,9 @@ import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Button } from '@/components/ui/Button';
 import { ComboboxSelect } from '@/components/ui/ComboboxSelect';
 import { CartPlusIcon } from '@/components/ui/Icons';
+import { Modal } from '@/components/ui/Modal';
+import { PasswordInput } from '@/components/ui/PasswordInput';
+import { PriceInput } from '@/components/ui/PriceInput';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { SpectrumLoader } from '@/components/ui/SpectrumLoader';
 import { ToastContainer, ToastItemCard } from '@/components/ui/Toast';
@@ -239,5 +242,76 @@ describe('UI primitives (icons, selectors, buttons, toasts, carousel, dialogs)',
     expect(breadcrumbHtml).toContain('aria-current="page"');
     expect(breadcrumbHtml).not.toContain('<ul');
     expect(breadcrumbHtml).not.toContain('<ol');
+
+    const hiddenPasswordHtml = renderToStaticMarkup(
+      createElement(PasswordInput, {
+        id: 'test-pw',
+        name: 'password',
+        label: VI_MESSAGES.auth.passwordLabel,
+        autoComplete: 'current-password',
+        visible: false,
+        onVisibleChange: vi.fn(),
+        toggleTestId: 'test-pw-toggle',
+      }),
+    );
+    expect(hiddenPasswordHtml).toContain('id="test-pw"');
+    expect(hiddenPasswordHtml).toContain('type="password"');
+    expect(hiddenPasswordHtml).toContain('password-input-native');
+    expect(hiddenPasswordHtml).toContain('pr-14');
+    expect(hiddenPasswordHtml).toContain('data-testid="test-pw-toggle"');
+    expect(hiddenPasswordHtml).toContain('aria-pressed="false"');
+    expect(hiddenPasswordHtml).toContain('aria-controls="test-pw"');
+    expect(hiddenPasswordHtml).toContain(`aria-label="${VI_MESSAGES.auth.showPasswordAria}"`);
+    expect(hiddenPasswordHtml).toContain('data-visible="false"');
+    expect(hiddenPasswordHtml).toContain('data-sfx="toggle"');
+    expect(hiddenPasswordHtml).toContain('bg-transparent');
+    expect(hiddenPasswordHtml).toContain('border-0');
+    expect(hiddenPasswordHtml).not.toContain('hover:border-signal');
+    expect(hiddenPasswordHtml).not.toContain('bg-surface-subtle');
+    expect(hiddenPasswordHtml).toContain('monkey-hands-svg');
+    expect(hiddenPasswordHtml).not.toContain('<ul');
+    expect(hiddenPasswordHtml).not.toContain('<ol');
+
+    const visiblePasswordHtml = renderToStaticMarkup(
+      createElement(PasswordInput, {
+        id: 'test-pw',
+        name: 'password',
+        label: VI_MESSAGES.auth.passwordLabel,
+        visible: true,
+        onVisibleChange: vi.fn(),
+        toggleTestId: 'test-pw-toggle',
+      }),
+    );
+    expect(visiblePasswordHtml).toContain('type="text"');
+    expect(visiblePasswordHtml).toContain('aria-pressed="true"');
+    expect(visiblePasswordHtml).toContain(`aria-label="${VI_MESSAGES.auth.hidePasswordAria}"`);
+    expect(visiblePasswordHtml).toContain('data-visible="true"');
+
+    const modalHtml = renderToStaticMarkup(
+      createElement(
+        Modal,
+        {
+          open: true,
+          title: 'Xác nhận',
+          onClose: vi.fn(),
+          testId: 'test-modal',
+        },
+        createElement('p', null, 'Nội dung'),
+      ),
+    );
+    expect(modalHtml).toContain('<dialog');
+    expect(modalHtml).toContain(`aria-label="${VI_MESSAGES.common.close}"`);
+    expect(modalHtml).not.toContain('closedby="any"');
+
+    const priceInputHtml = renderToStaticMarkup(
+      createElement(PriceInput, {
+        label: 'Ngân sách',
+        value: '20,000,000',
+        onValueChange: vi.fn(),
+      }),
+    );
+    expect(priceInputHtml).toContain('type="text"');
+    expect(priceInputHtml).toContain('inputMode="numeric"');
+    expect(priceInputHtml).toContain('value="20,000,000"');
   });
 });

@@ -9,6 +9,7 @@ import { VI_MESSAGES } from '@/shared/messages/vi';
 import type { OrderWithToken } from '@/shared/types';
 import { saveOrderToken } from './order-tokens';
 import { useAdvanceOrderStage } from './useAdvanceOrderStage';
+import { useCancelOrder } from './useCancelOrder';
 
 /**
  * Shared state + mutation controller for displaying the live OrderBoard popup immediately
@@ -22,6 +23,14 @@ export function usePlacedOrderPopup() {
 
   const { isAdvancing, advanceStage } = useAdvanceOrderStage({
     activeBoard: placedOrder?.order ?? null,
+    onBoardUpdated: (orderId, board) => {
+      setPlacedOrder((prev) =>
+        prev && prev.order.orderId === orderId ? { ...prev, order: board } : prev,
+      );
+    },
+  });
+
+  const { isCancelling, cancelOrder } = useCancelOrder({
     onBoardUpdated: (orderId, board) => {
       setPlacedOrder((prev) =>
         prev && prev.order.orderId === orderId ? { ...prev, order: board } : prev,
@@ -55,6 +64,15 @@ export function usePlacedOrderPopup() {
     );
   }, [placedOrder, advanceStage]);
 
+  const onCancelOrder = useCallback(() => {
+    if (!placedOrder) return Promise.resolve();
+    return cancelOrder(
+      placedOrder.order,
+      placedOrder.accessToken,
+      ['orders', 'board', placedOrder.order.orderId, placedOrder.accessToken],
+    );
+  }, [placedOrder, cancelOrder]);
+
   const navigateAndClear = useCallback(
     (href: string) => {
       setPlacedOrder(null);
@@ -83,11 +101,13 @@ export function usePlacedOrderPopup() {
       placedOrder,
       hasCompletedOrder,
       isAdvancing,
+      isCancelling,
     },
     actions: {
       openPlacedOrder,
       onCopyOrderId,
       onAdvanceStage,
+      onCancelOrder,
       onContinueShopping,
       onViewMyOrders,
       onClose,

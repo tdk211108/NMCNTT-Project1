@@ -67,13 +67,13 @@ export function CatalogPagination({
       <nav
         aria-label={VI_MESSAGES.common.paginationAria}
         data-testid={TEST_IDS.listing.pagination(scope)}
-        className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-card border-2 border-border-strong bg-surface px-3 py-2.5"
+        className="mt-2 flex flex-col gap-2.5 rounded-card border-2 border-border-strong bg-surface px-3 py-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3"
       >
         <span className="font-mono text-xs tabular-nums text-ink-muted">
           {VI_MESSAGES.common.pageIndicator(safePage, totalPages)} ({totalItems})
         </span>
 
-        <div className="flex flex-wrap items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-1">
           <button
             type="button"
             data-sfx="toggle"
@@ -81,7 +81,7 @@ export function CatalogPagination({
             aria-label={VI_MESSAGES.common.previousPage}
             data-testid={TEST_IDS.listing.paginationPrev(scope)}
             onClick={() => onPageChange(safePage - 1)}
-            className="inline-flex min-h-9 cursor-pointer items-center gap-1 rounded-control border-2 border-border-strong bg-surface-elevated px-2.5 text-xs font-semibold text-ink hover:border-signal hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-45"
+            className="inline-flex min-h-10 cursor-pointer items-center gap-1 rounded-control border-2 border-border-strong bg-surface-elevated px-2.5 text-xs font-semibold text-ink hover:border-signal hover:text-accent-ink disabled:cursor-not-allowed disabled:opacity-45 sm:min-h-9"
           >
             <ChevronLeft className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span className="hidden sm:inline">{VI_MESSAGES.common.previousPage}</span>
@@ -96,7 +96,7 @@ export function CatalogPagination({
                 aria-current={token === safePage ? 'page' : undefined}
                 data-testid={TEST_IDS.listing.paginationPage(scope, token)}
                 onClick={() => onPageChange(token)}
-                className={`relative inline-flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-control border-2 px-2.5 font-mono text-xs font-bold tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-signal ${
+                className={`relative inline-flex h-10 min-w-10 cursor-pointer items-center justify-center rounded-control border-2 px-2.5 font-mono text-xs font-bold tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-signal sm:h-9 sm:min-w-9 ${
                   token === safePage
                     ? 'border-border-strong text-primary-fg'
                     : 'border-border-strong bg-surface text-ink hover:border-signal hover:text-accent-ink'

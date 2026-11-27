@@ -29,21 +29,44 @@ function formatCartAdvisoryText(item: CartAdvisoryItem): string {
   switch (item.code) {
     case 'multi_cpu_conflict':
       return item.sockets && item.sockets.length > 1
-        ? msgs.multiCpuSockets(item.sockets)
+        ? msgs.multiCpuSockets(item.sockets, item.count)
         : msgs.multiCpuCount(item.count ?? 2);
+    case 'multi_gpu_conflict':
+      return (item.distinctModels ?? 1) > 1
+        ? msgs.multiGpuModels(item.count ?? 2, item.distinctModels ?? 2)
+        : msgs.multiGpuCount(item.count ?? 2);
     case 'cpu_ram_platform':
       return msgs.cpuRamPlatform(item.sockets?.[0] ?? '', item.ramKind ?? 'ddr4_only');
     case 'psu_recommendation':
       if (item.psuExceedsMaxTier) {
+        if (item.isMultiHardware && item.cpuName && item.gpuName) {
+          return msgs.psuExceedsMaxMultiHardware(
+            item.psuExactW ?? 1200,
+            item.cpuName,
+            item.gpuName,
+          );
+        }
         return msgs.psuExceedsMax(item.psuExactW ?? 1200);
       }
       if (item.psuTierW !== undefined && item.psuTierW !== null) {
+        if (item.isMultiHardware && item.cpuName && item.gpuName) {
+          return msgs.psuTierMultiHardware(
+            item.psuTierW,
+            item.psuExactW ?? item.psuTierW,
+            item.cpuName,
+            item.gpuName,
+          );
+        }
         return msgs.psuTier(item.psuTierW, item.psuExactW ?? item.psuTierW);
       }
       if (item.actionHref?.includes('gpu=')) {
-        return msgs.psuGpuOnly(item.productName ?? 'GPU', item.wattageW ?? 0);
+        return item.otherCount && item.otherCount > 0
+          ? msgs.psuGpuOnlyMulti(item.productName ?? 'GPU', item.wattageW ?? 0, item.otherCount)
+          : msgs.psuGpuOnly(item.productName ?? 'GPU', item.wattageW ?? 0);
       }
-      return msgs.psuCpuOnly(item.productName ?? 'CPU', item.wattageW ?? 0);
+      return item.otherCount && item.otherCount > 0
+        ? msgs.psuCpuOnlyMulti(item.productName ?? 'CPU', item.wattageW ?? 0, item.otherCount)
+        : msgs.psuCpuOnly(item.productName ?? 'CPU', item.wattageW ?? 0);
     case 'gpu_large_size':
       return msgs.gpuLargeSize(
         item.productName ?? 'GPU',
@@ -195,8 +218,11 @@ function CartAdvisoriesPanel({
       </div>
 
       <div className="flex flex-col gap-2">
-        {advisories.items.map((item) => (
-          <AdvisoryRow key={item.code} item={item} />
+        {advisories.items.map((item, idx) => (
+          <AdvisoryRow
+            key={`${item.code}-${item.sockets?.join(',') ?? ''}-${item.ramKind ?? ''}-${item.productName ?? ''}-${idx}`}
+            item={item}
+          />
         ))}
       </div>
     </Card>
@@ -209,14 +235,14 @@ export function CartView({ state, actions }: CartViewProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5 pb-24 sm:gap-6 lg:pb-0">
       <Breadcrumb
         items={[
           { label: VI_MESSAGES.nav.home, href: '/' },
           { label: VI_MESSAGES.cart.title, href: '/cart' },
         ]}
       />
-      <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.cart.title}</h1>
+      <h1 className="font-display text-xl font-bold text-ink sm:text-2xl">{VI_MESSAGES.cart.title}</h1>
 
       {state.errorMessage ? <EmptyState title={state.errorMessage} /> : null}
 
@@ -262,22 +288,22 @@ export function CartView({ state, actions }: CartViewProps) {
                 <Card
                   key={line.productId}
                   data-testid={TEST_IDS.cart.item(line.productId)}
-                  className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                  className="grid grid-cols-1 gap-3 p-3.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4 sm:p-4"
                 >
-                  <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex min-w-0 items-start gap-3 sm:items-center">
                     <ProductImage
                       src={line.imageUrl}
                       alt={line.name}
-                      className="h-20 w-20 shrink-0 border border-border-strong object-contain p-1"
+                      className="h-16 w-16 shrink-0 border border-border-strong object-contain p-1 sm:h-20 sm:w-20"
                     />
                     <div className="flex min-w-0 flex-1 flex-col gap-1">
                       <Link
                         href={`/products/${line.productId}`}
-                        className="min-w-0 wrap-anywhere font-semibold text-ink hover:text-accent-ink"
+                        className="min-w-0 wrap-anywhere text-sm font-semibold text-ink hover:text-accent-ink sm:text-base"
                       >
                         {line.name}
                       </Link>
-                      <p className="min-w-0 wrap-anywhere font-mono text-sm tabular-nums text-ink-muted">
+                      <p className="min-w-0 wrap-anywhere font-mono text-xs tabular-nums text-ink-muted sm:text-sm">
                         {VI_MESSAGES.cart.unitPriceLabel}: {formatVnd(line.unitPriceVnd)}
                       </p>
                       <p className="min-w-0 wrap-anywhere font-mono text-sm font-bold tabular-nums text-accent-ink">
@@ -286,12 +312,13 @@ export function CartView({ state, actions }: CartViewProps) {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2.5 sm:shrink-0 sm:flex-nowrap sm:justify-self-end">
-                    <div className="flex shrink-0 items-center gap-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2.5 border-t border-border pt-2.5 sm:shrink-0 sm:flex-nowrap sm:justify-self-end sm:border-t-0 sm:pt-0">
+                    <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
                       <Button
                         variant="outline"
                         size="sm"
                         cyber={false}
+                        className="min-h-10 min-w-10 px-2"
                         aria-label={VI_MESSAGES.cart.decreaseQtyAria(line.name)}
                         data-testid={TEST_IDS.cart.qtyDec(line.productId)}
                         onClick={() => actions.onDecrement(line.productId, line.quantity)}
@@ -308,12 +335,13 @@ export function CartView({ state, actions }: CartViewProps) {
                           actions.onQtyInputChange(line.productId, e.target.value)
                         }
                         onBlur={() => actions.onQtyBlur(line.productId)}
-                        className="min-h-9 w-16 rounded-control border-2 border-border-strong bg-surface-subtle px-2 text-center font-mono text-sm font-semibold tabular-nums text-ink focus-visible:outline-2 focus-visible:outline-signal"
+                        className="min-h-10 w-14 rounded-control border-2 border-border-strong bg-surface-subtle px-2 text-center font-mono text-base font-semibold tabular-nums text-ink focus-visible:outline-2 focus-visible:outline-signal sm:min-h-9 sm:w-16 sm:text-sm"
                       />
                       <Button
                         variant="outline"
                         size="sm"
                         cyber={false}
+                        className="min-h-10 min-w-10 px-2"
                         aria-label={VI_MESSAGES.cart.increaseQtyAria(line.name)}
                         data-testid={TEST_IDS.cart.qtyInc(line.productId)}
                         onClick={() => actions.onIncrement(line.productId, line.quantity)}
@@ -324,7 +352,7 @@ export function CartView({ state, actions }: CartViewProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="shrink-0 whitespace-nowrap"
+                      className="min-h-10 shrink-0 whitespace-nowrap"
                       data-testid={TEST_IDS.cart.remove(line.productId)}
                       onClick={() => actions.onRequestRemove(line.productId)}
                     >
@@ -414,6 +442,38 @@ export function CartView({ state, actions }: CartViewProps) {
         onConfirm={actions.onConfirmRemove}
         onCancel={actions.onCancelRemove}
       />
+
+      {!state.isEmpty ? (
+        <div
+          data-testid={TEST_IDS.cart.mobileStickyBar}
+          className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t-2 border-border-strong bg-surface/98 px-3 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))] shadow-2xl backdrop-blur-md lg:hidden"
+        >
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-medium text-ink-muted">{VI_MESSAGES.cart.total}</span>
+              {state.freeShipping ? (
+                <Badge variant="success" className="px-1.5 py-0 text-[10px]">
+                  {VI_MESSAGES.common.freeShippingLabel}
+                </Badge>
+              ) : null}
+            </div>
+            <p className="font-mono text-base font-bold tabular-nums text-accent-ink">
+              {formatVnd(state.totalVnd)}
+            </p>
+          </div>
+          <Button
+            variant="primary"
+            size="md"
+            cyber={false}
+            disabled={state.lines.length === 0}
+            className="min-h-11 shrink-0 px-4"
+            onClick={actions.onProceedToCheckout}
+          >
+            <span>{VI_MESSAGES.cart.proceedToCheckout}</span>
+            <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

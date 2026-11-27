@@ -67,7 +67,7 @@ function pickMaxBy<T>(items: readonly T[], selector: (item: T) => number): T | n
 
 /**
  * Evaluates concise technical advisories (PSU wattage, socket/RAM platform,
- * multi-CPU conflicts, GPU clearance, and pair balance) for active cart lines.
+ * multi-CPU/GPU conflicts, GPU clearance, and pair balance) for active cart lines.
  */
 export function evaluateCartAdvisories(
   specs: readonly CartAdvisorySpecInput[],
@@ -80,7 +80,7 @@ export function evaluateCartAdvisories(
   const gpus = specs.filter((item): item is CartGpuSpecInput => item.category === 'gpu');
   const items: CartAdvisoryItem[] = [];
 
-  // 1. Multi-CPU or mixed-socket check.
+  // 1. Multi-CPU and multi-GPU checks.
   const distinctSockets: string[] = [];
   for (const cpu of cpus) {
     if (cpu.socket && !distinctSockets.includes(cpu.socket)) {
@@ -93,6 +93,7 @@ export function evaluateCartAdvisories(
       code: 'multi_cpu_conflict',
       severity: 'high',
       sockets: distinctSockets,
+      count: totalCpuQty,
     });
   } else if (totalCpuQty > 1) {
     items.push({
@@ -102,23 +103,37 @@ export function evaluateCartAdvisories(
     });
   }
 
-  // 2. Socket + RAM generation notice when a single socket platform is chosen.
-  if (cpus.length > 0 && distinctSockets.length === 1) {
-    const primaryCpu = cpus[0]!;
-    const ramPlatform = classifyRamPlatform(primaryCpu.socket, primaryCpu.ramSupport);
-    if (ramPlatform !== 'unknown') {
-      items.push({
-        code: 'cpu_ram_platform',
-        severity: ramPlatform === 'ddr5_only' ? 'medium' : 'info',
-        sockets: [primaryCpu.socket],
-        ramKind: ramPlatform,
-      });
-    }
+  const totalGpuQty = gpus.reduce((sum, gpu) => sum + gpu.quantity, 0);
+  if (totalGpuQty > 1) {
+    items.push({
+      code: 'multi_gpu_conflict',
+      severity: 'medium',
+      count: totalGpuQty,
+      distinctModels: gpus.length,
+    });
   }
 
-  // 3. Combined PSU recommendation or standalone high-wattage notice.
+  // 2. Socket + RAM generation notice for each distinct CPU platform in the cart.
+  const seenPlatforms = new Set<string>();
+  for (const cpu of cpus) {
+    if (!cpu.socket) continue;
+    const ramPlatform = classifyRamPlatform(cpu.socket, cpu.ramSupport);
+    if (ramPlatform === 'unknown') continue;
+    const platformKey = `${cpu.socket}:${ramPlatform}`;
+    if (seenPlatforms.has(platformKey)) continue;
+    seenPlatforms.add(platformKey);
+    items.push({
+      code: 'cpu_ram_platform',
+      severity: ramPlatform === 'ddr5_only' ? 'medium' : 'info',
+      sockets: [cpu.socket],
+      ramKind: ramPlatform,
+    });
+  }
+
+  // 3. Combined PSU recommendation (highest-load pair) or standalone high-wattage notices.
   const maxCpu = pickMaxBy(cpus, (item) => item.psuPowerW);
   const maxGpu = pickMaxBy(gpus, (item) => item.tbpW);
+  const isMultiHardware = totalCpuQty > 1 || totalGpuQty > 1;
   let recommendedPsuTierW: number | null = null;
   let recommendedPsuExactW: number | null = null;
   let psuExceedsMaxTier = false;
@@ -139,48 +154,68 @@ export function evaluateCartAdvisories(
       psuTierW: recommendedPsuTierW,
       psuExactW: recommendedPsuExactW,
       psuExceedsMaxTier,
+      ...(isMultiHardware
+        ? {
+            cpuName: maxCpu.name,
+            gpuName: maxGpu.name,
+            isMultiHardware: true,
+          }
+        : {}),
       actionKind: 'psu',
       actionHref: `/tools/psu?cpu=${encodeURIComponent(`store:${maxCpu.productId}`)}&gpu=${encodeURIComponent(maxGpu.seriesId)}`,
     });
-  } else if (maxGpu && maxGpu.tbpW >= CART_GPU_STANDALONE_WARN_TBP_W) {
-    items.push({
-      code: 'psu_recommendation',
-      severity: 'medium',
-      productName: maxGpu.name,
-      wattageW: maxGpu.tbpW,
-      actionKind: 'psu',
-      actionHref: `/tools/psu?gpu=${encodeURIComponent(maxGpu.seriesId)}`,
-    });
-  } else if (maxCpu && maxCpu.psuPowerW >= CART_CPU_HIGH_POWER_W) {
-    items.push({
-      code: 'psu_recommendation',
-      severity: 'info',
-      productName: maxCpu.name,
-      wattageW: maxCpu.psuPowerW,
-      actionKind: 'psu',
-      actionHref: `/tools/psu?cpu=${encodeURIComponent(`store:${maxCpu.productId}`)}`,
-    });
+  } else if (gpus.length > 0) {
+    const highPowerGpus = gpus.filter((gpu) => gpu.tbpW >= CART_GPU_STANDALONE_WARN_TBP_W);
+    const topGpu = pickMaxBy(highPowerGpus, (gpu) => gpu.tbpW);
+    if (topGpu) {
+      items.push({
+        code: 'psu_recommendation',
+        severity: 'medium',
+        productName: topGpu.name,
+        wattageW: topGpu.tbpW,
+        ...(highPowerGpus.length > 1 ? { otherCount: highPowerGpus.length - 1 } : {}),
+        actionKind: 'psu',
+        actionHref: `/tools/psu?gpu=${encodeURIComponent(topGpu.seriesId)}`,
+      });
+    }
+  } else {
+    const highPowerCpus = cpus.filter((cpu) => cpu.psuPowerW >= CART_CPU_HIGH_POWER_W);
+    const topCpu = pickMaxBy(highPowerCpus, (cpu) => cpu.psuPowerW);
+    if (topCpu) {
+      items.push({
+        code: 'psu_recommendation',
+        severity: 'info',
+        productName: topCpu.name,
+        wattageW: topCpu.psuPowerW,
+        ...(highPowerCpus.length > 1 ? { otherCount: highPowerCpus.length - 1 } : {}),
+        actionKind: 'psu',
+        actionHref: `/tools/psu?cpu=${encodeURIComponent(`store:${topCpu.productId}`)}`,
+      });
+    }
   }
 
-  // 4. Physical chassis clearance notice for oversized GPUs.
-  const oversizedGpus = gpus.filter(
-    (gpu) => gpu.lengthMm >= UPGRADE_GPU_LARGE_LENGTH_MM || gpu.slotThickness >= UPGRADE_GPU_THICK_SLOT,
-  );
-  const largestGpu = pickMaxBy(
-    oversizedGpus,
-    (gpu) => gpu.lengthMm * 100 + gpu.slotThickness,
-  );
-  if (largestGpu) {
+  // 4. Physical chassis clearance notice for every oversized GPU model in the cart.
+  const oversizedGpus = gpus
+    .filter(
+      (gpu) =>
+        gpu.lengthMm >= UPGRADE_GPU_LARGE_LENGTH_MM ||
+        gpu.slotThickness >= UPGRADE_GPU_THICK_SLOT,
+    )
+    .sort(
+      (a, b) =>
+        b.lengthMm * 100 + b.slotThickness - (a.lengthMm * 100 + a.slotThickness),
+    );
+  for (const gpu of oversizedGpus) {
     items.push({
       code: 'gpu_large_size',
       severity: 'medium',
-      productName: largestGpu.name,
-      lengthMm: largestGpu.lengthMm,
-      slotThickness: largestGpu.slotThickness,
+      productName: gpu.name,
+      lengthMm: gpu.lengthMm,
+      slotThickness: gpu.slotThickness,
     });
   }
 
-  // 5. Pair balance notice when one CPU model and one GPU model diverge widely in score.
+  // 5. Pair balance requires one CPU and one GPU model to avoid guessing pairings in multi-part carts.
   if (cpus.length === 1 && gpus.length === 1) {
     const cpuScore = Math.round(cpus[0]!.normalizedScore);
     const gpuScore = Math.round(gpus[0]!.normalizedScore);

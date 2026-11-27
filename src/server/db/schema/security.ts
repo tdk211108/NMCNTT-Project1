@@ -7,6 +7,9 @@ export const authScopeEnum = pgEnum('auth_scope', [
   'admin_login',
   'user_login',
   'user_register',
+  'otp_request',
+  'otp_verify',
+  'password_change',
 ]);
 
 export const authFailures = pgTable(

@@ -9,6 +9,8 @@ import {
   CATALOG_PRICE_SLIDER_MIN,
   CATALOG_PRICE_SLIDER_STEP,
   clampPriceSliderBounds,
+  groupProductsByVendor,
+  resolvePriceSliderRange,
 } from '@/features/catalog/useCatalogController';
 import { HomeView } from '@/features/home/components/HomeView';
 import { ProductDetailView } from '@/features/product-detail/components/ProductDetailView';
@@ -60,16 +62,26 @@ function makeCatalogActions() {
 
 describe('Catalog, Search, ProductCard, ProductDetail, and Home views', () => {
   it('clamps catalog dual-range price slider bounds safely and renders sticky filter rail', () => {
+    expect(CATALOG_PRICE_SLIDER_MIN).toBe(0);
     expect(clampPriceSliderBounds('', '')).toEqual({
-      minValue: CATALOG_PRICE_SLIDER_MIN,
+      minValue: 0,
       maxValue: CATALOG_PRICE_SLIDER_MAX,
       minPct: 0,
       maxPct: 100,
     });
 
-    const subMin = clampPriceSliderBounds('2749000', '50000000');
-    expect(subMin.minValue).toBe(CATALOG_PRICE_SLIDER_MIN);
-    expect(subMin.maxValue).toBe(50_000_000);
+    const subTwoMillion = clampPriceSliderBounds('2749000', '50000000');
+    expect(subTwoMillion.minValue).toBe(2_749_000);
+    expect(subTwoMillion.maxValue).toBe(50_000_000);
+
+    const oddRange = resolvePriceSliderRange(350_500_000);
+    expect(oddRange).toEqual({ min: 0, max: 350_500_000, step: 500_000 });
+    expect(clampPriceSliderBounds('', '', oddRange.max, oddRange.step)).toEqual({
+      minValue: 0,
+      maxValue: 350_500_000,
+      minPct: 0,
+      maxPct: 100,
+    });
 
     const crossed = clampPriceSliderBounds('100000000', '80000000');
     expect(crossed.maxValue).toBe(80_000_000);
@@ -82,18 +94,23 @@ describe('Catalog, Search, ProductCard, ProductDetail, and Home views', () => {
           items: [SAMPLE_CARD],
           groupedByVendor: [{ vendor: 'amd', items: [SAMPLE_CARD] }],
           total: 1,
+          vendorTotals: { amd: 1 },
           pageSize: 40,
           pageByVendor: {},
           flatPage: 1,
-          facets: { vendors: ['amd'], vramGb: [16], aibBrands: ['Sapphire'], priceRange: null },
+          facets: {
+            vendors: ['amd'],
+            vramGb: [16],
+            aibBrands: ['Sapphire'],
+            priceRange: null,
+            shopMaxPriceVnd: 299_000_000,
+          },
           selectedVendors: [],
           priceMinInput: '',
           priceMaxInput: '',
           priceSlider: {
-            min: CATALOG_PRICE_SLIDER_MIN,
-            max: CATALOG_PRICE_SLIDER_MAX,
-            step: CATALOG_PRICE_SLIDER_STEP,
-            ...clampPriceSliderBounds('', ''),
+            ...resolvePriceSliderRange(299_000_000),
+            ...clampPriceSliderBounds('', '', 299_000_000, CATALOG_PRICE_SLIDER_STEP),
           },
           selectedVramGb: [],
           selectedAibBrands: [],
@@ -102,6 +119,7 @@ describe('Catalog, Search, ProductCard, ProductDetail, and Home views', () => {
           limitedOnly: false,
           sort: 'default',
           isLoading: false,
+          isFetching: false,
           errorMessage: null,
         },
         actions: makeCatalogActions(),
@@ -114,8 +132,8 @@ describe('Catalog, Search, ProductCard, ProductDetail, and Home views', () => {
     expect(catalogHtml).not.toContain('max-h-48');
     expect(catalogHtml).toContain('data-testid="filter-price-slider-min"');
     expect(catalogHtml).toContain('data-testid="filter-price-slider-max"');
-    expect(catalogHtml).toContain('min="5000000"');
-    expect(catalogHtml).toContain('max="300000000"');
+    expect(catalogHtml).toContain('min="0"');
+    expect(catalogHtml).toContain('max="299000000"');
   });
 
   it('renders ProductCard variants, ProductDetailView zoom frame, and HomeView Hero stage', () => {
@@ -132,6 +150,8 @@ describe('Catalog, Search, ProductCard, ProductDetail, and Home views', () => {
     expect(cardHtml).toContain('max-h-48');
     expect(cardHtml).toContain('bg-[#ED1C24]');
     expect(cardHtml).not.toContain('/ 100');
+    expect(cardHtml).toContain(`href="/products/${SAMPLE_CARD.id}"`);
+    expect(cardHtml).not.toContain('image-lightbox-trigger');
 
     const catalogCardHtml = renderToStaticMarkup(
       createElement(ProductCard, {
@@ -197,6 +217,8 @@ describe('Catalog, Search, ProductCard, ProductDetail, and Home views', () => {
       }),
     );
     expect(detailHtml).toContain('zoom-frame-cursor');
+    expect(detailHtml).toContain('data-testid="detail-image-lightbox-trigger"');
+    expect(detailHtml).toContain('role="button"');
     expect(detailHtml).toContain('data-testid="product-upgrade-advisor-link"');
     expect(detailHtml).toContain(
       `href="/tools/upgrade?category=cpu&amp;current=${encodeURIComponent(`store:${SAMPLE_CARD.id}`)}"`,
@@ -227,7 +249,10 @@ describe('Catalog, Search, ProductCard, ProductDetail, and Home views', () => {
     expect(homeHtml).toContain('hero-dark-stage');
     expect(homeHtml).toContain('hero-video-mask');
     expect(homeHtml).toContain('hero-video-fade');
-    expect(homeHtml).toContain('lg:pb-[clamp(8.5rem,24dvh,14.5rem)]');
+    expect(homeHtml).toContain('inset-0 z-0 h-full w-full');
+    expect(homeHtml).not.toContain('md:w-[82%]');
+    expect(homeHtml).not.toContain('66rem');
+    expect(homeHtml).toContain('md:pb-[clamp(5.5rem,14dvh,10.5rem)]');
     expect(homeHtml).toContain('/ROG-Matrix-GeForce-SnapYT.App.webm');
     expect(homeHtml).not.toContain('data-testid="home-crt-toggle"');
     expect(homeHtml).not.toContain('>REC<');
@@ -270,6 +295,7 @@ describe('Catalog, Search, ProductCard, ProductDetail, and Home views', () => {
             { vendor: 'intel', items: intelItems },
           ],
           total: 35,
+          vendorTotals: { amd: 14, intel: 21 },
           pageSize: 16,
           pageByVendor: { amd: 1, intel: 1 },
           flatPage: 1,
@@ -290,6 +316,7 @@ describe('Catalog, Search, ProductCard, ProductDetail, and Home views', () => {
           limitedOnly: false,
           sort: 'default',
           isLoading: false,
+          isFetching: false,
           errorMessage: null,
         },
         actions: makeCatalogActions(),
@@ -366,5 +393,22 @@ describe('Catalog, Search, ProductCard, ProductDetail, and Home views', () => {
     expect(searchHtml).toContain('data-testid="catalog-pagination-page-search-cpu-2"');
     expect(searchHtml).not.toContain('<ul');
     expect(searchHtml).not.toContain('<ol');
+
+    expect(clampPriceSliderBounds('50,000,000', '100,000,000')).toEqual({
+      minValue: 50_000_000,
+      maxValue: 100_000_000,
+      minPct: ((50_000_000 - CATALOG_PRICE_SLIDER_MIN) / (CATALOG_PRICE_SLIDER_MAX - CATALOG_PRICE_SLIDER_MIN)) * 100,
+      maxPct: ((100_000_000 - CATALOG_PRICE_SLIDER_MIN) / (CATALOG_PRICE_SLIDER_MAX - CATALOG_PRICE_SLIDER_MIN)) * 100,
+    });
+
+    const mixedGpuOrder = groupProductsByVendor(
+      [
+        { ...SAMPLE_CARD, id: 'g-amd', category: 'gpu', vendor: 'amd', name: 'AMD RX 9070 XT' },
+        { ...SAMPLE_CARD, id: 'g-intel', category: 'gpu', vendor: 'intel', name: 'Intel Arc B580' },
+        { ...SAMPLE_CARD, id: 'g-nv', category: 'gpu', vendor: 'nvidia', name: 'NVIDIA RTX 5090' },
+      ],
+      'gpu',
+    );
+    expect(mixedGpuOrder.map((g) => g.vendor)).toEqual(['nvidia', 'amd', 'intel']);
   });
 });

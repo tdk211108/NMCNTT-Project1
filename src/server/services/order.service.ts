@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { createHash } from 'node:crypto';
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import { MY_ORDERS_MAX_ROWS, ORDER_STAGE_VALUES } from '@/shared/constants';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { orderLookupSchema } from '@/shared/schemas';
@@ -54,6 +54,47 @@ export interface OrderItemRowWithImage {
   imageUrl: string | null;
 }
 
+export function resolveOrderStatusMeta(row: {
+  statusStage: number;
+  cancelledAt: Date | null;
+}): {
+  stage: OrderStage;
+  cancelledAt: string | null;
+  isCancelled: boolean;
+  stageLabel: string;
+} {
+  const stage = row.statusStage as OrderStage;
+  const cancelledAt = row.cancelledAt ? row.cancelledAt.toISOString() : null;
+  const isCancelled = cancelledAt !== null;
+  return {
+    stage,
+    cancelledAt,
+    isCancelled,
+    stageLabel: isCancelled ? VI_MESSAGES.orders.cancelledStatus : VI_MESSAGES.orders.stages[stage],
+  };
+}
+
+export function mapCustomerOrderSummary(row: {
+  id: string;
+  customerName: string;
+  totalQuantity: number;
+  totalVnd: number;
+  statusStage: number;
+  cancelledAt: Date | null;
+  paymentMethod: PaymentMethod;
+  createdAt: Date;
+}): CustomerOrderSummary {
+  return {
+    orderId: row.id,
+    customerName: row.customerName,
+    totalQuantity: row.totalQuantity,
+    totalVnd: row.totalVnd,
+    ...resolveOrderStatusMeta(row),
+    paymentMethod: row.paymentMethod,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
 export function buildOrderBoardFromRows(
   orderRow: typeof orders.$inferSelect,
   itemRows: OrderItemRowWithImage[],
@@ -64,7 +105,7 @@ export function buildOrderBoardFromRows(
     eventRows.map((event) => [event.stage, event.occurredAt.toISOString()]),
   );
 
-  const stage = orderRow.statusStage as OrderStage;
+  const { stage, cancelledAt, isCancelled } = resolveOrderStatusMeta(orderRow);
 
   return {
     orderId: orderRow.id,
@@ -74,7 +115,10 @@ export function buildOrderBoardFromRows(
       label: VI_MESSAGES.orders.stages[stageNum],
       reachedAt: reachedByStage.get(stageNum) ?? null,
     })),
-    isCompleted: stage === 4,
+    isCompleted: !isCancelled && stage === 4,
+    isCancelled,
+    cancelledAt,
+    canCancel: !isCancelled && stage === 0,
     customer: {
       fullName: orderRow.customerName,
       phoneMasked: options.maskCustomerPhone ? maskPhone(orderRow.phone) : orderRow.phone,
@@ -339,6 +383,7 @@ export async function listOrdersForUser(
       totalQuantity: orders.totalQuantity,
       totalVnd: orders.totalVnd,
       statusStage: orders.statusStage,
+      cancelledAt: orders.cancelledAt,
       paymentMethod: orders.paymentMethod,
       createdAt: orders.createdAt,
     })
@@ -347,19 +392,7 @@ export async function listOrdersForUser(
     .orderBy(desc(orders.createdAt))
     .limit(MY_ORDERS_MAX_ROWS);
 
-  return rows.map((row) => {
-    const stage = row.statusStage as OrderStage;
-    return {
-      orderId: row.id,
-      customerName: row.customerName,
-      totalQuantity: row.totalQuantity,
-      totalVnd: row.totalVnd,
-      stage,
-      stageLabel: VI_MESSAGES.orders.stages[stage],
-      paymentMethod: row.paymentMethod,
-      createdAt: row.createdAt.toISOString(),
-    };
-  });
+  return rows.map(mapCustomerOrderSummary);
 }
 
 export async function getOrderBoardForCustomer(
@@ -373,6 +406,17 @@ export async function getOrderBoardForCustomer(
   return board;
 }
 
+async function throwOrderStateConflict(
+  code: 'ORDER_CANCELLED' | 'STALE_STAGE' | 'ORDER_CANCEL_NOT_ALLOWED',
+  orderId: string,
+  tx: DbExecutor,
+): Promise<never> {
+  const board = await loadOrderBoard(orderId, tx, { maskCustomerPhone: true });
+  throw new AppError(code, {
+    details: board ? { order: board } : undefined,
+  });
+}
+
 export async function advanceOrderStage(
   orderId: string,
   expectedStage: OrderStage,
@@ -380,7 +424,11 @@ export async function advanceOrderStage(
 ): Promise<OrderBoard> {
   return db.transaction(async (tx) => {
     const [current] = await tx
-      .select({ id: orders.id, statusStage: orders.statusStage })
+      .select({
+        id: orders.id,
+        statusStage: orders.statusStage,
+        cancelledAt: orders.cancelledAt,
+      })
       .from(orders)
       .where(eq(orders.id, orderId))
       .limit(1);
@@ -389,15 +437,16 @@ export async function advanceOrderStage(
       throw new AppError('ORDER_NOT_FOUND');
     }
 
+    if (current.cancelledAt !== null) {
+      await throwOrderStateConflict('ORDER_CANCELLED', orderId, tx);
+    }
+
     if (current.statusStage >= 4 && expectedStage === 4) {
       throw new AppError('ORDER_COMPLETED');
     }
 
     if (current.statusStage !== expectedStage) {
-      const staleBoard = await loadOrderBoard(orderId, tx, { maskCustomerPhone: true });
-      throw new AppError('STALE_STAGE', {
-        details: staleBoard ? { order: staleBoard } : undefined,
-      });
+      await throwOrderStateConflict('STALE_STAGE', orderId, tx);
     }
 
     const updated = await tx
@@ -410,15 +459,16 @@ export async function advanceOrderStage(
         and(
           eq(orders.id, orderId),
           eq(orders.statusStage, expectedStage),
+          isNull(orders.cancelledAt),
           sql`${orders.statusStage} < 4`,
         ),
       )
       .returning({ id: orders.id });
 
     if (updated.length === 0) {
-      const staleBoard = await loadOrderBoard(orderId, tx, { maskCustomerPhone: true });
-      throw new AppError('STALE_STAGE', {
-        details: staleBoard ? { order: staleBoard } : undefined,
+      const board = await loadOrderBoard(orderId, tx, { maskCustomerPhone: true });
+      throw new AppError(board?.isCancelled ? 'ORDER_CANCELLED' : 'STALE_STAGE', {
+        details: board ? { order: board } : undefined,
       });
     }
 
@@ -429,6 +479,63 @@ export async function advanceOrderStage(
         stage: expectedStage + 1,
       })
       .onConflictDoNothing();
+
+    const updatedBoard = await loadOrderBoard(orderId, tx, { maskCustomerPhone: true });
+    if (!updatedBoard) {
+      throw new AppError('INTERNAL');
+    }
+    return updatedBoard;
+  });
+}
+
+export async function cancelOrder(
+  orderId: string,
+  db: DbClient = getDb(),
+): Promise<OrderBoard> {
+  return db.transaction(async (tx) => {
+    const [current] = await tx
+      .select({
+        id: orders.id,
+        statusStage: orders.statusStage,
+        cancelledAt: orders.cancelledAt,
+      })
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
+    if (!current) {
+      throw new AppError('ORDER_NOT_FOUND');
+    }
+
+    if (current.cancelledAt !== null) {
+      await throwOrderStateConflict('ORDER_CANCELLED', orderId, tx);
+    }
+
+    if (current.statusStage !== 0) {
+      await throwOrderStateConflict('ORDER_CANCEL_NOT_ALLOWED', orderId, tx);
+    }
+
+    const updated = await tx
+      .update(orders)
+      .set({
+        cancelledAt: sql`now()`,
+        updatedAt: sql`now()`,
+      })
+      .where(
+        and(
+          eq(orders.id, orderId),
+          eq(orders.statusStage, 0),
+          isNull(orders.cancelledAt),
+        ),
+      )
+      .returning({ id: orders.id });
+
+    if (updated.length === 0) {
+      const board = await loadOrderBoard(orderId, tx, { maskCustomerPhone: true });
+      throw new AppError(board?.isCancelled ? 'ORDER_CANCELLED' : 'ORDER_CANCEL_NOT_ALLOWED', {
+        details: board ? { order: board } : undefined,
+      });
+    }
 
     const updatedBoard = await loadOrderBoard(orderId, tx, { maskCustomerPhone: true });
     if (!updatedBoard) {

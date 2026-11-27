@@ -15,6 +15,23 @@ export class ApiClientError extends Error {
   }
 }
 
+export function extractApiErrorMessage(error: unknown): string | null {
+  if (!error || !(error instanceof Error)) {
+    return null;
+  }
+  if (error instanceof ApiClientError && error.details) {
+    const fieldErrors = error.details.fieldErrors as Record<string, unknown> | undefined;
+    if (fieldErrors && typeof fieldErrors === 'object') {
+      for (const value of Object.values(fieldErrors)) {
+        if (Array.isArray(value) && typeof value[0] === 'string' && value[0].trim()) {
+          return value[0];
+        }
+      }
+    }
+  }
+  return error.message || null;
+}
+
 async function parseErrorResponse(response: Response): Promise<ApiClientError> {
   try {
     const json = (await response.json()) as Partial<ApiError>;
@@ -57,7 +74,10 @@ export async function apiFetch<T>(
       credentials: 'same-origin',
     });
   } catch (error) {
-    if (error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')) {
+    if (
+      error instanceof Error &&
+      (error.name === 'TimeoutError' || (!init.signal && error.name === 'AbortError'))
+    ) {
       throw new ApiClientError('INTERNAL', 408, VI_MESSAGES.common.requestTimeoutError);
     }
     throw error;

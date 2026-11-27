@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useCartStore } from '@/features/cart/store';
 import { apiFetch } from '@/lib/api-client';
+import { formatCommaNumberInput, parsePriceInputDigits } from '@/lib/format';
 import { COMBO_MAX_BUDGET_VND, COMBO_MIN_BUDGET_VND } from '@/shared/constants';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type {
@@ -42,16 +43,10 @@ function parseGpuVendor(raw?: string): GpuVendor | undefined {
   return raw === 'nvidia' || raw === 'amd' || raw === 'intel' ? raw : undefined;
 }
 
-function normalizeBudgetDigits(raw: string): string {
-  return raw.replace(/[\s.,₫đ]/gi, '').trim();
-}
-
 function parseBudgetValue(raw: string): number | null {
-  const digits = normalizeBudgetDigits(raw);
-  if (!digits || !/^\d+$/.test(digits)) return null;
-  const num = Number(digits);
+  const num = parsePriceInputDigits(raw);
   if (
-    !Number.isSafeInteger(num) ||
+    num === null ||
     num < COMBO_MIN_BUDGET_VND ||
     num > COMBO_MAX_BUDGET_VND
   ) {
@@ -60,24 +55,22 @@ function parseBudgetValue(raw: string): number | null {
   return num;
 }
 
-function buildComboApiUrl(params: AppliedComboParams): string {
+function buildComboQueryString(params: AppliedComboParams): string {
   const qs = new URLSearchParams({
     budget: String(params.budgetVnd),
     purpose: params.purpose,
   });
   if (params.cpuVendor) qs.set('cpuVendor', params.cpuVendor);
   if (params.gpuVendor) qs.set('gpuVendor', params.gpuVendor);
-  return `/api/tools/combo?${qs.toString()}`;
+  return qs.toString();
+}
+
+function buildComboApiUrl(params: AppliedComboParams): string {
+  return `/api/tools/combo?${buildComboQueryString(params)}`;
 }
 
 function buildComboPageUrl(params: AppliedComboParams): string {
-  const qs = new URLSearchParams({
-    budget: String(params.budgetVnd),
-    purpose: params.purpose,
-  });
-  if (params.cpuVendor) qs.set('cpuVendor', params.cpuVendor);
-  if (params.gpuVendor) qs.set('gpuVendor', params.gpuVendor);
-  return `/tools/combo?${qs.toString()}`;
+  return `/tools/combo?${buildComboQueryString(params)}`;
 }
 
 export function useComboAdvisorController(initial: ComboInitialParams) {
@@ -90,7 +83,7 @@ export function useComboAdvisorController(initial: ComboInitialParams) {
   const initialGpuVendor = parseGpuVendor(initial.gpuVendor);
 
   const [budgetInput, setBudgetInput] = useState(
-    initialBudgetVnd !== null ? String(initialBudgetVnd) : initial.budget ?? '20000000',
+    initialBudgetVnd !== null ? formatCommaNumberInput(initialBudgetVnd) : initial.budget ?? '20,000,000',
   );
   const [purpose, setPurpose] = useState<ComboPurpose>(initialPurpose);
   const [cpuVendor, setCpuVendor] = useState<CpuVendor | undefined>(initialCpuVendor);
@@ -157,10 +150,10 @@ export function useComboAdvisorController(initial: ComboInitialParams) {
     actions: {
       onChangeBudgetInput: (value: string) => {
         setBudgetError(null);
-        setBudgetInput(value);
+        setBudgetInput(formatCommaNumberInput(value));
       },
       onSelectBudgetPreset: (amountVnd: number) => {
-        setBudgetInput(String(amountVnd));
+        setBudgetInput(formatCommaNumberInput(amountVnd));
         setBudgetError(null);
         applyWithCurrentBudget({ budgetVnd: amountVnd });
       },
@@ -188,7 +181,7 @@ export function useComboAdvisorController(initial: ComboInitialParams) {
         applyWithCurrentBudget();
       },
       onApplyMinBudget: (minBudgetVnd: number) => {
-        setBudgetInput(String(minBudgetVnd));
+        setBudgetInput(formatCommaNumberInput(minBudgetVnd));
         setBudgetError(null);
         applyWithCurrentBudget({ budgetVnd: minBudgetVnd });
       },

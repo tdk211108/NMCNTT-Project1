@@ -12,8 +12,8 @@
   - Gợi ý Combo theo ngân sách (`/tools/combo`) & Tư vấn nâng cấp kèm cảnh báo tương thích (`/tools/upgrade`).
 - **Giỏ hàng, Đặt hàng & Theo dõi đơn (Mô phỏng):**
   - Tự động đồng bộ giá/trạng thái sản phẩm và hiển thị **Lưu ý kỹ thuật** trong `/cart` (PSU, nền tảng socket/RAM, xung đột nhiều CPU, kích thước GPU, cân bằng cặp CPU+GPU).
-  - Đăng nhập khách hàng (Username/Password, Google PKCE OAuth2, Facebook OAuth2) và Admin Mode (`/admin*`).
-  - Checkout mô phỏng 3 phương thức (`COD`, `VietQR Demo`, `Thẻ mô phỏng`), bảng theo dõi 5 giai đoạn (`/orders/[orderId]`) và âm thanh UI SFX (`Web Audio API` + `/applepay.mp3` khi giao hàng thành công).
+  - Tài khoản khách hàng với Email OTP khi đăng ký/quên mật khẩu, đăng nhập Username/Password, Google PKCE OAuth2, Facebook OAuth2 (kèm xác thực Email OTP bổ sung khi thiếu email), trang hồ sơ `/profile`, và Admin Mode (`/admin*`).
+  - Checkout mô phỏng 3 phương thức (`COD`, `VietQR Demo`, `Thẻ mô phỏng`), bảng theo dõi 5 giai đoạn (`/orders/[orderId]`, hỗ trợ hủy đơn ở bước 0 `Đã đặt hàng`) và âm thanh UI SFX (`Web Audio API` + `/applepay.mp3` khi giao hàng thành công).
 
 ## Công nghệ sử dụng
 

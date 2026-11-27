@@ -3,12 +3,19 @@ import 'server-only';
 import { createHash, createHmac, randomBytes } from 'node:crypto';
 import { SignJWT, jwtVerify } from 'jose';
 import type { NextRequest, NextResponse } from 'next/server';
-import { OAUTH_TX_COOKIE, OAUTH_TX_TTL_MINUTES } from '@/shared/constants';
+import {
+  FB_PENDING_COOKIE,
+  FB_PENDING_TTL_MINUTES,
+  OAUTH_TX_COOKIE,
+  OAUTH_TX_TTL_MINUTES,
+} from '@/shared/constants';
 import type { OAuthProvider } from '@/shared/types';
+import { AppError } from '../http/errors';
 import { resolveDeploymentOrigin } from '../security/origin-check';
-import { getJwtSecretKey } from './session';
+import { getJwtSecretKey, readCookieFromRequest } from './session';
 
 const OAUTH_TX_AUDIENCE = 'oauth-tx';
+const FB_PENDING_AUDIENCE = 'facebook-pending';
 const OAUTH_FETCH_TIMEOUT_MS = 10_000;
 
 export interface OAuthCredentials {
@@ -20,6 +27,13 @@ export interface OAuthTransactionPayload {
   provider: OAuthProvider;
   state: string;
   codeVerifier?: string;
+  next: string;
+}
+
+export interface FacebookPendingPayload {
+  providerAccountId: string;
+  displayName: string;
+  avatarUrl: string | null;
   next: string;
 }
 
@@ -154,6 +168,86 @@ export function clearOAuthTxCookie(response: NextResponse): void {
     secure: process.env.NODE_ENV === 'production',
     maxAge: 0,
   });
+}
+
+export async function signFacebookPendingToken(payload: FacebookPendingPayload): Promise<string> {
+  return new SignJWT({
+    providerAccountId: payload.providerAccountId,
+    displayName: payload.displayName,
+    avatarUrl: sanitizeHttpsUrl(payload.avatarUrl),
+    next: sanitizeNextPath(payload.next),
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setAudience(FB_PENDING_AUDIENCE)
+    .setIssuedAt()
+    .setExpirationTime(`${FB_PENDING_TTL_MINUTES}m`)
+    .sign(getJwtSecretKey());
+}
+
+export async function verifyFacebookPendingToken(
+  token: string,
+): Promise<FacebookPendingPayload | null> {
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, getJwtSecretKey(), {
+      algorithms: ['HS256'],
+      audience: FB_PENDING_AUDIENCE,
+    });
+    const providerAccountId = payload.providerAccountId;
+    const displayName = payload.displayName;
+    const next = payload.next;
+    if (
+      typeof providerAccountId !== 'string' ||
+      !providerAccountId ||
+      typeof displayName !== 'string' ||
+      !displayName
+    ) {
+      return null;
+    }
+    return {
+      providerAccountId,
+      displayName: displayName.slice(0, 80),
+      avatarUrl: sanitizeHttpsUrl(payload.avatarUrl),
+      next: sanitizeNextPath(typeof next === 'string' ? next : '/'),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function setFacebookPendingCookie(response: NextResponse, token: string): void {
+  response.cookies.set({
+    name: FB_PENDING_COOKIE,
+    value: token,
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: FB_PENDING_TTL_MINUTES * 60,
+  });
+}
+
+export function clearFacebookPendingCookie(response: NextResponse): void {
+  response.cookies.set({
+    name: FB_PENDING_COOKIE,
+    value: '',
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 0,
+  });
+}
+
+export async function requireFacebookPendingCookie(
+  request: NextRequest,
+): Promise<FacebookPendingPayload> {
+  const token = readCookieFromRequest(request, FB_PENDING_COOKIE);
+  const pending = token ? await verifyFacebookPendingToken(token) : null;
+  if (!pending) {
+    throw new AppError('UNAUTHORIZED');
+  }
+  return pending;
 }
 
 export function buildGoogleAuthUrl(params: {

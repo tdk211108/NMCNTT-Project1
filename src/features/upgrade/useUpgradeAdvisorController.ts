@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useCartStore } from '@/features/cart/store';
 import { apiFetch } from '@/lib/api-client';
-import { MAX_PRICE_VND } from '@/shared/constants';
+import { formatCommaNumberInput, parsePriceInputDigits } from '@/lib/format';
+import { MAX_PRICE_VND, VENDOR_ORDER_BY_CATEGORY } from '@/shared/constants';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type {
   Category,
@@ -35,7 +36,7 @@ interface AppliedUpgradeParams {
 
 const VENDORS_BY_CATEGORY: Record<Category, readonly ChipVendor[]> = {
   cpu: ['intel', 'amd'],
-  gpu: ['nvidia', 'amd', 'intel'],
+  gpu: VENDOR_ORDER_BY_CATEGORY.gpu,
 };
 
 function parseCategory(raw?: string): Category {
@@ -63,11 +64,9 @@ function parseVendors(raw: string | undefined, category: Category): ChipVendor[]
 }
 
 function parseOptionalBudget(raw: string): { value?: number; valid: boolean } {
-  const digits = raw.replace(/[\s.,₫đ]/gi, '').trim();
-  if (!digits) return { value: undefined, valid: true };
-  if (!/^\d+$/.test(digits)) return { valid: false };
-  const num = Number(digits);
-  if (!Number.isSafeInteger(num) || num <= 0 || num > MAX_PRICE_VND) {
+  if (!raw.trim()) return { value: undefined, valid: true };
+  const num = parsePriceInputDigits(raw);
+  if (num === null || num <= 0 || num > MAX_PRICE_VND) {
     return { valid: false };
   }
   return { value: num, valid: true };
@@ -122,7 +121,9 @@ export function useUpgradeAdvisorController(initial: UpgradeInitialParams) {
   const [category, setCategory] = useState<Category>(initialCategory);
   const [currentId, setCurrentId] = useState(initialCurrent);
   const [budgetInput, setBudgetInput] = useState(
-    initialBudgetCheck.value !== undefined ? String(initialBudgetCheck.value) : initial.budget ?? '',
+    initialBudgetCheck.value !== undefined
+      ? formatCommaNumberInput(initialBudgetCheck.value)
+      : initial.budget ?? '',
   );
   const [budgetError, setBudgetError] = useState<string | null>(
     initial.budget && !initialBudgetCheck.valid
@@ -245,10 +246,10 @@ export function useUpgradeAdvisorController(initial: UpgradeInitialParams) {
       },
       onChangeBudgetInput: (value: string) => {
         setBudgetError(null);
-        setBudgetInput(value);
+        setBudgetInput(formatCommaNumberInput(value));
       },
       onSelectBudgetPreset: (amountVnd: number) => {
-        setBudgetInput(String(amountVnd));
+        setBudgetInput(formatCommaNumberInput(amountVnd));
         setBudgetError(null);
         if (currentId) {
           commitSearch({ budgetVnd: amountVnd });

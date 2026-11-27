@@ -4,6 +4,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useMemo, useState } from 'react';
 import { showToast } from '@/components/ui/toast-store';
 import { apiFetch, apiUpload } from '@/lib/api-client';
+import { formatCommaNumberInput, parsePriceInputDigits } from '@/lib/format';
 import { ADMIN_PRODUCTS_PAGE_SIZE } from '@/shared/constants';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type { ImageRef } from '@/shared/schemas/admin';
@@ -110,7 +111,7 @@ function formFromItem(item: AdminProductListItem): ProductFormState {
     mode: 'edit' as const,
     editingId: item.id,
     name: item.name,
-    priceVnd: String(item.priceVnd),
+    priceVnd: formatCommaNumberInput(item.priceVnd),
     imageMode,
     imageUrl: !isUploaded && item.imageUrl ? item.imageUrl : '',
     uploadedStoragePath: isUploaded && item.imageStoragePath ? item.imageStoragePath : '',
@@ -169,7 +170,7 @@ function buildProductPayload(form: ProductFormState): Record<string, unknown> {
   if (form.category === 'cpu') {
     const payload = {
       name: form.name,
-      priceVnd: Number(form.priceVnd),
+      priceVnd: parsePriceInputDigits(form.priceVnd) ?? 0,
       image,
       vendor: form.vendor,
       architecture: form.architecture,
@@ -197,7 +198,7 @@ function buildProductPayload(form: ProductFormState): Record<string, unknown> {
     name: form.name,
     aibBrand: form.aibBrand,
     isLimitedEdition: form.isLimitedEdition,
-    priceVnd: Number(form.priceVnd),
+    priceVnd: parsePriceInputDigits(form.priceVnd) ?? 0,
     image,
     lengthMm: Number(form.lengthMm),
     slotThickness: Number(form.slotThickness),
@@ -337,7 +338,18 @@ export function useAdminProductsController() {
       onUpdateFormField: <K extends keyof ProductFormState>(
         key: K,
         value: ProductFormState[K],
-      ) => setForm((prev) => (prev ? { ...prev, [key]: value } : prev)),
+      ) =>
+        setForm((prev) =>
+          prev
+            ? {
+                ...prev,
+                [key]:
+                  key === 'priceVnd' && typeof value === 'string'
+                    ? formatCommaNumberInput(value)
+                    : value,
+              }
+            : prev,
+        ),
       onUploadFile: (file: File) => uploadMutation.mutate(file),
       onSave: () => {
         if (!form || saveMutation.isPending) return;

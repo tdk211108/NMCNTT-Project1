@@ -10,8 +10,10 @@ import { OrderBoardPanel } from './OrderBoardView';
 export interface OrderStatusModalProps {
   placedOrder: OrderWithToken | null;
   isAdvancing: boolean;
+  isCancelling?: boolean;
   onCopyOrderId: () => void | Promise<void>;
   onAdvanceStage: () => void;
+  onCancelOrder?: () => void | Promise<void>;
   onContinueShopping: () => void;
   onViewMyOrders: () => void;
   onClose: () => void;
@@ -23,8 +25,10 @@ export interface OrderStatusModalProps {
 export function OrderStatusModal({
   placedOrder,
   isAdvancing,
+  isCancelling = false,
   onCopyOrderId,
   onAdvanceStage,
+  onCancelOrder,
   onContinueShopping,
   onViewMyOrders,
   onClose,
@@ -50,8 +54,10 @@ export function OrderStatusModal({
         <OrderBoardPanel
           board={placedOrder.order}
           isAdvancing={isAdvancing}
+          isCancelling={isCancelling}
           onCopyOrderId={onCopyOrderId}
           onAdvanceStage={onAdvanceStage}
+          onCancelOrder={onCancelOrder}
           compactHeading
         />
 

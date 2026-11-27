@@ -3,7 +3,12 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
-import { CPU_PER_BRAND_PAGE_SIZE, GPU_PAGE_SIZE } from '@/shared/constants';
+import { formatCommaNumberInput, parsePriceInputDigits } from '@/lib/format';
+import {
+  CPU_PER_BRAND_PAGE_SIZE,
+  GPU_PAGE_SIZE,
+  compareCategoryVendors,
+} from '@/shared/constants';
 import type {
   Category,
   ChipVendor,
@@ -13,9 +18,11 @@ import type {
 } from '@/shared/types';
 import { useProductCardActions } from './useProductCardActions';
 
-export const CATALOG_PRICE_SLIDER_MIN = 5_000_000;
+export const CATALOG_PRICE_SLIDER_MIN = 0;
 export const CATALOG_PRICE_SLIDER_MAX = 300_000_000;
 export const CATALOG_PRICE_SLIDER_STEP = 1_000_000;
+
+const SLIDER_STEP_CANDIDATES = [1_000_000, 500_000, 100_000, 10_000, 1_000, 1] as const;
 
 export interface PriceSliderBounds {
   minValue: number;
@@ -24,31 +31,58 @@ export interface PriceSliderBounds {
   maxPct: number;
 }
 
-function parsePriceDigits(raw: string): number | null {
-  const trimmed = raw.trim();
-  if (!trimmed || !/^\d+$/.test(trimmed)) return null;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
+/** Pick the largest clean step that evenly divides `maxBound` so the right thumb reaches exact max. */
+export function resolvePriceSliderStep(maxBound: number): number {
+  if (!Number.isFinite(maxBound) || maxBound <= 0) {
+    return CATALOG_PRICE_SLIDER_STEP;
+  }
+  for (const candidate of SLIDER_STEP_CANDIDATES) {
+    if (candidate <= maxBound && maxBound % candidate === 0) {
+      return candidate;
+    }
+  }
+  return 1;
 }
 
-/** Clamp visual slider thumb bounds strictly inside [5tr, 300tr] without distorting raw text inputs. */
-export function clampPriceSliderBounds(rawMinInput: string, rawMaxInput: string): PriceSliderBounds {
-  const parsedMin = parsePriceDigits(rawMinInput);
-  const parsedMax = parsePriceDigits(rawMaxInput);
+export function resolvePriceSliderRange(upperBound?: number | null): {
+  min: number;
+  max: number;
+  step: number;
+} {
+  const rawMax =
+    upperBound !== null &&
+    upperBound !== undefined &&
+    Number.isFinite(upperBound) &&
+    upperBound > 0
+      ? Math.trunc(upperBound)
+      : CATALOG_PRICE_SLIDER_MAX;
+  const step = resolvePriceSliderStep(rawMax);
+  return {
+    min: CATALOG_PRICE_SLIDER_MIN,
+    max: Math.max(step, rawMax),
+    step,
+  };
+}
 
-  const rawMax = parsedMax ?? CATALOG_PRICE_SLIDER_MAX;
+/** Clamp visual slider thumb bounds inside [0, upperBound] without distorting raw text inputs. */
+export function clampPriceSliderBounds(
+  rawMinInput: string,
+  rawMaxInput: string,
+  maxBound = CATALOG_PRICE_SLIDER_MAX,
+  step = resolvePriceSliderStep(maxBound),
+): PriceSliderBounds {
+  const safeStep = Math.max(1, step);
+  const safeMax = Math.max(CATALOG_PRICE_SLIDER_MIN + safeStep, maxBound);
+  const parsedMin = parsePriceInputDigits(rawMinInput);
+  const parsedMax = parsePriceInputDigits(rawMaxInput);
+
+  const rawMax = parsedMax ?? safeMax;
   const rawMin = parsedMin ?? CATALOG_PRICE_SLIDER_MIN;
 
-  const maxValue = Math.min(
-    CATALOG_PRICE_SLIDER_MAX,
-    Math.max(CATALOG_PRICE_SLIDER_MIN + CATALOG_PRICE_SLIDER_STEP, rawMax),
-  );
-  const minValue = Math.max(
-    CATALOG_PRICE_SLIDER_MIN,
-    Math.min(maxValue - CATALOG_PRICE_SLIDER_STEP, rawMin),
-  );
+  const maxValue = Math.min(safeMax, Math.max(CATALOG_PRICE_SLIDER_MIN + safeStep, rawMax));
+  const minValue = Math.max(CATALOG_PRICE_SLIDER_MIN, Math.min(maxValue - safeStep, rawMin));
 
-  const span = CATALOG_PRICE_SLIDER_MAX - CATALOG_PRICE_SLIDER_MIN;
+  const span = safeMax - CATALOG_PRICE_SLIDER_MIN;
   const minPct = ((minValue - CATALOG_PRICE_SLIDER_MIN) / span) * 100;
   const maxPct = ((maxValue - CATALOG_PRICE_SLIDER_MIN) / span) * 100;
 
@@ -76,15 +110,13 @@ function buildFilterParams(
   const params = new URLSearchParams({ category });
   if (filters.vendors.length > 0) params.set('vendor', filters.vendors.join(','));
 
-  const minVal = filters.priceMinInput.trim();
-  const maxVal = filters.priceMaxInput.trim();
-  const parsedMin = minVal && /^\d+$/.test(minVal) ? Number(minVal) : undefined;
-  const parsedMax = maxVal && /^\d+$/.test(maxVal) ? Number(maxVal) : undefined;
+  const parsedMin = parsePriceInputDigits(filters.priceMinInput);
+  const parsedMax = parsePriceInputDigits(filters.priceMaxInput);
 
-  if (parsedMin !== undefined && (parsedMax === undefined || parsedMin <= parsedMax)) {
+  if (parsedMin !== null && (parsedMax === null || parsedMin <= parsedMax)) {
     params.set('priceMin', String(parsedMin));
   }
-  if (parsedMax !== undefined && parsedMax > 0 && (parsedMin === undefined || parsedMin <= parsedMax)) {
+  if (parsedMax !== null && parsedMax > 0 && (parsedMin === null || parsedMin <= parsedMax)) {
     params.set('priceMax', String(parsedMax));
   }
   if (category === 'gpu' && filters.vramGb.length > 0) {
@@ -110,6 +142,7 @@ function buildFilterParams(
 
 export function groupProductsByVendor(
   items: readonly ProductCardDto[],
+  category?: Category,
 ): Array<{ vendor: ChipVendor; items: ProductCardDto[] }> {
   const grouped = new Map<ChipVendor, ProductCardDto[]>();
   for (const item of items) {
@@ -120,7 +153,14 @@ export function groupProductsByVendor(
       grouped.set(item.vendor, [item]);
     }
   }
-  return [...grouped.entries()].map(([vendor, groupItems]) => ({ vendor, items: groupItems }));
+  const groups = [...grouped.entries()].map(([vendor, groupItems]) => ({
+    vendor,
+    items: groupItems,
+  }));
+  if (category) {
+    groups.sort((a, b) => compareCategoryVendors(category, a.vendor, b.vendor));
+  }
+  return groups;
 }
 
 export function useCatalogController(category: Category, initialSeriesId = '') {
@@ -200,8 +240,19 @@ export function useCatalogController(category: Category, initialSeriesId = '') {
   });
 
   const items = listQuery.data?.items ?? [];
-  const groupedByVendor = sort === 'default' ? groupProductsByVendor(items) : null;
-  const sliderBounds = clampPriceSliderBounds(priceMinInput, priceMaxInput);
+  const groupedByVendor = sort === 'default' ? groupProductsByVendor(items, category) : null;
+  const facets = listQuery.data?.facets ?? {
+    vendors: [],
+    priceRange: null,
+    shopMaxPriceVnd: null,
+  };
+  const sliderRange = resolvePriceSliderRange(facets.shopMaxPriceVnd);
+  const sliderBounds = clampPriceSliderBounds(
+    priceMinInput,
+    priceMaxInput,
+    sliderRange.max,
+    sliderRange.step,
+  );
 
   return {
     state: {
@@ -210,18 +261,15 @@ export function useCatalogController(category: Category, initialSeriesId = '') {
       groupedByVendor,
       total: listQuery.data?.total ?? 0,
       vendorTotals: listQuery.data?.vendorTotals ?? {},
-      serverPaginated: true,
       pageSize,
       pageByVendor: activePageByVendor,
       flatPage: listQuery.data?.pagination?.page ?? activeFlatPage,
-      facets: listQuery.data?.facets ?? { vendors: [], priceRange: null },
+      facets,
       selectedVendors: vendors,
       priceMinInput,
       priceMaxInput,
       priceSlider: {
-        min: CATALOG_PRICE_SLIDER_MIN,
-        max: CATALOG_PRICE_SLIDER_MAX,
-        step: CATALOG_PRICE_SLIDER_STEP,
+        ...sliderRange,
         ...sliderBounds,
       },
       selectedVramGb: vramGb,
@@ -236,21 +284,21 @@ export function useCatalogController(category: Category, initialSeriesId = '') {
     },
     actions: {
       onToggleVendor: (v: ChipVendor) => setVendors((prev) => toggleItem(prev, v)),
-      onChangePriceMin: setPriceMinInput,
-      onChangePriceMax: setPriceMaxInput,
+      onChangePriceMin: (value: string) => setPriceMinInput(formatCommaNumberInput(value)),
+      onChangePriceMax: (value: string) => setPriceMaxInput(formatCommaNumberInput(value)),
       onSlidePriceMin: (value: number) => {
         const clamped = Math.max(
-          CATALOG_PRICE_SLIDER_MIN,
-          Math.min(sliderBounds.maxValue - CATALOG_PRICE_SLIDER_STEP, Math.round(value)),
+          sliderRange.min,
+          Math.min(sliderBounds.maxValue - sliderRange.step, Math.round(value)),
         );
-        setPriceMinInput(String(clamped));
+        setPriceMinInput(clamped <= sliderRange.min ? '' : formatCommaNumberInput(clamped));
       },
       onSlidePriceMax: (value: number) => {
         const clamped = Math.min(
-          CATALOG_PRICE_SLIDER_MAX,
-          Math.max(sliderBounds.minValue + CATALOG_PRICE_SLIDER_STEP, Math.round(value)),
+          sliderRange.max,
+          Math.max(sliderBounds.minValue + sliderRange.step, Math.round(value)),
         );
-        setPriceMaxInput(String(clamped));
+        setPriceMaxInput(clamped >= sliderRange.max ? '' : formatCommaNumberInput(clamped));
       },
       onToggleVram: (gb: number) => setVramGb((prev) => toggleItem(prev, gb)),
       onToggleAibBrand: (brand: string) => setAibBrands((prev) => toggleItem(prev, brand)),

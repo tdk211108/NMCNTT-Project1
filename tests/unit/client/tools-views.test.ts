@@ -119,6 +119,9 @@ describe('Hardware tool views (Compare, Combo, PerfPerPrice, Upgrade)', () => {
     const headerIdx = compareHtml.indexOf('compare-table');
     const tableSnippet = compareHtml.slice(headerIdx, compareHtml.indexOf('<tbody>'));
     expect(tableSnippet).toContain('zoom-frame-cursor');
+    expect(tableSnippet).toContain(`data-testid="compare-header-image-trigger-${SAMPLE_CARD.id}"`);
+    expect(tableSnippet).not.toContain(`<a class="block w-full max-w-60" href="/products/${SAMPLE_CARD.id}"`);
+    expect(tableSnippet).toContain(`href="/products/${SAMPLE_CARD.id}"`);
     expect(tableSnippet).toContain('aspect-square');
     expect(tableSnippet).toContain(`data-testid="compare-header-image-${SAMPLE_CARD.id}"`);
     expect(tableSnippet).toContain(`data-testid="compare-buy-now-${SAMPLE_CARD.id}"`);

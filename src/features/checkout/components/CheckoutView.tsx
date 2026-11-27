@@ -1,3 +1,7 @@
+'use client';
+
+import { ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Badge, Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -15,6 +19,66 @@ import type { useCheckoutController } from '../useCheckoutController';
 import { ReviewModal } from './ReviewModal';
 
 export type CheckoutViewProps = ReturnType<typeof useCheckoutController>;
+
+function CheckoutSummaryDetails({
+  quote,
+  imageSizeClass,
+  dividerClass,
+  showTotal = false,
+}: {
+  quote: NonNullable<CheckoutViewProps['state']['quote']>;
+  imageSizeClass: string;
+  dividerClass: string;
+  showTotal?: boolean;
+}) {
+  return (
+    <>
+      <div className={`flex flex-col gap-2.5 pb-3 text-sm ${dividerClass}`}>
+        {quote.lines.map((line) => (
+          <div key={line.productId} className="flex items-center justify-between gap-2.5">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <ProductImage
+                src={line.imageUrl}
+                alt={line.name}
+                className={`${imageSizeClass} shrink-0 border border-border-strong object-contain p-0.5`}
+              />
+              <span className="line-clamp-2 text-ink-muted">
+                {line.name} x {line.quantity}
+              </span>
+            </div>
+            <span className="shrink-0 font-mono font-medium tabular-nums text-ink">
+              {formatVnd(line.lineTotalVnd)}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-between text-sm">
+        <span className="text-ink-muted">{VI_MESSAGES.cart.subtotal}</span>
+        <span className="font-mono font-medium tabular-nums text-ink">
+          {formatVnd(quote.subtotalVnd)}
+        </span>
+      </div>
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-ink-muted">{VI_MESSAGES.cart.shippingFee}</span>
+        <span className="font-mono font-medium tabular-nums text-ink">
+          {quote.freeShipping ? (
+            <Badge variant="success">{VI_MESSAGES.common.freeShippingLabel}</Badge>
+          ) : (
+            formatVnd(quote.shippingFeeVnd)
+          )}
+        </span>
+      </div>
+      {showTotal ? (
+        <div className="flex justify-between border-t-2 border-border pt-3 text-base font-bold">
+          <span className="text-ink">{VI_MESSAGES.cart.total}</span>
+          <span className="font-mono tabular-nums text-accent-ink">
+            {formatVnd(quote.totalVnd)}
+          </span>
+        </div>
+      ) : null}
+    </>
+  );
+}
 
 function buildAddressGroups(
   id: string,
@@ -36,6 +100,8 @@ function buildAddressGroups(
 }
 
 export function CheckoutView({ state, actions }: CheckoutViewProps) {
+  const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
+
   if (!state.hasHydrated || state.isAuthLoading) {
     return <Spinner />;
   }
@@ -75,7 +141,43 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
       />
       <h1 className="font-display text-2xl font-bold text-ink">{VI_MESSAGES.checkout.title}</h1>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-3">
+        {/* Mobile collapsible order summary above the address form */}
+        {state.quote ? (
+          <Card className="p-0 overflow-hidden lg:hidden">
+            <button
+              type="button"
+              aria-expanded={mobileSummaryOpen}
+              data-testid={TEST_IDS.checkout.mobileSummaryToggle}
+              onClick={() => setMobileSummaryOpen((prev) => !prev)}
+              className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-2 bg-surface-subtle px-4 py-3 text-left text-sm font-semibold text-ink"
+            >
+              <span className="truncate font-mono text-xs text-accent-ink sm:text-sm">
+                {VI_MESSAGES.checkout.mobileOrderSummaryToggle(
+                  state.quote.totalQuantity,
+                  formatVnd(state.quote.totalVnd),
+                )}
+              </span>
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 text-ink-muted transition-transform ${
+                  mobileSummaryOpen ? 'rotate-180' : ''
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+
+            {mobileSummaryOpen ? (
+              <div className="flex flex-col gap-3 border-t border-border p-4 text-sm">
+                <CheckoutSummaryDetails
+                  quote={state.quote}
+                  imageSizeClass="h-10 w-10"
+                  dividerClass="border-b border-border"
+                />
+              </div>
+            ) : null}
+          </Card>
+        ) : null}
+
         <form onSubmit={actions.onSubmitForm} className="flex flex-col gap-4 lg:col-span-2" noValidate>
           <Card className="flex flex-col gap-4">
             <Input
@@ -188,49 +290,12 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
           <Card className="flex flex-col gap-3">
             <h2 className="font-display text-base font-bold text-ink">{VI_MESSAGES.orders.summaryHeading}</h2>
             {state.quote ? (
-              <>
-                <div className="flex flex-col gap-2.5 border-b-2 border-border pb-3 text-sm">
-                  {state.quote.lines.map((line) => (
-                    <div key={line.productId} className="flex items-center justify-between gap-2.5">
-                      <div className="flex min-w-0 items-center gap-2.5">
-                        <ProductImage
-                          src={line.imageUrl}
-                          alt={line.name}
-                          className="h-11 w-11 shrink-0 border border-border-strong object-contain p-0.5"
-                        />
-                        <span className="line-clamp-2 text-ink-muted">
-                          {line.name} x {line.quantity}
-                        </span>
-                      </div>
-                      <span className="shrink-0 font-mono font-medium tabular-nums text-ink">
-                        {formatVnd(line.lineTotalVnd)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-ink-muted">{VI_MESSAGES.cart.subtotal}</span>
-                  <span className="font-mono font-medium tabular-nums text-ink">
-                    {formatVnd(state.quote.subtotalVnd)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-ink-muted">{VI_MESSAGES.cart.shippingFee}</span>
-                  <span className="font-mono font-medium tabular-nums text-ink">
-                    {state.quote.freeShipping ? (
-                      <Badge variant="success">{VI_MESSAGES.common.freeShippingLabel}</Badge>
-                    ) : (
-                      formatVnd(state.quote.shippingFeeVnd)
-                    )}
-                  </span>
-                </div>
-                <div className="flex justify-between border-t-2 border-border pt-3 text-base font-bold">
-                  <span className="text-ink">{VI_MESSAGES.cart.total}</span>
-                  <span className="font-mono tabular-nums text-accent-ink">
-                    {formatVnd(state.quote.totalVnd)}
-                  </span>
-                </div>
-              </>
+              <CheckoutSummaryDetails
+                quote={state.quote}
+                imageSizeClass="h-11 w-11"
+                dividerClass="border-b-2 border-border"
+                showTotal
+              />
             ) : (
               <Spinner />
             )}
@@ -249,8 +314,10 @@ export function CheckoutView({ state, actions }: CheckoutViewProps) {
       <OrderStatusModal
         placedOrder={state.placedOrderModal.placedOrder}
         isAdvancing={state.placedOrderModal.isAdvancing}
+        isCancelling={state.placedOrderModal.isCancelling}
         onCopyOrderId={actions.placedOrderActions.onCopyOrderId}
         onAdvanceStage={actions.placedOrderActions.onAdvanceStage}
+        onCancelOrder={actions.placedOrderActions.onCancelOrder}
         onContinueShopping={actions.placedOrderActions.onContinueShopping}
         onViewMyOrders={actions.placedOrderActions.onViewMyOrders}
         onClose={actions.placedOrderActions.onClose}

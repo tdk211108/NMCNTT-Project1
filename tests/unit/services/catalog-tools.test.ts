@@ -80,18 +80,32 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     expect(wildcard.total).toBe(0);
 
     // Zero active products in category returns empty list and null priceRange (C22)
+    // while shopMaxPriceVnd still reflects active items in remaining categories
     await db.update(products).set({ deletedAt: new Date() }).where(eq(products.category, 'cpu'));
     const emptyCategory = await listProducts({ category: 'cpu' }, db);
     expect(emptyCategory.items).toEqual([]);
     expect(emptyCategory.facets.priceRange).toBeNull();
+    expect(emptyCategory.facets.shopMaxPriceVnd).toBe(299_000_000);
 
-    // GPU listing supports filtering Limited Edition, Intel Arc, server pagination, and exact seriesId
+    // GPU listing supports filtering Limited Edition, Intel Arc, server pagination, and exact seriesId,
+    // returns NVIDIA -> AMD -> INTEL ordering, and keeps only VRAM + Loại bộ nhớ in GPU card summaries
     const allGpus = await listProducts({ category: 'gpu' }, db);
     expect(allGpus.total).toBe(232);
+    expect(allGpus.facets.vendors).toEqual(['nvidia', 'amd', 'intel']);
+    expect(allGpus.facets.shopMaxPriceVnd).toBe(299_000_000);
+    expect(allGpus.items[0].summary.map((s) => s.key)).toEqual(['vram', 'memoryType']);
+    const firstNvidiaIdx = allGpus.items.findIndex((g) => g.vendor === 'nvidia');
+    const firstAmdIdx = allGpus.items.findIndex((g) => g.vendor === 'amd');
+    const firstIntelIdx = allGpus.items.findIndex((g) => g.vendor === 'intel');
+    expect(firstNvidiaIdx).toBe(0);
+    expect(firstAmdIdx).toBeGreaterThan(firstNvidiaIdx);
+    expect(firstIntelIdx).toBeGreaterThan(firstAmdIdx);
+
     const gpuPage1 = await listProducts({ category: 'gpu', page: 1, pageSize: 40 }, db);
     const gpuPage6 = await listProducts({ category: 'gpu', page: 6, pageSize: 40 }, db);
     expect(gpuPage1.items).toHaveLength(40);
     expect(gpuPage1.total).toBe(232);
+    expect(gpuPage1.items[0].vendor).toBe('nvidia');
     expect(gpuPage1.pagination).toEqual({ page: 1, pageSize: 40, totalPages: 6 });
     expect(gpuPage6.items).toHaveLength(32);
     const page1Ids = new Set(gpuPage1.items.map((g) => g.id));
@@ -107,6 +121,12 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     const limitedGpus = await listProducts({ category: 'gpu', limitedEdition: true }, db);
     expect(limitedGpus.total).toBe(45);
     expect(limitedGpus.items.every((g) => g.isLimitedEdition)).toBe(true);
+    const limitedFirstAmd = limitedGpus.items.findIndex((g) => g.vendor === 'amd');
+    const limitedLastNvidia = limitedGpus.items.findLastIndex((g) => g.vendor === 'nvidia');
+    const limitedFirstIntel = limitedGpus.items.findIndex((g) => g.vendor === 'intel');
+    expect(limitedGpus.items[0].vendor).toBe('nvidia');
+    expect(limitedFirstAmd).toBeGreaterThan(limitedLastNvidia);
+    expect(limitedFirstIntel).toBeGreaterThan(limitedFirstAmd);
   });
 
   it('loads product detail with stockStatus=in_stock and hides soft-deleted items', async () => {
@@ -118,9 +138,18 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
 
     const gpuDetail = await getProductDetail('gpu-asus-rog-astral-rtx-5090-32gb-oc', db);
     expect(gpuDetail.stockStatus).toBe('in_stock');
+    expect(gpuDetail.summary.map((s) => s.key)).toEqual(['vram', 'memoryType']);
     expect(gpuDetail.specGroups.map((g) => g.key)).toEqual(['specs', 'physical', 'outputs']);
     expect(gpuDetail.series).toEqual({ id: 'gs-rtx-5090', name: 'NVIDIA GeForce RTX 5090' });
     expect(gpuDetail.psuPrefill).toEqual({ gpu: 'gs-rtx-5090' });
+
+    // Dynamic shopMaxPriceVnd updates automatically when shop's priciest active product changes
+    await db
+      .update(products)
+      .set({ priceVnd: 350_500_000 })
+      .where(eq(products.id, 'gpu-asus-rog-astral-rtx-5090-32gb-oc'));
+    const updatedShopFacets = await listProducts({ category: 'gpu' }, db);
+    expect(updatedShopFacets.facets.shopMaxPriceVnd).toBe(350_500_000);
 
     const intelDetail = await getProductDetail('gpu-intel-arc-b580-limited-edition-12gb', db);
     expect(intelDetail.vendor).toBe('intel');

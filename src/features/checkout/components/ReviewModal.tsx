@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { formatVnd } from '@/lib/format';
@@ -54,7 +55,7 @@ export function ReviewModal({
           </p>
         </div>
 
-        <div className="flex flex-col gap-1 border-t-2 border-border pt-2">
+        <div className="flex flex-col gap-1.5 border-t-2 border-border pt-2">
           {prepared.quote.lines.map((line) => (
             <div key={line.productId} className="flex justify-between gap-2">
               <span className="text-ink">
@@ -65,9 +66,34 @@ export function ReviewModal({
               </span>
             </div>
           ))}
-          <div className="mt-2 flex justify-between border-t-2 border-border pt-2 font-bold text-ink">
+          <div className="mt-1 flex justify-between border-t border-border pt-2">
+            <span className="text-ink-muted">{VI_MESSAGES.cart.subtotal}</span>
+            <span
+              data-testid={TEST_IDS.checkout.reviewSubtotal}
+              className="font-mono font-medium tabular-nums text-ink"
+            >
+              {formatVnd(prepared.quote.subtotalVnd)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-ink-muted">{VI_MESSAGES.cart.shippingFee}</span>
+            <span
+              data-testid={TEST_IDS.checkout.reviewShipping}
+              className="font-mono font-medium tabular-nums text-ink"
+            >
+              {prepared.quote.freeShipping ? (
+                <Badge variant="success">{VI_MESSAGES.common.freeShippingLabel}</Badge>
+              ) : (
+                formatVnd(prepared.quote.shippingFeeVnd)
+              )}
+            </span>
+          </div>
+          <div className="mt-1 flex justify-between border-t-2 border-border pt-2 font-bold text-ink">
             <span>{VI_MESSAGES.cart.total}</span>
-            <span className="font-mono tabular-nums text-accent-ink">
+            <span
+              data-testid={TEST_IDS.checkout.reviewTotal}
+              className="font-mono tabular-nums text-accent-ink"
+            >
               {formatVnd(prepared.quote.totalVnd)}
             </span>
           </div>

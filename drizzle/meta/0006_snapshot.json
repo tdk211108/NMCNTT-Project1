@@ -1,0 +1,1671 @@
+{
+  "id": "fcc99be5-bc36-4ccb-be73-72728a977213",
+  "prevId": "7a303f5d-2eb1-4381-aea2-1b610ca05a72",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.oauth_accounts": {
+      "name": "oauth_accounts",
+      "schema": "",
+      "columns": {
+        "provider": {
+          "name": "provider",
+          "type": "oauth_provider",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_account_id": {
+          "name": "provider_account_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_email": {
+          "name": "provider_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "oauth_accounts_user_idx": {
+          "name": "oauth_accounts_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "oauth_accounts_user_id_users_id_fk": {
+          "name": "oauth_accounts_user_id_users_id_fk",
+          "tableFrom": "oauth_accounts",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "oauth_accounts_pk": {
+          "name": "oauth_accounts_pk",
+          "columns": [
+            "provider",
+            "provider_account_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "avatar_url": {
+          "name": "avatar_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "users_email_idx": {
+          "name": "users_email_idx",
+          "columns": [
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_username_unique": {
+          "name": "users_username_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "username"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "users_username_format_chk": {
+          "name": "users_username_format_chk",
+          "value": "\"users\".\"username\" IS NULL OR (\"users\".\"username\" ~ '^[a-z0-9_.-]{3,30}$' AND \"users\".\"username\" <> 'admin')"
+        },
+        "users_password_pair_chk": {
+          "name": "users_password_pair_chk",
+          "value": "(\"users\".\"username\" IS NULL AND \"users\".\"password_hash\" IS NULL) OR (\"users\".\"username\" IS NOT NULL AND \"users\".\"password_hash\" IS NOT NULL)"
+        },
+        "users_display_name_chk": {
+          "name": "users_display_name_chk",
+          "value": "char_length(\"users\".\"display_name\") BETWEEN 1 AND 80"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.products": {
+      "name": "products",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "category",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price_vnd": {
+          "name": "price_vnd",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image_storage_path": {
+          "name": "image_storage_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_seed": {
+          "name": "is_seed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "products_active_name_uq": {
+          "name": "products_active_name_uq",
+          "columns": [
+            {
+              "expression": "lower(\"name\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"products\".\"deleted_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "products_id_category_uq": {
+          "name": "products_id_category_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "category"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "products_id_format_chk": {
+          "name": "products_id_format_chk",
+          "value": "\"products\".\"id\" ~ '^[a-z0-9]+(-[a-z0-9]+)*$' AND char_length(\"products\".\"id\") <= 80"
+        },
+        "products_name_len_chk": {
+          "name": "products_name_len_chk",
+          "value": "char_length(\"products\".\"name\") BETWEEN 2 AND 150"
+        },
+        "products_price_positive_chk": {
+          "name": "products_price_positive_chk",
+          "value": "\"products\".\"price_vnd\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.cpu_specs": {
+      "name": "cpu_specs",
+      "schema": "",
+      "columns": {
+        "product_id": {
+          "name": "product_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "category",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'cpu'"
+        },
+        "vendor": {
+          "name": "vendor",
+          "type": "cpu_vendor",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "architecture": {
+          "name": "architecture",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "socket": {
+          "name": "socket",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "process_node": {
+          "name": "process_node",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cores_total": {
+          "name": "cores_total",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "threads_total": {
+          "name": "threads_total",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "p_cores": {
+          "name": "p_cores",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "e_cores": {
+          "name": "e_cores",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "base_clock_ghz": {
+          "name": "base_clock_ghz",
+          "type": "numeric(4, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "boost_clock_ghz": {
+          "name": "boost_clock_ghz",
+          "type": "numeric(4, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cache_text": {
+          "name": "cache_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "l3_cache_mb": {
+          "name": "l3_cache_mb",
+          "type": "numeric(6, 1)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tdp_w": {
+          "name": "tdp_w",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "psu_power_w": {
+          "name": "psu_power_w",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ram_support": {
+          "name": "ram_support",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "passmark_raw": {
+          "name": "passmark_raw",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "passmark_source": {
+          "name": "passmark_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PassMark'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cpu_specs_product_fk": {
+          "name": "cpu_specs_product_fk",
+          "tableFrom": "cpu_specs",
+          "tableTo": "products",
+          "columnsFrom": [
+            "product_id",
+            "category"
+          ],
+          "columnsTo": [
+            "id",
+            "category"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "cpu_specs_category_chk": {
+          "name": "cpu_specs_category_chk",
+          "value": "\"cpu_specs\".\"category\" = 'cpu'"
+        },
+        "cpu_specs_cores_chk": {
+          "name": "cpu_specs_cores_chk",
+          "value": "\"cpu_specs\".\"cores_total\" > 0"
+        },
+        "cpu_specs_threads_chk": {
+          "name": "cpu_specs_threads_chk",
+          "value": "\"cpu_specs\".\"threads_total\" >= \"cpu_specs\".\"cores_total\""
+        },
+        "cpu_specs_p_cores_chk": {
+          "name": "cpu_specs_p_cores_chk",
+          "value": "\"cpu_specs\".\"p_cores\" > 0"
+        },
+        "cpu_specs_e_cores_chk": {
+          "name": "cpu_specs_e_cores_chk",
+          "value": "\"cpu_specs\".\"e_cores\" >= 0"
+        },
+        "cpu_specs_hybrid_cores_chk": {
+          "name": "cpu_specs_hybrid_cores_chk",
+          "value": "(\"cpu_specs\".\"p_cores\" IS NULL AND \"cpu_specs\".\"e_cores\" IS NULL) OR (\"cpu_specs\".\"p_cores\" + \"cpu_specs\".\"e_cores\" = \"cpu_specs\".\"cores_total\")"
+        },
+        "cpu_specs_base_clock_chk": {
+          "name": "cpu_specs_base_clock_chk",
+          "value": "\"cpu_specs\".\"base_clock_ghz\" > 0"
+        },
+        "cpu_specs_boost_clock_chk": {
+          "name": "cpu_specs_boost_clock_chk",
+          "value": "\"cpu_specs\".\"boost_clock_ghz\" >= \"cpu_specs\".\"base_clock_ghz\""
+        },
+        "cpu_specs_l3_cache_chk": {
+          "name": "cpu_specs_l3_cache_chk",
+          "value": "\"cpu_specs\".\"l3_cache_mb\" > 0"
+        },
+        "cpu_specs_tdp_chk": {
+          "name": "cpu_specs_tdp_chk",
+          "value": "\"cpu_specs\".\"tdp_w\" > 0"
+        },
+        "cpu_specs_psu_power_chk": {
+          "name": "cpu_specs_psu_power_chk",
+          "value": "\"cpu_specs\".\"psu_power_w\" >= \"cpu_specs\".\"tdp_w\""
+        },
+        "cpu_specs_passmark_chk": {
+          "name": "cpu_specs_passmark_chk",
+          "value": "\"cpu_specs\".\"passmark_raw\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.gpu_series": {
+      "name": "gpu_series",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "gpu_series_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vendor": {
+          "name": "vendor",
+          "type": "gpu_vendor",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vram_gb": {
+          "name": "vram_gb",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tbp_w": {
+          "name": "tbp_w",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cores": {
+          "name": "cores",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "base_clock_mhz": {
+          "name": "base_clock_mhz",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "boost_clock_mhz": {
+          "name": "boost_clock_mhz",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "memory_type": {
+          "name": "memory_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bus_width_bit": {
+          "name": "bus_width_bit",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "passmark_raw": {
+          "name": "passmark_raw",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "passmark_source": {
+          "name": "passmark_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_seed": {
+          "name": "is_seed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "gpu_series_active_name_uq": {
+          "name": "gpu_series_active_name_uq",
+          "columns": [
+            {
+              "expression": "lower(\"name\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"gpu_series\".\"deleted_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "gpu_series_id_kind_uq": {
+          "name": "gpu_series_id_kind_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "kind"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "gpu_series_id_format_chk": {
+          "name": "gpu_series_id_format_chk",
+          "value": "\"gpu_series\".\"id\" ~ '^[A-Za-z0-9-]{2,60}$'"
+        },
+        "gpu_series_name_len_chk": {
+          "name": "gpu_series_name_len_chk",
+          "value": "char_length(\"gpu_series\".\"name\") BETWEEN 2 AND 100"
+        },
+        "gpu_series_vram_chk": {
+          "name": "gpu_series_vram_chk",
+          "value": "\"gpu_series\".\"vram_gb\" > 0"
+        },
+        "gpu_series_tbp_chk": {
+          "name": "gpu_series_tbp_chk",
+          "value": "\"gpu_series\".\"tbp_w\" > 0"
+        },
+        "gpu_series_cores_chk": {
+          "name": "gpu_series_cores_chk",
+          "value": "\"gpu_series\".\"cores\" > 0"
+        },
+        "gpu_series_base_clock_chk": {
+          "name": "gpu_series_base_clock_chk",
+          "value": "\"gpu_series\".\"base_clock_mhz\" > 0"
+        },
+        "gpu_series_boost_clock_chk": {
+          "name": "gpu_series_boost_clock_chk",
+          "value": "\"gpu_series\".\"boost_clock_mhz\" > 0"
+        },
+        "gpu_series_bus_width_chk": {
+          "name": "gpu_series_bus_width_chk",
+          "value": "\"gpu_series\".\"bus_width_bit\" > 0"
+        },
+        "gpu_series_passmark_chk": {
+          "name": "gpu_series_passmark_chk",
+          "value": "\"gpu_series\".\"passmark_raw\" > 0"
+        },
+        "gpu_series_retail_specs_chk": {
+          "name": "gpu_series_retail_specs_chk",
+          "value": "\"gpu_series\".\"kind\" = 'legacy' OR (\"gpu_series\".\"cores\" IS NOT NULL AND \"gpu_series\".\"base_clock_mhz\" IS NOT NULL AND \"gpu_series\".\"boost_clock_mhz\" IS NOT NULL AND \"gpu_series\".\"memory_type\" IS NOT NULL AND \"gpu_series\".\"bus_width_bit\" IS NOT NULL AND \"gpu_series\".\"passmark_raw\" IS NOT NULL AND \"gpu_series\".\"passmark_source\" IS NOT NULL AND \"gpu_series\".\"boost_clock_mhz\" >= \"gpu_series\".\"base_clock_mhz\")"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.gpu_variants": {
+      "name": "gpu_variants",
+      "schema": "",
+      "columns": {
+        "product_id": {
+          "name": "product_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "category",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'gpu'"
+        },
+        "series_id": {
+          "name": "series_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "series_kind": {
+          "name": "series_kind",
+          "type": "gpu_series_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'retail'"
+        },
+        "aib_brand": {
+          "name": "aib_brand",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_limited_edition": {
+          "name": "is_limited_edition",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "length_mm": {
+          "name": "length_mm",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot_thickness": {
+          "name": "slot_thickness",
+          "type": "numeric(3, 1)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hdmi_count": {
+          "name": "hdmi_count",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dp_count": {
+          "name": "dp_count",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "gpu_variants_series_idx": {
+          "name": "gpu_variants_series_idx",
+          "columns": [
+            {
+              "expression": "series_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "gpu_variants_product_fk": {
+          "name": "gpu_variants_product_fk",
+          "tableFrom": "gpu_variants",
+          "tableTo": "products",
+          "columnsFrom": [
+            "product_id",
+            "category"
+          ],
+          "columnsTo": [
+            "id",
+            "category"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "gpu_variants_series_fk": {
+          "name": "gpu_variants_series_fk",
+          "tableFrom": "gpu_variants",
+          "tableTo": "gpu_series",
+          "columnsFrom": [
+            "series_id",
+            "series_kind"
+          ],
+          "columnsTo": [
+            "id",
+            "kind"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "gpu_variants_category_chk": {
+          "name": "gpu_variants_category_chk",
+          "value": "\"gpu_variants\".\"category\" = 'gpu'"
+        },
+        "gpu_variants_series_kind_chk": {
+          "name": "gpu_variants_series_kind_chk",
+          "value": "\"gpu_variants\".\"series_kind\" = 'retail'"
+        },
+        "gpu_variants_aib_brand_chk": {
+          "name": "gpu_variants_aib_brand_chk",
+          "value": "char_length(\"gpu_variants\".\"aib_brand\") BETWEEN 2 AND 40"
+        },
+        "gpu_variants_length_chk": {
+          "name": "gpu_variants_length_chk",
+          "value": "\"gpu_variants\".\"length_mm\" BETWEEN 100 AND 450"
+        },
+        "gpu_variants_slot_chk": {
+          "name": "gpu_variants_slot_chk",
+          "value": "\"gpu_variants\".\"slot_thickness\" BETWEEN 1 AND 5"
+        },
+        "gpu_variants_hdmi_chk": {
+          "name": "gpu_variants_hdmi_chk",
+          "value": "\"gpu_variants\".\"hdmi_count\" BETWEEN 0 AND 8"
+        },
+        "gpu_variants_dp_chk": {
+          "name": "gpu_variants_dp_chk",
+          "value": "\"gpu_variants\".\"dp_count\" BETWEEN 0 AND 8"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.legacy_cpus": {
+      "name": "legacy_cpus",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vendor": {
+          "name": "vendor",
+          "type": "cpu_vendor",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "socket": {
+          "name": "socket",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cores_total": {
+          "name": "cores_total",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "threads_total": {
+          "name": "threads_total",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "psu_power_w": {
+          "name": "psu_power_w",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "passmark_raw": {
+          "name": "passmark_raw",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "passmark_source": {
+          "name": "passmark_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_seed": {
+          "name": "is_seed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "legacy_cpus_active_name_uq": {
+          "name": "legacy_cpus_active_name_uq",
+          "columns": [
+            {
+              "expression": "lower(\"name\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"legacy_cpus\".\"deleted_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "legacy_cpus_id_format_chk": {
+          "name": "legacy_cpus_id_format_chk",
+          "value": "\"legacy_cpus\".\"id\" ~ '^C[0-9]{2,4}$'"
+        },
+        "legacy_cpus_name_len_chk": {
+          "name": "legacy_cpus_name_len_chk",
+          "value": "char_length(\"legacy_cpus\".\"name\") BETWEEN 2 AND 100"
+        },
+        "legacy_cpus_cores_chk": {
+          "name": "legacy_cpus_cores_chk",
+          "value": "\"legacy_cpus\".\"cores_total\" > 0"
+        },
+        "legacy_cpus_threads_chk": {
+          "name": "legacy_cpus_threads_chk",
+          "value": "\"legacy_cpus\".\"threads_total\" > 0"
+        },
+        "legacy_cpus_psu_power_chk": {
+          "name": "legacy_cpus_psu_power_chk",
+          "value": "\"legacy_cpus\".\"psu_power_w\" > 0"
+        },
+        "legacy_cpus_passmark_chk": {
+          "name": "legacy_cpus_passmark_chk",
+          "value": "\"legacy_cpus\".\"passmark_raw\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.order_items": {
+      "name": "order_items",
+      "schema": "",
+      "columns": {
+        "order_id": {
+          "name": "order_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "line_no": {
+          "name": "line_no",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "product_name": {
+          "name": "product_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "category",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit_price_vnd": {
+          "name": "unit_price_vnd",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "line_total_vnd": {
+          "name": "line_total_vnd",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "order_items_product_idx": {
+          "name": "order_items_product_idx",
+          "columns": [
+            {
+              "expression": "product_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "order_items_order_id_orders_id_fk": {
+          "name": "order_items_order_id_orders_id_fk",
+          "tableFrom": "order_items",
+          "tableTo": "orders",
+          "columnsFrom": [
+            "order_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "order_items_product_id_products_id_fk": {
+          "name": "order_items_product_id_products_id_fk",
+          "tableFrom": "order_items",
+          "tableTo": "products",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "order_items_pk": {
+          "name": "order_items_pk",
+          "columns": [
+            "order_id",
+            "line_no"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "order_items_order_product_uq": {
+          "name": "order_items_order_product_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "order_id",
+            "product_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "order_items_line_no_chk": {
+          "name": "order_items_line_no_chk",
+          "value": "\"order_items\".\"line_no\" BETWEEN 1 AND 20"
+        },
+        "order_items_unit_price_chk": {
+          "name": "order_items_unit_price_chk",
+          "value": "\"order_items\".\"unit_price_vnd\" > 0"
+        },
+        "order_items_quantity_chk": {
+          "name": "order_items_quantity_chk",
+          "value": "\"order_items\".\"quantity\" BETWEEN 1 AND 100"
+        },
+        "order_items_line_total_chk": {
+          "name": "order_items_line_total_chk",
+          "value": "\"order_items\".\"line_total_vnd\" = \"order_items\".\"unit_price_vnd\" * \"order_items\".\"quantity\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.order_status_events": {
+      "name": "order_status_events",
+      "schema": "",
+      "columns": {
+        "order_id": {
+          "name": "order_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stage": {
+          "name": "stage",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "order_status_events_order_id_orders_id_fk": {
+          "name": "order_status_events_order_id_orders_id_fk",
+          "tableFrom": "order_status_events",
+          "tableTo": "orders",
+          "columnsFrom": [
+            "order_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "order_status_events_pk": {
+          "name": "order_status_events_pk",
+          "columns": [
+            "order_id",
+            "stage"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "order_status_events_stage_chk": {
+          "name": "order_status_events_stage_chk",
+          "value": "\"order_status_events\".\"stage\" BETWEEN 0 AND 4"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.orders": {
+      "name": "orders",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_hash": {
+          "name": "request_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_name": {
+          "name": "customer_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "province_code": {
+          "name": "province_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "province_name": {
+          "name": "province_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ward_code": {
+          "name": "ward_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ward_name": {
+          "name": "ward_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "street_address": {
+          "name": "street_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payment_method": {
+          "name": "payment_method",
+          "type": "payment_method",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payment_reference": {
+          "name": "payment_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_quantity": {
+          "name": "total_quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subtotal_vnd": {
+          "name": "subtotal_vnd",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shipping_fee_vnd": {
+          "name": "shipping_fee_vnd",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_vnd": {
+          "name": "total_vnd",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status_stage": {
+          "name": "status_stage",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "cancelled_at": {
+          "name": "cancelled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "orders_created_at_idx": {
+          "name": "orders_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "orders_user_created_idx": {
+          "name": "orders_user_created_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "orders_user_id_users_id_fk": {
+          "name": "orders_user_id_users_id_fk",
+          "tableFrom": "orders",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "orders_idempotency_key_unique": {
+          "name": "orders_idempotency_key_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "idempotency_key"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "orders_id_format_chk": {
+          "name": "orders_id_format_chk",
+          "value": "\"orders\".\"id\" ~ '^PC-[A-HJKMNP-TV-Z0-9]{10}$'"
+        },
+        "orders_phone_format_chk": {
+          "name": "orders_phone_format_chk",
+          "value": "\"orders\".\"phone\" ~ '^0(3|5|7|8|9)[0-9]{8}$'"
+        },
+        "orders_total_quantity_chk": {
+          "name": "orders_total_quantity_chk",
+          "value": "\"orders\".\"total_quantity\" BETWEEN 1 AND 2000"
+        },
+        "orders_subtotal_positive_chk": {
+          "name": "orders_subtotal_positive_chk",
+          "value": "\"orders\".\"subtotal_vnd\" > 0"
+        },
+        "orders_shipping_fee_chk": {
+          "name": "orders_shipping_fee_chk",
+          "value": "\"orders\".\"shipping_fee_vnd\" IN (0, 50000)"
+        },
+        "orders_total_sum_chk": {
+          "name": "orders_total_sum_chk",
+          "value": "\"orders\".\"total_vnd\" = \"orders\".\"subtotal_vnd\" + \"orders\".\"shipping_fee_vnd\""
+        },
+        "orders_status_stage_chk": {
+          "name": "orders_status_stage_chk",
+          "value": "\"orders\".\"status_stage\" BETWEEN 0 AND 4"
+        },
+        "orders_cancelled_stage_chk": {
+          "name": "orders_cancelled_stage_chk",
+          "value": "\"orders\".\"cancelled_at\" IS NULL OR \"orders\".\"status_stage\" = 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.auth_failures": {
+      "name": "auth_failures",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "auth_failures_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "scope": {
+          "name": "scope",
+          "type": "auth_scope",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ip_hash": {
+          "name": "ip_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "auth_failures_lookup_idx": {
+          "name": "auth_failures_lookup_idx",
+          "columns": [
+            {
+              "expression": "scope",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ip_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.oauth_provider": {
+      "name": "oauth_provider",
+      "schema": "public",
+      "values": [
+        "google",
+        "facebook"
+      ]
+    },
+    "public.category": {
+      "name": "category",
+      "schema": "public",
+      "values": [
+        "cpu",
+        "gpu"
+      ]
+    },
+    "public.cpu_vendor": {
+      "name": "cpu_vendor",
+      "schema": "public",
+      "values": [
+        "intel",
+        "amd"
+      ]
+    },
+    "public.gpu_series_kind": {
+      "name": "gpu_series_kind",
+      "schema": "public",
+      "values": [
+        "retail",
+        "legacy"
+      ]
+    },
+    "public.gpu_vendor": {
+      "name": "gpu_vendor",
+      "schema": "public",
+      "values": [
+        "nvidia",
+        "amd",
+        "intel"
+      ]
+    },
+    "public.payment_method": {
+      "name": "payment_method",
+      "schema": "public",
+      "values": [
+        "cod",
+        "bank_transfer",
+        "card"
+      ]
+    },
+    "public.auth_scope": {
+      "name": "auth_scope",
+      "schema": "public",
+      "values": [
+        "order_lookup",
+        "admin_login",
+        "user_login",
+        "user_register"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {
+    "public.storefront_products_v": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "category",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price_vnd": {
+          "name": "price_vnd",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vendor": {
+          "name": "vendor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "aib_brand": {
+          "name": "aib_brand",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "series_id": {
+          "name": "series_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_limited_edition": {
+          "name": "is_limited_edition",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "socket": {
+          "name": "socket",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vram_gb": {
+          "name": "vram_gb",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "passmark_raw": {
+          "name": "passmark_raw",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "normalized_score": {
+          "name": "normalized_score",
+          "type": "numeric(5, 1)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "search_text": {
+          "name": "search_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "name": "storefront_products_v",
+      "schema": "public",
+      "isExisting": true,
+      "materialized": false
+    }
+  },
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

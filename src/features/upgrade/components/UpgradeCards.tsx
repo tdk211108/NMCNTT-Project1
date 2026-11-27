@@ -193,7 +193,7 @@ function UpgradeCardActions({
           data-testid={TEST_IDS.upgrade.psuLink(item.id)}
           className="block min-w-0"
         >
-          <Button variant="outline" size="xs" cyber={false} className="w-full min-w-0 whitespace-nowrap">
+          <Button variant="outline" size="xs" cyber={false} className="min-h-10 w-full min-w-0 whitespace-nowrap sm:min-h-9">
             <Gauge className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>{VI_MESSAGES.tools.upgrade.checkPsuAction}</span>
           </Button>
@@ -209,7 +209,7 @@ function UpgradeCardActions({
               variant="outline"
               size="xs"
               cyber={false}
-              className="w-full min-w-0 whitespace-nowrap"
+              className="min-h-10 w-full min-w-0 whitespace-nowrap sm:min-h-9"
             >
               <Scale className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span>{VI_MESSAGES.tools.upgrade.compareDirectAction}</span>

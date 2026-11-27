@@ -1,19 +1,22 @@
 'use client';
 
-import { LogIn, LogOut, ShieldAlert, ShoppingCart, User } from 'lucide-react';
+import { LogIn, LogOut, Menu, ShieldAlert, ShoppingCart, User } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/Card';
 import { useAuthSession } from '@/features/auth/useAuthSession';
 import { useCartStore } from '@/features/cart/store';
 import { SearchBar } from '@/features/search/components/SearchBar';
+import { useIsMobileViewport } from '@/lib/use-media-query';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
 import { BrandMark } from './BrandMark';
 import { GooeyNav, type GooeyNavItem } from './GooeyNav';
 import { getChromeContainerClass } from '../layout-width';
+import { HARDWARE_TOOL_LINKS } from '../nav-items';
+import { MobileNavDrawer } from './MobileNavDrawer';
 import { MusicPlayerBar } from './MusicPlayerBar';
 import { ThemeToggle } from './ThemeToggle';
 import { SfxToggle } from './UiSoundEffects';
@@ -31,32 +34,12 @@ function buildNavItems(isAdmin: boolean, compact = false): GooeyNavItem[] {
       label: VI_MESSAGES.nav.tools,
       testId: compact ? TEST_IDS.header.floatingToolsDropdown : TEST_IDS.header.toolsDropdown,
       menuTestId: compact ? undefined : TEST_IDS.header.toolsMenu,
-      subItems: [
-        {
-          href: '/compare',
-          label: VI_MESSAGES.nav.compare,
-          description: VI_MESSAGES.nav.compareMenuDesc,
-          testId: compact ? undefined : TEST_IDS.header.toolsCompare,
-        },
-        {
-          href: '/tools/combo',
-          label: VI_MESSAGES.nav.combo,
-          description: VI_MESSAGES.nav.comboMenuDesc,
-          testId: compact ? undefined : TEST_IDS.header.toolsCombo,
-        },
-        {
-          href: '/tools/upgrade',
-          label: VI_MESSAGES.nav.upgrade,
-          description: VI_MESSAGES.nav.upgradeMenuDesc,
-          testId: compact ? undefined : TEST_IDS.header.toolsUpgrade,
-        },
-        {
-          href: '/tools/psu',
-          label: VI_MESSAGES.nav.psu,
-          description: VI_MESSAGES.nav.psuMenuDesc,
-          testId: compact ? undefined : TEST_IDS.header.toolsPsu,
-        },
-      ],
+      subItems: HARDWARE_TOOL_LINKS.map(({ href, label, description, headerTestId }) => ({
+        href,
+        label,
+        description,
+        ...(compact ? {} : { testId: headerTestId }),
+      })),
     },
     { href: '/tools/perf-per-price', label: VI_MESSAGES.nav.perfPerPrice },
   ];
@@ -170,8 +153,8 @@ function HeaderActions({
         ) : (
           <div className="flex items-center gap-2 sm:gap-2.5">
             <Link
-              href="/orders"
-              data-testid={floating ? undefined : TEST_IDS.auth.headerMyOrders}
+              href="/profile"
+              data-testid={floating ? undefined : TEST_IDS.auth.headerProfile}
               className="mtx-shadow-sm inline-flex min-h-10 items-center gap-1.5 rounded-control border-2 border-border-strong bg-surface-subtle px-2.5 text-xs font-semibold text-ink hover:border-signal sm:text-sm"
             >
               {authState.user.avatarUrl ? (
@@ -272,6 +255,9 @@ export function Header() {
   const pathname = usePathname();
   const staticHeaderRef = useRef<HTMLElement>(null);
   const [showFloatingNav, setShowFloatingNav] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const drawerId = useId();
+  const isMobile = useIsMobileViewport();
 
   const cartItems = useCartStore((s) => s.items);
   const cartHydrated = useCartStore((s) => s.hasHydrated);
@@ -285,8 +271,22 @@ export function Header() {
 
   useEffect(() => {
     const target = staticHeaderRef.current;
-    if (!target || typeof IntersectionObserver === 'undefined') {
-      return;
+    if (!target) return undefined;
+
+    const syncHeaderHeight = () => {
+      const h = Math.round(target.getBoundingClientRect().height);
+      if (h > 0) {
+        document.documentElement.style.setProperty('--cr-header-h', `${h}px`);
+      }
+    };
+    syncHeaderHeight();
+
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(syncHeaderHeight) : null;
+    resizeObserver?.observe(target);
+
+    if (isMobile || typeof IntersectionObserver === 'undefined') {
+      return () => resizeObserver?.disconnect();
     }
 
     const updateInitial = () => {
@@ -303,8 +303,113 @@ export function Header() {
     );
 
     observer.observe(target);
-    return () => observer.disconnect();
-  }, []);
+    return () => {
+      observer.disconnect();
+      resizeObserver?.disconnect();
+    };
+  }, [isMobile]);
+
+  if (isMobile) {
+    return (
+      <>
+        <header
+          ref={staticHeaderRef}
+          className="sticky top-0 z-30 border-b-2 border-border-strong bg-surface/95 backdrop-blur-sm"
+        >
+          <div className="flex h-14 w-full items-center justify-between gap-1.5 px-2.5 min-[400px]:gap-2 min-[400px]:px-3">
+            <div className="flex min-w-0 items-center gap-1.5 min-[400px]:gap-2">
+              <button
+                type="button"
+                aria-label={VI_MESSAGES.nav.mobileMenuOpenAria}
+                aria-expanded={mobileDrawerOpen}
+                aria-controls={drawerId}
+                data-testid={TEST_IDS.header.mobileMenuOpen}
+                data-sfx="toggle"
+                onClick={() => setMobileDrawerOpen(true)}
+                className="mtx-shadow-sm inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-control border-2 border-border-strong bg-surface-subtle text-ink hover:border-signal active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus-visible:outline-2 focus-visible:outline-signal"
+              >
+                <Menu className="h-5 w-5 shrink-0" aria-hidden="true" />
+              </button>
+              <BrandMark size="compact" testId={TEST_IDS.header.brandLink} />
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1 min-[400px]:gap-1.5">
+              <SearchBar mobilePanel />
+
+              <Link
+                href="/cart"
+                aria-label={VI_MESSAGES.nav.cart}
+                data-testid={TEST_IDS.header.cartLink}
+                className="mtx-shadow-sm inline-flex h-10 items-center gap-1 rounded-control border-2 border-border-strong bg-surface-subtle px-1.5 text-xs font-semibold text-ink hover:border-signal active:translate-x-[1px] active:translate-y-[1px] active:shadow-none min-[400px]:px-2"
+              >
+                <ShoppingCart className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span
+                  data-testid={TEST_IDS.header.cartCount}
+                  className="rounded-control bg-primary px-1.5 py-0.5 font-mono text-[11px] font-bold tabular-nums text-primary-fg"
+                >
+                  {totalCartCount}
+                </span>
+              </Link>
+
+              {authState.user ? (
+                isAdmin ? (
+                  <Link
+                    href="/admin"
+                    aria-label={VI_MESSAGES.nav.adminMode}
+                    data-testid={TEST_IDS.header.adminToggle}
+                    className="mtx-shadow-sm inline-flex h-10 items-center gap-1 rounded-control border-2 border-signal bg-surface-subtle px-2 text-xs font-semibold text-ink"
+                  >
+                    <ShieldAlert className="h-4 w-4 shrink-0 text-accent-ink" aria-hidden="true" />
+                  </Link>
+                ) : (
+                  <Link
+                    href="/profile"
+                    aria-label={authState.user.displayName}
+                    data-testid={TEST_IDS.auth.headerProfile}
+                    className="mtx-shadow-sm inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-control border-2 border-border-strong bg-surface-subtle text-ink hover:border-signal"
+                  >
+                    {authState.user.avatarUrl ? (
+                      <img
+                        src={authState.user.avatarUrl}
+                        alt={authState.user.displayName}
+                        className="h-6 w-6 rounded-full object-cover"
+                      />
+                    ) : (
+                      <User className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    )}
+                    <span data-testid={TEST_IDS.auth.headerUserBadge} className="sr-only">
+                      {authState.user.displayName}
+                    </span>
+                  </Link>
+                )
+              ) : (
+                <button
+                  type="button"
+                  aria-label={VI_MESSAGES.nav.login}
+                  data-testid={TEST_IDS.auth.headerLoginButton}
+                  onClick={() => authActions.openAuthModal({ tab: 'login' })}
+                  className="mtx-shadow-sm inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-control border-2 border-border-strong bg-surface-subtle text-ink hover:border-signal"
+                >
+                  <LogIn className="h-4 w-4 shrink-0" aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <MobileNavDrawer
+          id={drawerId}
+          open={mobileDrawerOpen}
+          pathname={pathname}
+          isAdmin={isAdmin}
+          totalCartCount={totalCartCount}
+          authState={authState}
+          authActions={authActions}
+          onClose={() => setMobileDrawerOpen(false)}
+        />
+      </>
+    );
+  }
 
   return (
     <>

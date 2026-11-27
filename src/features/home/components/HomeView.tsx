@@ -169,12 +169,12 @@ export function HomeView({ state, actions }: HomeViewProps) {
       <div className="flex w-full flex-col">
         <section
           ref={heroWrapperRef}
-          className="parallax-hero-wrapper hero-dark-stage relative flex min-h-[clamp(24rem,68dvh,38rem)] w-full items-end overflow-clip bg-bg md:min-h-[clamp(28rem,calc(100dvh-10.5rem),66rem)]"
+          className="parallax-hero-wrapper hero-dark-stage relative flex min-h-[max(28rem,calc(100dvh-var(--cr-header-h,3.5rem)-6.375rem))] w-full items-end overflow-clip bg-bg md:min-h-[max(32rem,calc(100dvh-var(--cr-header-h,8rem)-2.75rem))]"
         >
-          {/* Background video feathered tightly on the left edge so bottom 1/4 & video captions stay bright */}
+          {/* Full-bleed background video spanning 100% width and height across every viewport (mobile to 2K/4K/ultrawide) */}
           <div
             aria-hidden="true"
-            className="hero-video-mask pointer-events-none absolute inset-y-0 right-0 z-0 w-full md:w-[82%] lg:w-[82%]"
+            className="hero-video-mask pointer-events-none absolute inset-0 z-0 h-full w-full"
           >
             <video
               ref={videoRef}
@@ -190,7 +190,7 @@ export function HomeView({ state, actions }: HomeViewProps) {
             <div className="mtx-crt-scanlines pointer-events-none absolute inset-0" />
           </div>
 
-          {/* Localized contrast scrim behind upper/mid headline & CTAs leaving bottom 1/4 un-dimmed */}
+          {/* Responsive contrast scrim: bottom-up on mobile, subtle left scrim on desktop */}
           <div
             aria-hidden="true"
             className="hero-video-fade pointer-events-none absolute inset-0 z-[1]"
@@ -199,9 +199,9 @@ export function HomeView({ state, actions }: HomeViewProps) {
           <div className="relative z-10 w-full px-4 sm:px-6 lg:px-12">
             <div
               ref={frontLayerRef}
-              className="parallax-layer-front flex w-full max-w-2xl flex-col items-start pt-12 pb-24 text-left sm:pb-32 lg:pb-[clamp(8.5rem,24dvh,14.5rem)]"
+              className="parallax-layer-front flex w-full max-w-2xl flex-col items-start pt-16 pb-6 text-left sm:pt-14 sm:pb-14 md:pb-[clamp(5.5rem,14dvh,10.5rem)]"
             >
-              <h1 className="font-display text-[clamp(2.35rem,1.4rem+3.8vw,4.85rem)] leading-[1.02] font-bold tracking-tight text-ink uppercase text-balance">
+              <h1 className="font-display text-[clamp(2.1rem,1.2rem+4.5vw,4.85rem)] leading-[1.02] font-bold tracking-tight text-ink uppercase text-balance">
                 <DecryptedText
                   text={VI_MESSAGES.home.heroTitleLine1}
                   speed={65}
@@ -222,7 +222,7 @@ export function HomeView({ state, actions }: HomeViewProps) {
                 />
               </h1>
 
-              <p className="mt-5 max-w-2xl text-[clamp(1rem,0.92rem+0.42vw,1.28rem)] leading-relaxed text-ink-muted text-pretty">
+              <p className="mt-3 max-w-xl text-[clamp(0.95rem,0.9rem+0.35vw,1.25rem)] leading-relaxed text-ink-muted text-pretty sm:mt-5">
                 {subtitleParts.length === 2 ? (
                   <>
                     {subtitleParts[0]}
@@ -234,15 +234,15 @@ export function HomeView({ state, actions }: HomeViewProps) {
                 )}
               </p>
 
-              <p className="mt-4 border-l-4 border-primary pl-3 font-mono text-xs font-bold tracking-[0.22em] text-accent-ink">
+              <p className="mt-3 border-l-4 border-primary pl-3 font-mono text-[11px] font-bold tracking-[0.2em] text-accent-ink sm:mt-4 sm:text-xs sm:tracking-[0.22em]">
                 {VI_MESSAGES.home.heroRetailerLabel}
               </p>
 
-              <div className="mt-8 flex flex-wrap items-center gap-4">
+              <div className="mt-5 grid w-full grid-cols-2 gap-2.5 sm:mt-8 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:gap-4">
                 <a
                   href="#featured-cpu"
                   data-testid={TEST_IDS.home.heroScrollCta}
-                  className="mtx-cyber-btn mtx-cyber-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-control border-2 px-4.5 py-2 text-sm font-bold tracking-wide motion-safe:transition-[transform,background-color,border-color,color] duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
+                  className="mtx-cyber-btn mtx-cyber-primary col-span-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-control border-2 px-4 py-2 text-sm font-bold tracking-wide motion-safe:transition-[transform,background-color,border-color,color] duration-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal sm:w-auto sm:px-4.5"
                 >
                   <span aria-hidden="true" className="mtx-cyber-face" />
                   <span aria-hidden="true" className="mtx-cyber-tag">
@@ -257,16 +257,16 @@ export function HomeView({ state, actions }: HomeViewProps) {
                     <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
                   </span>
                 </a>
-                <Link href="/cpu" data-testid={TEST_IDS.home.browseCpu}>
-                  <Button variant="outline" cyberTag="02">
+                <Link href="/cpu" data-testid={TEST_IDS.home.browseCpu} className="w-full sm:w-auto">
+                  <Button variant="outline" cyberTag="02" className="w-full sm:w-auto">
                     <CpuIcon className="h-4 w-4" />
-                    <span>{VI_MESSAGES.home.viewAllCpu}</span>
+                    <span className="truncate">{VI_MESSAGES.home.viewAllCpu}</span>
                   </Button>
                 </Link>
-                <Link href="/gpu" data-testid={TEST_IDS.home.browseGpu}>
-                  <Button variant="outline" cyberTag="03">
+                <Link href="/gpu" data-testid={TEST_IDS.home.browseGpu} className="w-full sm:w-auto">
+                  <Button variant="outline" cyberTag="03" className="w-full sm:w-auto">
                     <GpuCardIcon className="h-4 w-4" />
-                    <span>{VI_MESSAGES.home.viewAllGpu}</span>
+                    <span className="truncate">{VI_MESSAGES.home.viewAllGpu}</span>
                   </Button>
                 </Link>
               </div>
@@ -300,8 +300,8 @@ export function HomeView({ state, actions }: HomeViewProps) {
         </div>
       </div>
 
-      <div className={`${WIDE_CONTAINER_CLASS} flex flex-col gap-10 pt-8`}>
-        <div id="featured-cpu" className="scroll-mt-24">
+      <div className={`${WIDE_CONTAINER_CLASS} flex flex-col gap-7 pt-6 sm:gap-10 sm:pt-8`}>
+        <div id="featured-cpu" className="scroll-mt-16 md:scroll-mt-24">
         {state.isLoading ? (
           <Spinner />
         ) : state.errorMessage ? (
@@ -314,20 +314,20 @@ export function HomeView({ state, actions }: HomeViewProps) {
             }
           />
         ) : (
-          <div className="flex flex-col gap-10">
+          <div className="flex flex-col gap-7 sm:gap-10">
             <section
               data-testid={TEST_IDS.home.featuredCpuSection}
-              className="parallax-section-rise flex flex-col gap-4"
+              className="parallax-section-rise flex flex-col gap-3 sm:gap-4"
             >
               <div className="flex flex-wrap items-center justify-between gap-3 border-l-4 border-primary pl-3">
                 <div>
                   <p className="font-mono text-xs font-bold tracking-widest text-accent-ink">
                     01 // CENTRAL PROCESSORS
                   </p>
-                  <h2 className="font-display text-2xl font-bold text-ink uppercase">
+                  <h2 className="font-display text-xl font-bold text-ink uppercase sm:text-2xl">
                     {VI_MESSAGES.home.featuredCpuTitle}
                   </h2>
-                  <p className="text-sm text-ink-muted">{VI_MESSAGES.home.browseCpuDesc}</p>
+                  <p className="text-xs text-ink-muted sm:text-sm">{VI_MESSAGES.home.browseCpuDesc}</p>
                 </div>
                 <Link href="/cpu" data-testid={TEST_IDS.home.featuredCpuAll}>
                   <Button variant="outline" size="sm">
@@ -351,17 +351,17 @@ export function HomeView({ state, actions }: HomeViewProps) {
             <section
               id="featured-gpu"
               data-testid={TEST_IDS.home.featuredGpuSection}
-              className="parallax-section-rise flex flex-col gap-4 scroll-mt-24"
+              className="parallax-section-rise flex flex-col gap-3 scroll-mt-16 sm:gap-4 md:scroll-mt-24"
             >
               <div className="flex flex-wrap items-center justify-between gap-3 border-l-4 border-primary pl-3">
                 <div>
                   <p className="font-mono text-xs font-bold tracking-widest text-accent-ink">
                     02 // GRAPHICS PROCESSORS
                   </p>
-                  <h2 className="font-display font-bold text-2xl text-ink uppercase">
+                  <h2 className="font-display text-xl font-bold text-ink uppercase sm:text-2xl">
                     {VI_MESSAGES.home.featuredGpuTitle}
                   </h2>
-                  <p className="text-sm text-ink-muted">{VI_MESSAGES.home.browseGpuDesc}</p>
+                  <p className="text-xs text-ink-muted sm:text-sm">{VI_MESSAGES.home.browseGpuDesc}</p>
                 </div>
                 <Link href="/gpu" data-testid={TEST_IDS.home.featuredGpuAll}>
                   <Button variant="outline" size="sm">

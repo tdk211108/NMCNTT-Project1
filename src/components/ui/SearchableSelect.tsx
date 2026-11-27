@@ -150,7 +150,13 @@ export function SearchableSelect({
         </Combobox.Trigger>
 
         <Combobox.Portal keepMounted>
-          <Combobox.Positioner side="bottom" sideOffset={6} align="start" className="z-50 w-[var(--anchor-width)]">
+          <Combobox.Positioner
+            side="bottom"
+            sideOffset={6}
+            align="start"
+            collisionPadding={8}
+            className="z-50 w-[var(--anchor-width)]"
+          >
             <AnimatePresence>
               {open ? (
                 <Combobox.Popup
@@ -176,11 +182,11 @@ export function SearchableSelect({
                       autoCapitalize="none"
                       spellCheck={false}
                       data-testid={searchTestId}
-                      className="min-h-9 w-full bg-transparent text-sm text-ink placeholder:text-ink-muted focus:outline-none"
+                      className="min-h-10 w-full bg-transparent text-base text-ink placeholder:text-ink-muted focus:outline-none sm:min-h-9 sm:text-sm"
                     />
                   </div>
 
-                  <Combobox.List className="max-h-72 overflow-y-auto p-1">
+                  <Combobox.List className="max-h-[min(18rem,44dvh)] overflow-y-auto p-1">
                     {filteredGroups.length === 0 ? (
                       <p className="px-3 py-4 text-center text-sm text-ink-muted">{emptyMessage}</p>
                     ) : (

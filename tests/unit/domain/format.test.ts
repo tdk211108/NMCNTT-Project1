@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { formatCommaNumberInput, parsePriceInputDigits } from '@/lib/format';
 import {
   formatCpuCoresThreads,
   formatViNumber,
@@ -44,5 +45,24 @@ describe('domain/format utilities', () => {
 
     const picked = selectRepresentativeGpuList([limitedSamePrice, first, lowerIdSamePrice]);
     expect(picked.map((p) => p.id)).toEqual(['gpu-a']);
+  });
+
+  it('formats and parses comma-separated VND price inputs across edge cases', () => {
+    expect(formatCommaNumberInput('')).toBe('');
+    expect(formatCommaNumberInput('   ')).toBe('');
+    expect(formatCommaNumberInput('0')).toBe('0');
+    expect(formatCommaNumberInput('0002500')).toBe('2,500');
+    expect(formatCommaNumberInput('20000000')).toBe('20,000,000');
+    expect(formatCommaNumberInput('20.000.000 đ')).toBe('20,000,000');
+    expect(formatCommaNumberInput(28_990_000)).toBe('28,990,000');
+    expect(formatCommaNumberInput(-1)).toBe('');
+    expect(formatCommaNumberInput(Number.NaN)).toBe('');
+
+    expect(parsePriceInputDigits('')).toBeNull();
+    expect(parsePriceInputDigits('abc')).toBeNull();
+    expect(parsePriceInputDigits('-500')).toBeNull();
+    expect(parsePriceInputDigits('0')).toBe(0);
+    expect(parsePriceInputDigits('20,000,000')).toBe(20_000_000);
+    expect(parsePriceInputDigits('20.000.000 đ')).toBe(20_000_000);
   });
 });

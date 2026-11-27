@@ -51,6 +51,15 @@ export function vendorBadgeVariant(vendor: ChipVendor): BadgeVariant {
   return VENDOR_BADGE_MAP[vendor];
 }
 
+export function orderStatusBadgeVariant(
+  order: { isCancelled: boolean; stage: number },
+  activeVariant: BadgeVariant = 'accent',
+): BadgeVariant {
+  if (order.isCancelled) return 'danger';
+  if (order.stage === 4) return 'success';
+  return activeVariant;
+}
+
 export function Badge({
   variant = 'default',
   className = '',

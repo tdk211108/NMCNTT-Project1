@@ -61,6 +61,18 @@ export const VI_MESSAGES = {
     compactNavAria: 'Điều hướng nhanh',
     floatingNavAria: 'Điều hướng cố định',
     githubText: 'GitHub',
+    mobileMenuOpenAria: 'Mở danh mục và cài đặt',
+    mobileMenuCloseAria: 'Đóng danh mục điều hướng',
+    mobileMenuTitle: 'Danh mục CoreRaster',
+    mobileBottomNavAria: 'Thanh điều hướng nhanh di động',
+    mobileToolsSheetTitle: 'Bộ công cụ phần cứng',
+    mobileStoreSection: 'Cửa hàng và đơn hàng',
+    mobileToolsSection: 'Công cụ phân tích',
+    mobileMediaSection: 'Âm thanh và giao diện',
+    mobilePoliciesSection: 'Thông tin và chính sách',
+    mobileThemeLabel: 'Giao diện Sáng / Tối',
+    mobileSfxLabel: 'Âm thanh thao tác',
+    mobileAccountLabel: 'Tài khoản',
   },
   common: {
     notificationsAria: 'Thông báo',
@@ -165,6 +177,13 @@ export const VI_MESSAGES = {
     sortLabel: 'Sắp xếp',
     filterSidebarAria: 'Bộ lọc sản phẩm',
     clearFilters: 'Xóa bộ lọc',
+    mobileFilterOpen: 'Bộ lọc',
+    mobileFilterCount: (count: number) => `Bộ lọc (${count})`,
+    mobileFilterApply: (total: number) => `Xem ${total} sản phẩm`,
+    mobileFilterTitle: 'Lọc sản phẩm',
+    mobileFilterCloseAria: 'Đóng bảng bộ lọc',
+    mobileExpandSpecs: 'Xem đầy đủ thông số',
+    mobileCollapseSpecs: 'Thu gọn thông số',
     productCountLabel: (count: number) => `${count} sản phẩm`,
     detailStockLabel: 'Tình trạng',
     detailWarrantyLabel: 'Bảo hành',
@@ -172,6 +191,7 @@ export const VI_MESSAGES = {
     detailScoreLabel: 'Điểm PassMark chuẩn hóa',
     productDetailMetaTitle: 'Chi tiết sản phẩm',
     productNotFound: 'Sản phẩm không tồn tại hoặc đã ngừng kinh doanh.',
+    openFullImageAria: (name: string) => `Xem ảnh đầy đủ của ${name}`,
   },
   tools: {
     disclaimers: {
@@ -459,10 +479,16 @@ export const VI_MESSAGES = {
             : `Lưu ý kỹ thuật (${count})`,
       actionPsu: 'Kiểm tra PSU',
       actionCombo: 'Xem gợi ý Combo',
-      multiCpuSockets: (sockets: string[]) =>
-        `Giỏ đang có nhiều CPU khác socket (${sockets.join(', ')}), không thể lắp chung một mainboard.`,
+      multiCpuSockets: (sockets: string[], count?: number) =>
+        count && count > sockets.length
+          ? `Giỏ đang có ${count} CPU thuộc nhiều socket khác nhau (${sockets.join(', ')}), không thể lắp chung một mainboard.`
+          : `Giỏ đang có nhiều CPU khác socket (${sockets.join(', ')}), không thể lắp chung một mainboard.`,
       multiCpuCount: (count: number) =>
         `Giỏ đang có ${count} CPU, hãy kiểm tra lại số lượng nếu bạn chỉ build 1 máy.`,
+      multiGpuModels: (count: number, distinctModels: number) =>
+        `Giỏ đang có ${count} GPU (${distinctModels} mẫu khác nhau). Hãy kiểm tra lại nếu bạn chỉ lắp 1 card đồ họa cho 1 bộ máy.`,
+      multiGpuCount: (count: number) =>
+        `Giỏ đang có ${count} GPU cùng mẫu. Nếu lắp nhiều card trong cùng một máy, cần mainboard, vỏ case và nguồn chuyên dụng.`,
       cpuRamPlatform: (
         socket: string,
         ramKind: 'ddr5_only' | 'ddr4_and_ddr5' | 'ddr4_only',
@@ -474,12 +500,25 @@ export const VI_MESSAGES = {
             : `CPU ${socket} sử dụng mainboard ${socket} và RAM DDR4.`,
       psuExceedsMax: (exactW: number) =>
         `Nguồn đề xuất vượt mức 1200 W (ước tính ${exactW} W).`,
+      psuExceedsMaxMultiHardware: (exactW: number, cpuName: string, gpuName: string) =>
+        `Nguồn đề xuất vượt mức 1200 W (ước tính ${exactW} W) ngay cả khi chỉ tính 1 cặp tải cao nhất (${cpuName} và ${gpuName}).`,
       psuTier: (tierW: number, exactW: number) =>
         `Khuyến nghị nguồn PSU tối thiểu ${tierW} W (ước tính ${exactW} W).`,
+      psuTierMultiHardware: (
+        tierW: number,
+        exactW: number,
+        cpuName: string,
+        gpuName: string,
+      ) =>
+        `Khuyến nghị nguồn PSU tối thiểu ${tierW} W (ước tính ${exactW} W) cho 1 cặp tải cao nhất (${cpuName} và ${gpuName}). Nếu lắp nhiều GPU chung một máy cần cộng thêm công suất.`,
       psuGpuOnly: (name: string, wattageW: number) =>
         `${name} tiêu thụ tới ${wattageW} W, cần kiểm tra nguồn PSU tương xứng với CPU.`,
+      psuGpuOnlyMulti: (name: string, wattageW: number, otherCount: number) =>
+        `${name} (${wattageW} W) cùng ${otherCount} mẫu GPU công suất lớn khác trong giỏ đều cần nguồn PSU đủ tải tương xứng với CPU.`,
       psuCpuOnly: (name: string, wattageW: number) =>
         `${name} ăn điện đỉnh tới ${wattageW} W, nên chuẩn bị tản nhiệt và PSU đủ tải.`,
+      psuCpuOnlyMulti: (name: string, wattageW: number, otherCount: number) =>
+        `${name} (${wattageW} W) cùng ${otherCount} mẫu CPU công suất cao khác trong giỏ đều cần tản nhiệt và PSU đủ tải.`,
       gpuLargeSize: (name: string, lengthMm: number, slotThickness: string) =>
         `${name} dài ${lengthMm} mm (${slotThickness} slot), hãy đo khoảng trống vỏ case.`,
       pairImbalance: (cpuScore: number, gpuScore: number) =>
@@ -524,6 +563,8 @@ export const VI_MESSAGES = {
     cardCvvLabel: 'Mã bảo mật CVV',
     qrImageAlt: 'QR chuyển khoản mô phỏng',
     missingAttemptNotice: 'Phiên thanh toán đã hết hạn hoặc chưa được khởi tạo.',
+    mobileOrderSummaryToggle: (count: number, totalFormatted: string) =>
+      `Tóm tắt đơn hàng (${count} sản phẩm): ${totalFormatted}`,
     validation: {
       fullName: 'Họ và tên phải từ 2 đến 50 ký tự.',
       phone: 'Số điện thoại Việt Nam phải gồm 10 chữ số (03, 05, 07, 08, 09).',
@@ -546,6 +587,14 @@ export const VI_MESSAGES = {
     placedCloseView: 'Đóng và xem trang đơn hàng',
     demoAdvanceButton: '[Demo Control] Chuyển trạng thái tiếp theo',
     completedMessage: 'Đơn hàng đã hoàn tất',
+    cancelledStatus: 'Đã hủy',
+    cancelledBanner: 'Đơn hàng này đã bị hủy.',
+    cancelButton: 'Hủy đơn hàng',
+    cancelConfirmTitle: 'Xác nhận hủy đơn hàng?',
+    cancelConfirmBody:
+      'Đơn hàng đang ở bước Đã đặt hàng và sẽ được chuyển sang trạng thái Đã hủy. Bạn không thể hoàn tác sau khi hủy.',
+    cancelConfirmAction: 'Xác nhận hủy đơn',
+    cancelSuccessToast: 'Đã hủy đơn hàng thành công.',
     customerHeading: 'Thông tin người nhận',
     itemsHeading: 'Danh sách sản phẩm trong đơn',
     summaryHeading: 'Tổng kết đơn hàng',
@@ -588,17 +637,47 @@ export const VI_MESSAGES = {
   auth: {
     modalTitleLogin: 'Đăng nhập tài khoản',
     modalTitleRegister: 'Đăng ký tài khoản mới',
+    modalTitleForgot: 'Quên mật khẩu',
+    modalTitleFacebookEmail: 'Xác thực email tài khoản Facebook',
     tabLogin: 'Đăng nhập',
     tabRegister: 'Đăng ký',
     orDivider: 'Hoặc dùng tài khoản',
     googleButton: 'Tiếp tục với Google',
     facebookButton: 'Tiếp tục với Facebook',
+    loginUsernameLabel: 'Tên đăng nhập hoặc Email',
     usernameLabel: 'Tên đăng nhập',
-    usernameHint: 'Nhập tên tài khoản của bạn hoặc admin để vào chế độ quản trị.',
+    usernameHint: 'Nhập tên đăng nhập, địa chỉ email hoặc admin để vào chế độ quản trị.',
     displayNameLabel: 'Tên hiển thị',
+    emailLabel: 'Địa chỉ email',
     passwordLabel: 'Mật khẩu',
+    newPasswordLabel: 'Mật khẩu mới',
+    confirmPasswordLabel: 'Nhập lại mật khẩu mới',
+    showPasswordAria: 'Hiện mật khẩu',
+    hidePasswordAria: 'Ẩn mật khẩu',
     loginSubmit: 'Đăng nhập',
     registerSubmit: 'Tạo tài khoản',
+    registerRequestOtpSubmit: 'Gửi mã OTP xác thực',
+    registerVerifySubmit: 'Xác thực và tạo tài khoản',
+    forgotPasswordLink: 'Quên mật khẩu?',
+    forgotPasswordDesc: 'Nhập địa chỉ email đã đăng ký để nhận mã OTP 6 chữ số đặt lại mật khẩu.',
+    forgotPasswordSubmit: 'Gửi mã OTP khôi phục',
+    forgotPasswordResetSubmit: 'Đặt lại mật khẩu',
+    forgotPasswordSuccessToast: 'Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.',
+    backToLogin: 'Quay lại đăng nhập',
+    editInfoButton: 'Sửa thông tin',
+    otpLabel: 'Mã xác thực OTP (6 chữ số)',
+    otpHint: (email: string, minutes: number) =>
+      `Nhập mã gồm 6 chữ số vừa được gửi tới ${email}. Mã có hiệu lực trong ${minutes} phút.`,
+    otpResendButton: 'Gửi lại mã OTP',
+    otpResendWait: (seconds: number) => `Gửi lại sau ${seconds}s`,
+    otpSentToast: (email: string) => `Đã gửi mã OTP tới ${email}.`,
+    facebookVerifyDesc:
+      'Để nhận thông báo đơn hàng và khôi phục tài khoản khi cần, vui lòng xác thực địa chỉ email của bạn qua OTP.',
+    facebookGreeting: (name: string) => `Xin chào ${name}, vui lòng hoàn tất bước xác thực email.`,
+    facebookRequestOtpSubmit: 'Gửi mã OTP tới email này',
+    facebookVerifySubmit: 'Xác thực email và đăng nhập',
+    passwordMismatchError: 'Mật khẩu xác nhận không khớp.',
+    passwordSameAsCurrentError: 'Mật khẩu mới phải khác mật khẩu hiện tại.',
     loginSuccessToast: (name: string) => `Xin chào ${name}, bạn đã đăng nhập thành công.`,
     adminLoginSuccessToast: 'Đã đăng nhập chế độ Quản trị.',
     registerSuccessToast: (name: string) => `Tài khoản ${name} đã được tạo và đăng nhập.`,
@@ -610,6 +689,53 @@ export const VI_MESSAGES = {
       invalid_state: 'Phiên xác thực đã hết hạn hoặc không hợp lệ, vui lòng thử lại.',
       failed: 'Không thể kết nối tới dịch vụ đăng nhập, vui lòng thử lại.',
     },
+  },
+  profile: {
+    pageTitle: 'Hồ sơ tài khoản',
+    loginPrompt: 'Vui lòng đăng nhập để xem hồ sơ cá nhân và lịch sử đơn hàng của bạn.',
+    adminRedirectNote: 'Bạn đang đăng nhập bằng tài khoản Quản trị viên. Vui lòng truy cập trang Quản trị.',
+    tabOverview: 'Tổng quan',
+    tabOrders: 'Đơn hàng',
+    changePasswordButton: 'Đổi mật khẩu',
+    changePasswordModalTitle: 'Đổi mật khẩu tài khoản',
+    currentPasswordLabel: 'Mật khẩu hiện tại',
+    newPasswordLabel: 'Mật khẩu mới',
+    confirmPasswordLabel: 'Nhập lại mật khẩu mới',
+    changePasswordSubmit: 'Cập nhật mật khẩu',
+    changePasswordSuccessToast: 'Đã cập nhật mật khẩu thành công.',
+    oauthPasswordNote:
+      'Tài khoản đăng nhập qua Google hoặc Facebook và hiện không dùng mật khẩu nội bộ.',
+    oauthUsernameFallback: 'Tài khoản liên kết OAuth',
+    emailVerifiedBadge: 'Đã xác thực',
+    emailMissingValue: 'Chưa liên kết email',
+    providersLabel: 'Phương thức đăng nhập',
+    providerNames: {
+      password: 'Mật khẩu nội bộ',
+      google: 'Google',
+      facebook: 'Facebook',
+    },
+    joinedAtLabel: 'Tham gia từ',
+    orderSummaryInline: (total: number, completed: number) =>
+      `${total} đơn hàng · ${completed} hoàn tất`,
+    overviewCardTitle: (handle: string) => `${handle} / tong-quan`,
+    totalSpentLabel: 'Tổng số tiền đã mua',
+    totalSpentNote: 'Tổng giá trị các đơn chưa hủy',
+    totalOrdersLabel: 'Tổng số đơn hàng',
+    totalItemsNote: (qty: number) => `Tổng ${qty} sản phẩm đã đặt`,
+    completedOrdersLabel: 'Giao hàng thành công',
+    completedSpentNote: (amountFormatted: string) => `Hoàn tất: ${amountFormatted}`,
+    activeCancelledLabel: 'Trạng thái hiện tại',
+    activeCancelledValue: (active: number, cancelled: number) =>
+      `${active} đang xử lý · ${cancelled} đã hủy`,
+    ordersSectionTitle: 'Danh sách đơn hàng đã đặt',
+    ordersPinnedTitle: 'Đơn hàng gần đây',
+    filterAll: 'Tất cả',
+    filterActive: 'Đang xử lý',
+    filterCompleted: 'Hoàn tất',
+    filterCancelled: 'Đã hủy',
+    emptyFilteredOrders: 'Không có đơn hàng nào thuộc trạng thái này.',
+    browseMoreCta: 'Mua thêm linh kiện',
+    orderCardItemsMeta: (qty: number) => `${qty} sản phẩm`,
   },
   policies: {
     warrantyTitle: 'Chính sách bảo hành',
@@ -632,10 +758,10 @@ export const VI_MESSAGES = {
       'CoreRaster tôn trọng quyền riêng tư của người dùng và chỉ thu thập thông tin tối thiểu cần thiết để vận hành đăng nhập tài khoản, xử lý đơn hàng và tra cứu trạng thái đơn hàng trực tuyến.',
     privacyDataCollectedLabel: 'Dữ liệu tiếp nhận',
     privacyDataCollected:
-      'Khi đăng nhập bằng Google hoặc Facebook, hệ thống chỉ tiếp nhận tên hiển thị, địa chỉ email (nếu nhà cung cấp trả về), ảnh đại diện và mã định danh tài khoản OAuth để tạo hồ sơ người dùng. Với tài khoản đăng ký trực tiếp, hệ thống lưu tên đăng nhập, tên hiển thị và mật khẩu được băm một chiều bằng thuật toán scrypt. Khi đặt hàng, hệ thống lưu họ tên người nhận, số điện thoại liên hệ, địa chỉ giao hàng và ghi chú đơn hàng.',
+      'Khi đăng nhập bằng Google hoặc Facebook, hệ thống tiếp nhận tên hiển thị, địa chỉ email (xác thực trực tiếp từ Google hoặc qua mã OTP với Facebook), ảnh đại diện và mã định danh tài khoản OAuth để tạo hồ sơ người dùng. Với tài khoản đăng ký trực tiếp, hệ thống lưu tên đăng nhập, tên hiển thị, địa chỉ email đã xác thực OTP và mật khẩu được băm một chiều bằng thuật toán scrypt. Khi đặt hàng, hệ thống lưu họ tên người nhận, số điện thoại liên hệ, địa chỉ giao hàng và ghi chú đơn hàng.',
     privacyPurposeLabel: 'Mục đích sử dụng',
     privacyPurpose:
-      'Dữ liệu chỉ được dùng để xác thực phiên đăng nhập, hiển thị lịch sử đơn hàng của bạn, xuất trình thông tin đơn hàng theo yêu cầu và liên hệ giao nhận. CoreRaster không bán, cho thuê hay chia sẻ dữ liệu cá nhân của người dùng cho bên thứ ba phục vụ quảng cáo.',
+      'Dữ liệu chỉ được dùng để xác thực phiên đăng nhập, gửi mã OTP xác thực và khôi phục mật khẩu, gửi email thông báo khi đơn hàng được đặt và giao hàng thành công qua tên miền coreraster.me, hiển thị lịch sử đơn hàng của bạn và liên hệ giao nhận. CoreRaster không bán, cho thuê hay chia sẻ dữ liệu cá nhân của người dùng cho bên thứ ba phục vụ quảng cáo.',
     privacyCookiesLabel: 'Cookie và lưu trữ',
     privacyCookies:
       'Website sử dụng cookie phiên bảo mật HTTP-only phục vụ duy trì đăng nhập và lưu giỏ hàng, danh sách so sánh tạm thời trên trình duyệt (localStorage). Số điện thoại được ẩn bớt khi hiển thị công khai trên bảng đơn hàng và thông tin thẻ ở bước thanh toán mô phỏng không được gửi về máy chủ.',

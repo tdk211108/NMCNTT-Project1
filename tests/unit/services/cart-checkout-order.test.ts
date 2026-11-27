@@ -2,13 +2,16 @@ import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import type { DbClient } from '@/server/db/client';
-import { products } from '@/server/db/schema';
+import { products, users } from '@/server/db/schema';
 import { hashClientIp } from '@/server/security/client-ip';
+import { listAdminOrders } from '@/server/services/admin-order.service';
 import { quoteCart } from '@/server/services/cart.service';
 import { prepareCheckout } from '@/server/services/checkout.service';
 import {
   advanceOrderStage,
+  cancelOrder,
   createOrder,
+  listOrdersForUser,
   lookupOrder,
 } from '@/server/services/order.service';
 import { setupTestDbLifecycle } from '../../helpers/test-db';
@@ -274,6 +277,90 @@ describe('services/cart, checkout, order & rate-limit (Postgres 16)', () => {
 
     await expect(advanceOrderStage(created.order.orderId, 4, db)).rejects.toMatchObject({
       code: 'ORDER_COMPLETED',
+      status: 409,
+    });
+  });
+
+  it('allows cancelling only at stage 0, updates user/admin summaries, and blocks advancing or re-cancelling', async () => {
+    await expect(cancelOrder('PC-DOESNOTEX1', db)).rejects.toMatchObject({
+      code: 'ORDER_NOT_FOUND',
+      status: 404,
+    });
+
+    const [userRow] = await db
+      .insert(users)
+      .values({
+        username: 'cancel.tester',
+        passwordHash: 'scrypt:16384:8:1:c2FsdA:aGFzaA',
+        displayName: 'Cancel Tester',
+      })
+      .returning();
+
+    const key0 = randomUUID();
+    const placed = await createOrder(
+      {
+        idempotencyKey: key0,
+        items: [{ productId: 'cpu-amd-ryzen-7-9800x3d', quantity: 1 }],
+        customer: VALID_CUSTOMER,
+        paymentMethod: 'cod',
+      },
+      key0,
+      db,
+      undefined,
+      userRow.id,
+    );
+    expect(placed.order.canCancel).toBe(true);
+    expect(placed.order.isCancelled).toBe(false);
+    expect(placed.order.cancelledAt).toBeNull();
+
+    const cancelled = await cancelOrder(placed.order.orderId, db);
+    expect(cancelled.stage).toBe(0);
+    expect(cancelled.isCancelled).toBe(true);
+    expect(cancelled.canCancel).toBe(false);
+    expect(cancelled.isCompleted).toBe(false);
+    expect(cancelled.cancelledAt).toBeTruthy();
+
+    const myOrders = await listOrdersForUser(userRow.id, db);
+    expect(myOrders).toHaveLength(1);
+    expect(myOrders[0]).toMatchObject({
+      orderId: placed.order.orderId,
+      isCancelled: true,
+      stageLabel: 'Đã hủy',
+    });
+    expect(myOrders[0].cancelledAt).toBeTruthy();
+
+    const adminOrders = await listAdminOrders(db);
+    expect(adminOrders).toHaveLength(1);
+    expect(adminOrders[0]).toMatchObject({
+      orderId: placed.order.orderId,
+      isCancelled: true,
+      stageLabel: 'Đã hủy',
+    });
+
+    await expect(cancelOrder(placed.order.orderId, db)).rejects.toMatchObject({
+      code: 'ORDER_CANCELLED',
+      status: 409,
+    });
+    await expect(advanceOrderStage(placed.order.orderId, 0, db)).rejects.toMatchObject({
+      code: 'ORDER_CANCELLED',
+      status: 409,
+    });
+
+    const key1 = randomUUID();
+    const preparedOrder = await createOrder(
+      {
+        idempotencyKey: key1,
+        items: [{ productId: 'cpu-amd-ryzen-7-9800x3d', quantity: 2 }],
+        customer: VALID_CUSTOMER,
+        paymentMethod: 'cod',
+      },
+      key1,
+      db,
+    );
+    const stage1 = await advanceOrderStage(preparedOrder.order.orderId, 0, db);
+    expect(stage1.canCancel).toBe(false);
+    await expect(cancelOrder(preparedOrder.order.orderId, db)).rejects.toMatchObject({
+      code: 'ORDER_CANCEL_NOT_ALLOWED',
       status: 409,
     });
   });

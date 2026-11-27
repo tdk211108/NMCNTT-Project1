@@ -114,6 +114,8 @@ export interface AdminOrderListItem {
   totalVnd: number;
   stage: OrderStage;
   stageLabel: string;
+  isCancelled: boolean;
+  cancelledAt: string | null;
   createdAt: string;
 }
 

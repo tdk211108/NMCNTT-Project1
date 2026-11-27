@@ -36,6 +36,7 @@ export interface ProductListQuery {
 export interface Facets {
   vendors: ChipVendor[];
   priceRange: { min: number; max: number } | null;
+  shopMaxPriceVnd?: number | null;
   vramGb?: number[];
   aibBrands?: string[];
   sockets?: string[];

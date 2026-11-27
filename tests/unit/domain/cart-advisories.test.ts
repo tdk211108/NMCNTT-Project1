@@ -40,22 +40,37 @@ describe('domain/cart-advisories', () => {
     expect(evaluateCartAdvisories([])).toEqual(EMPTY_CART_ADVISORIES);
   });
 
-  it('detects mixed sockets, duplicate CPU quantities, and single-socket RAM platforms', () => {
+  it('detects mixed sockets, duplicate CPU quantities, and all distinct RAM platforms', () => {
     const mixed = evaluateCartAdvisories([
-      makeCpu({ socket: 'AM5', ramSupport: 'DDR5-5600' }),
+      makeCpu({ socket: 'AM5', ramSupport: 'DDR5-5600', psuPowerW: 162 }),
       makeCpu({
         productId: 'cpu-intel-core-i5-14600k',
         name: 'Intel Core i5-14600K',
         socket: 'LGA1700',
         ramSupport: 'DDR4 / DDR5',
+        psuPowerW: 181,
       }),
     ]);
     expect(mixed.items.find((i) => i.code === 'multi_cpu_conflict')).toEqual({
       code: 'multi_cpu_conflict',
       severity: 'high',
       sockets: ['AM5', 'LGA1700'],
+      count: 2,
     });
-    expect(mixed.items.some((i) => i.code === 'cpu_ram_platform')).toBe(false);
+    expect(mixed.items.filter((i) => i.code === 'cpu_ram_platform')).toEqual([
+      {
+        code: 'cpu_ram_platform',
+        severity: 'medium',
+        sockets: ['AM5'],
+        ramKind: 'ddr5_only',
+      },
+      {
+        code: 'cpu_ram_platform',
+        severity: 'info',
+        sockets: ['LGA1700'],
+        ramKind: 'ddr4_and_ddr5',
+      },
+    ]);
 
     const qtyTwo = evaluateCartAdvisories([
       makeCpu({
@@ -77,13 +92,13 @@ describe('domain/cart-advisories', () => {
       },
     ]);
 
-    const sameSocketTwoModels = evaluateCartAdvisories([
+    const sameSocketMultiHighCpu = evaluateCartAdvisories([
       makeCpu({
-        productId: 'cpu-amd-ryzen-5-7500f',
-        name: 'AMD Ryzen 5 7500F',
+        productId: 'cpu-amd-ryzen-9-7950x',
+        name: 'AMD Ryzen 9 7950X',
         socket: 'AM5',
         ramSupport: 'DDR5-5200',
-        psuPowerW: 88,
+        psuPowerW: 230,
       }),
       makeCpu({
         productId: 'cpu-amd-ryzen-9-9950x',
@@ -93,7 +108,7 @@ describe('domain/cart-advisories', () => {
         psuPowerW: 200,
       }),
     ]);
-    expect(sameSocketTwoModels.items).toEqual([
+    expect(sameSocketMultiHighCpu.items).toEqual([
       { code: 'multi_cpu_conflict', severity: 'high', count: 2 },
       {
         code: 'cpu_ram_platform',
@@ -104,10 +119,11 @@ describe('domain/cart-advisories', () => {
       {
         code: 'psu_recommendation',
         severity: 'info',
-        productName: 'AMD Ryzen 9 9950X',
-        wattageW: 200,
+        productName: 'AMD Ryzen 9 7950X',
+        wattageW: 230,
+        otherCount: 1,
         actionKind: 'psu',
-        actionHref: '/tools/psu?cpu=store%3Acpu-amd-ryzen-9-9950x',
+        actionHref: '/tools/psu?cpu=store%3Acpu-amd-ryzen-9-7950x',
       },
     ]);
 
@@ -168,8 +184,8 @@ describe('domain/cart-advisories', () => {
     ]);
   });
 
-  it('computes paired PSU tiers, standalone GPU warnings, oversized clearance, and pair balance', () => {
-    // High GPU standalone + multiple oversized cards picking the largest
+  it('computes paired PSU tiers, multi-GPU conflicts, every oversized card, and multi-hardware context', () => {
+    // Multi-GPU standalone: warns multi_gpu_conflict, standalone PSU with otherCount, and ALL oversized cards
     const gpuOnly = evaluateCartAdvisories([
       makeGpu({
         productId: 'gpu-rtx-5070-ti-mid',
@@ -198,10 +214,17 @@ describe('domain/cart-advisories', () => {
     ]);
     expect(gpuOnly.items).toEqual([
       {
+        code: 'multi_gpu_conflict',
+        severity: 'medium',
+        count: 3,
+        distinctModels: 3,
+      },
+      {
         code: 'psu_recommendation',
         severity: 'medium',
         productName: 'RTX 5080 Monster',
         wattageW: 360,
+        otherCount: 1,
         actionKind: 'psu',
         actionHref: '/tools/psu?gpu=gs-rtx-5080',
       },
@@ -211,6 +234,40 @@ describe('domain/cart-advisories', () => {
         productName: 'RTX 5080 Monster',
         lengthMm: 340,
         slotThickness: 3.5,
+      },
+      {
+        code: 'gpu_large_size',
+        severity: 'medium',
+        productName: 'RTX 5070 Ti Trio',
+        lengthMm: 310,
+        slotThickness: 3.0,
+      },
+    ]);
+
+    // Single high-power standalone GPU (no otherCount) and low-power multi-GPU (qty 2, no PSU warning)
+    const singleHighGpu = evaluateCartAdvisories([
+      makeGpu({ tbpW: 250, lengthMm: 250, slotThickness: 2.0 }),
+    ]);
+    expect(singleHighGpu.items).toEqual([
+      {
+        code: 'psu_recommendation',
+        severity: 'medium',
+        productName: 'ASUS PRIME RTX 5070 12GB',
+        wattageW: 250,
+        actionKind: 'psu',
+        actionHref: '/tools/psu?gpu=gs-rtx-5070',
+      },
+    ]);
+
+    const lowPowerMultiGpu = evaluateCartAdvisories([
+      makeGpu({ quantity: 2, tbpW: 145, lengthMm: 220, slotThickness: 2.0 }),
+    ]);
+    expect(lowPowerMultiGpu.items).toEqual([
+      {
+        code: 'multi_gpu_conflict',
+        severity: 'medium',
+        count: 2,
+        distinctModels: 1,
       },
     ]);
 
@@ -231,10 +288,11 @@ describe('domain/cart-advisories', () => {
       '/tools/psu?cpu=store%3Acpu-amd-ryzen-7-9800x3d&gpu=gs-rtx-5070',
     );
 
-    // >= 850W PSU + exact multi-oversized pick
-    const heavyPair = evaluateCartAdvisories([
+    // Multi-hardware paired PSU includes cpuName/gpuName/isMultiHardware and skips pair_imbalance
+    const multiHardwarePair = evaluateCartAdvisories([
       makeCpu({
         productId: 'cpu-intel-core-i9-14900k',
+        name: 'Intel Core i9-14900K',
         socket: 'LGA1700',
         ramSupport: 'DDR5',
         psuPowerW: 253,
@@ -249,10 +307,24 @@ describe('domain/cart-advisories', () => {
         slotThickness: 3.5,
         normalizedScore: 99,
       }),
+      makeGpu({
+        productId: 'gpu-rtx-5070-b',
+        name: 'RTX 5070 B',
+        seriesId: 'gs-rtx-5070',
+        tbpW: 250,
+        lengthMm: 260,
+        slotThickness: 2.0,
+        normalizedScore: 70,
+      }),
     ]);
-    expect(heavyPair.recommendedPsuTierW).toBe(1200);
-    expect(heavyPair.items.find((i) => i.code === 'psu_recommendation')?.severity).toBe('medium');
-    expect(heavyPair.items.some((i) => i.code === 'pair_imbalance')).toBe(false);
+    expect(multiHardwarePair.recommendedPsuTierW).toBe(1200);
+    expect(multiHardwarePair.items.find((i) => i.code === 'psu_recommendation')).toMatchObject({
+      severity: 'medium',
+      isMultiHardware: true,
+      cpuName: 'Intel Core i9-14900K',
+      gpuName: 'RTX 5090 A',
+    });
+    expect(multiHardwarePair.items.some((i) => i.code === 'pair_imbalance')).toBe(false);
 
     // Exceeds 1200W PSU -> high severity + thick-only GPU
     const ultraPair = evaluateCartAdvisories([

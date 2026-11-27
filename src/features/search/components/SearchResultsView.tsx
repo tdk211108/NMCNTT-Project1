@@ -90,7 +90,7 @@ export function SearchResultsView({ state, actions }: SearchResultsViewProps) {
           <div
             role="tablist"
             aria-label={VI_MESSAGES.catalog.searchResultsTitle}
-            className="flex flex-wrap gap-2.5 border-b border-border pb-3"
+            className="mtx-no-scrollbar flex items-center gap-2 overflow-x-auto border-b border-border pb-3"
           >
             {tabs.map((tab) => {
               const selected = state.activeTab === tab.key;
@@ -102,6 +102,7 @@ export function SearchResultsView({ state, actions }: SearchResultsViewProps) {
                   size="sm"
                   cyber={false}
                   sfx="toggle"
+                  className="shrink-0"
                   variant={selected ? 'primary' : 'outline'}
                   data-testid={tab.testId}
                   onClick={() => actions.onChangeTab(tab.key)}

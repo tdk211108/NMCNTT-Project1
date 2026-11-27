@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 import type { DbClient } from '@/server/db/client';
-import { authFailures, gpuSeries } from '@/server/db/schema';
+import { authFailures, emailOtps, gpuSeries } from '@/server/db/schema';
 import {
   createAdminGpuSeries,
   listAdminGpuSeries,
@@ -271,6 +271,12 @@ describe('services/admin-catalog, admin-order, reset & DB triggers (Postgres 16)
       scope: 'admin_login',
       ipHash: 'deadbeef',
     });
+    await db.insert(emailOtps).values({
+      purpose: 'register',
+      email: 'reset-check@example.com',
+      codeHash: 'deadbeef',
+      expiresAt: new Date(Date.now() + 60_000),
+    });
 
     const resetResult = await resetSampleData(
       db,
@@ -286,6 +292,7 @@ describe('services/admin-catalog, admin-order, reset & DB triggers (Postgres 16)
     });
     expect(await listAdminOrders(db)).toEqual([]);
     expect(await db.select().from(authFailures)).toEqual([]);
+    expect(await db.select().from(emailOtps)).toEqual([]);
   });
 
   it('supports optional PassMark scores on legacy CPUs and legacy GPU series while requiring them on retail GPU series', async () => {

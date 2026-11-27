@@ -2,9 +2,10 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ComboboxSelect, type ComboboxSelectOption } from '@/components/ui/ComboboxSelect';
 import { CpuIcon, GpuCardIcon } from '@/components/ui/Icons';
-import { Input } from '@/components/ui/Input';
+import { PriceInput } from '@/components/ui/PriceInput';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { buildRetailLegacyGroups } from '@/features/tools/hardware-select-groups';
+import { parsePriceInputDigits } from '@/lib/format';
 import {
   UPGRADE_CPU_BUDGET_PRESETS_VND,
   UPGRADE_GPU_BUDGET_PRESETS_VND,
@@ -127,17 +128,15 @@ export function UpgradeFilterForm({
           />
 
           <div className="flex flex-col gap-2">
-            <Input
-              type="text"
-              inputMode="numeric"
+            <PriceInput
               label={VI_MESSAGES.tools.upgrade.budgetLabel}
               value={state.budgetInput}
               error={state.budgetError ?? undefined}
               data-testid={TEST_IDS.upgrade.budgetInput}
-              onChange={(e) => actions.onChangeBudgetInput(e.target.value)}
+              onValueChange={actions.onChangeBudgetInput}
             />
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-ink-muted">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+              <span className="col-span-2 text-xs font-medium text-ink-muted sm:col-span-1">
                 {VI_MESSAGES.tools.upgrade.budgetPresetsLabel}:
               </span>
               {presets.map((amount) => (
@@ -146,14 +145,23 @@ export function UpgradeFilterForm({
                   size="sm"
                   cyber={false}
                   sfx="toggle"
-                  variant={state.budgetInput === String(amount) ? 'primary' : 'outline'}
+                  className="w-full sm:w-auto"
+                  variant={
+                    parsePriceInputDigits(state.budgetInput) === amount ? 'primary' : 'outline'
+                  }
                   onClick={() => actions.onSelectBudgetPreset(amount)}
                 >
                   {VI_MESSAGES.tools.combo.presetChipLabel(Math.round(amount / 1_000_000))}
                 </Button>
               ))}
               {state.budgetInput ? (
-                <Button size="sm" cyber={false} variant="ghost" onClick={actions.onClearBudget}>
+                <Button
+                  size="sm"
+                  cyber={false}
+                  variant="ghost"
+                  className="col-span-2 w-full sm:col-span-1 sm:w-auto"
+                  onClick={actions.onClearBudget}
+                >
                   {VI_MESSAGES.common.reset}
                 </Button>
               ) : null}
@@ -236,6 +244,7 @@ export function UpgradeFilterForm({
             type="submit"
             variant="primary"
             disabled={!state.currentId}
+            className="w-full sm:w-auto"
             data-testid={TEST_IDS.upgrade.submit}
           >
             {VI_MESSAGES.tools.upgrade.submitLabel}

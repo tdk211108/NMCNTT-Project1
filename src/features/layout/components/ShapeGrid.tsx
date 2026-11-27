@@ -3,8 +3,41 @@
 import { useEffect, useRef } from 'react';
 import { useIsomorphicLayoutEffect } from '@/lib/client-hooks';
 
-export const DEFAULT_IGNORE_CASCADE_SELECTOR =
-  'header, nav, footer, [data-testid="header-floating-nav"], dialog, [role="dialog"], [role="listbox"], [data-no-grid-cascade]';
+export const DEFAULT_IGNORE_CASCADE_SELECTOR = [
+  'header',
+  'nav',
+  'footer',
+  'aside',
+  'dialog',
+  'table',
+  'thead',
+  'tbody',
+  'tr',
+  'th',
+  'td',
+  'button',
+  'a[href]',
+  'input',
+  'select',
+  'textarea',
+  'label',
+  'summary',
+  '[data-testid="header-floating-nav"]',
+  '[role="dialog"]',
+  '[role="listbox"]',
+  '[role="menu"]',
+  '[role="option"]',
+  '[role="button"]',
+  '[role="tab"]',
+  '[role="tabpanel"]',
+  '[role="switch"]',
+  '[role="menuitem"]',
+  '[role="checkbox"]',
+  '[role="radio"]',
+  '[role="alert"]',
+  '[role="status"]',
+  '[data-no-grid-cascade]',
+].join(', ');
 
 export interface ShapeGridProps {
   cellSize?: number;
@@ -70,6 +103,168 @@ const smoothstep = (edge0: number, edge1: number, value: number) => {
 };
 const keyOf = (i: number, j: number) => (i + OFFSET) * 65536 + (j + OFFSET);
 
+export type CascadeStyleSnapshot = Pick<
+  CSSStyleDeclaration,
+  | 'backgroundColor'
+  | 'backgroundImage'
+  | 'boxShadow'
+  | 'backdropFilter'
+  | 'borderTopWidth'
+  | 'borderTopStyle'
+  | 'borderTopColor'
+  | 'borderRightWidth'
+  | 'borderRightStyle'
+  | 'borderRightColor'
+  | 'borderBottomWidth'
+  | 'borderBottomStyle'
+  | 'borderBottomColor'
+  | 'borderLeftWidth'
+  | 'borderLeftStyle'
+  | 'borderLeftColor'
+> & {
+  getPropertyValue?: (property: string) => string;
+};
+
+type AncestorElement = {
+  closest?: (selectors: string) => unknown;
+  parentElement?: AncestorElement | null;
+};
+
+export function parseColorAlpha(color: string | null | undefined): number {
+  if (!color) return 0;
+  const normalized = color.trim().toLowerCase();
+  if (!normalized || normalized === 'transparent' || normalized === 'none') return 0;
+
+  const slashMatch = normalized.match(/\/\s*(none|[0-9.]+)(%?)\s*\)$/);
+  if (slashMatch) {
+    if (slashMatch[1] === 'none') return 0;
+    const raw = Number(slashMatch[1]);
+    if (!Number.isFinite(raw)) return 1;
+    return slashMatch[2] === '%' ? raw / 100 : raw;
+  }
+
+  const commaMatch = normalized.match(
+    /^(?:rgba|hsla)\([^,]+,[^,]+,[^,]+,\s*([0-9.]+)(%?)\s*\)$/,
+  );
+  if (commaMatch) {
+    const raw = Number(commaMatch[1]);
+    if (!Number.isFinite(raw)) return 1;
+    return commaMatch[2] === '%' ? raw / 100 : raw;
+  }
+
+  return 1;
+}
+
+function hasFourSidedVisibleBorder(style: CascadeStyleSnapshot): boolean {
+  const sides = [
+    [style.borderTopWidth, style.borderTopStyle, style.borderTopColor],
+    [style.borderRightWidth, style.borderRightStyle, style.borderRightColor],
+    [style.borderBottomWidth, style.borderBottomStyle, style.borderBottomColor],
+    [style.borderLeftWidth, style.borderLeftStyle, style.borderLeftColor],
+  ] as const;
+
+  return sides.every(([width, borderStyle, color]) => {
+    const px = Number.parseFloat(width || '0');
+    return (
+      Number.isFinite(px) &&
+      px > 0 &&
+      Boolean(borderStyle) &&
+      borderStyle !== 'none' &&
+      borderStyle !== 'hidden' &&
+      parseColorAlpha(color) > 0
+    );
+  });
+}
+
+function hasVisualBlockStyling(style: CascadeStyleSnapshot): boolean {
+  if (parseColorAlpha(style.backgroundColor) > 0) return true;
+  if (style.backgroundImage && style.backgroundImage !== 'none') return true;
+  if (style.boxShadow && style.boxShadow !== 'none') return true;
+  const backdrop =
+    style.backdropFilter || style.getPropertyValue?.('-webkit-backdrop-filter') || '';
+  if (backdrop && backdrop !== 'none') return true;
+  return hasFourSidedVisibleBorder(style);
+}
+
+function resolveCascadeElement(target: EventTarget | null): AncestorElement | null {
+  if (!target || typeof target !== 'object') return null;
+  if (typeof Element !== 'undefined') {
+    if (target instanceof Element) return target;
+    if (typeof Node !== 'undefined' && target instanceof Node) return target.parentElement;
+    return null;
+  }
+  const candidate = target as AncestorElement;
+  if (typeof candidate.closest === 'function') return candidate;
+  return candidate.parentElement ?? null;
+}
+
+/** Suppress click cascades when pressing inside chrome, controls, cells, or visually boxed surfaces. */
+export function shouldIgnoreGridCascade(
+  target: EventTarget | null,
+  selector = DEFAULT_IGNORE_CASCADE_SELECTOR,
+  getStyle?: (el: Element) => CascadeStyleSnapshot,
+): boolean {
+  if (!selector) return false;
+  const element = resolveCascadeElement(target);
+  if (!element) return false;
+  if (element.closest?.(selector)) return true;
+
+  const resolveStyle =
+    getStyle ??
+    (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function'
+      ? (node: Element) => window.getComputedStyle(node)
+      : null);
+  if (!resolveStyle) return false;
+
+  const docBody = typeof document !== 'undefined' ? document.body : null;
+  const docRoot = typeof document !== 'undefined' ? document.documentElement : null;
+
+  for (
+    let current: AncestorElement | null = element;
+    current;
+    current = current.parentElement ?? null
+  ) {
+    if (current === docBody || current === docRoot) break;
+    if (hasVisualBlockStyling(resolveStyle(current as Element))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function normalizeShapeGridSettings(params: {
+  cellSize: number;
+  lineWidth: number;
+  direction: ShapeGridProps['direction'];
+  speed: number;
+  lineColor: string;
+  hoverColor: string;
+  hoverFillColor?: string;
+  fillOpacity: number;
+  radius: number;
+  trail: number;
+  glow: number;
+  clickCascade: boolean;
+  ignoreCascadeSelector: string;
+}): Settings {
+  const dir = params.direction ?? 'diagonal';
+  return {
+    cellSize: Math.max(12, params.cellSize),
+    lineWidth: Math.max(0.25, params.lineWidth),
+    direction: DIRECTIONS[dir] ? dir : 'diagonal',
+    speed: Math.max(0, params.speed),
+    lineColor: params.lineColor,
+    hoverColor: params.hoverColor,
+    hoverFillColor: params.hoverFillColor ?? params.hoverColor,
+    fillOpacity: clamp(params.fillOpacity, 0, 1),
+    radius: Math.max(0, params.radius),
+    trail: Math.max(0.05, params.trail),
+    glow: clamp(params.glow, 0, 1),
+    clickCascade: params.clickCascade,
+    ignoreCascadeSelector: params.ignoreCascadeSelector,
+  };
+}
+
 /** Interactive drifting square drafting grid rendered on HTML5 Canvas. */
 export function ShapeGrid({
   cellSize = 44,
@@ -91,41 +286,56 @@ export function ShapeGrid({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
 
-  const nextSettings: Settings = {
-    cellSize: Math.max(12, cellSize),
-    lineWidth: Math.max(0.25, lineWidth),
-    direction: DIRECTIONS[direction] ? direction : 'diagonal',
-    speed: Math.max(0, speed),
-    lineColor,
-    hoverColor,
-    hoverFillColor: hoverFillColor ?? hoverColor,
-    fillOpacity: clamp(fillOpacity, 0, 1),
-    radius: Math.max(0, radius),
-    trail: Math.max(0.05, trail),
-    glow: clamp(glow, 0, 1),
-    clickCascade,
-    ignoreCascadeSelector,
-  };
-  const settingsRef = useRef<Settings>(nextSettings);
-
-  useIsomorphicLayoutEffect(() => {
-    settingsRef.current = {
-      cellSize: Math.max(12, cellSize),
-      lineWidth: Math.max(0.25, lineWidth),
-      direction: DIRECTIONS[direction] ? direction : 'diagonal',
-      speed: Math.max(0, speed),
+  const settingsRef = useRef<Settings>(
+    normalizeShapeGridSettings({
+      cellSize,
+      lineWidth,
+      direction,
+      speed,
       lineColor,
       hoverColor,
-      hoverFillColor: hoverFillColor ?? hoverColor,
-      fillOpacity: clamp(fillOpacity, 0, 1),
-      radius: Math.max(0, radius),
-      trail: Math.max(0.05, trail),
-      glow: clamp(glow, 0, 1),
+      hoverFillColor,
+      fillOpacity,
+      radius,
+      trail,
+      glow,
       clickCascade,
       ignoreCascadeSelector,
-    };
+    }),
+  );
+
+  useIsomorphicLayoutEffect(() => {
+    settingsRef.current = normalizeShapeGridSettings({
+      cellSize,
+      lineWidth,
+      direction,
+      speed,
+      lineColor,
+      hoverColor,
+      hoverFillColor,
+      fillOpacity,
+      radius,
+      trail,
+      glow,
+      clickCascade,
+      ignoreCascadeSelector,
+    });
     engineRef.current?.redraw();
-  });
+  }, [
+    cellSize,
+    lineWidth,
+    direction,
+    speed,
+    lineColor,
+    hoverColor,
+    hoverFillColor,
+    fillOpacity,
+    radius,
+    trail,
+    glow,
+    clickCascade,
+    ignoreCascadeSelector,
+  ]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -402,7 +612,7 @@ export function ShapeGrid({
     const onDown = (event: PointerEvent) => {
       const s = settingsRef.current;
       if (reducedMotion || !s.clickCascade) return;
-      if (isIgnoredTarget(event.target, s.ignoreCascadeSelector)) return;
+      if (shouldIgnoreGridCascade(event.target, s.ignoreCascadeSelector)) return;
       const point = pointFrom(event);
       if (!point) return;
       state.cascades.push({

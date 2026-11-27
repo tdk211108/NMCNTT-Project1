@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge, Card, vendorBadgeVariant } from '@/components/ui/Card';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { CpuIcon, GpuCardIcon } from '@/components/ui/Icons';
-import { Input } from '@/components/ui/Input';
+import { PriceInput } from '@/components/ui/PriceInput';
 import { ProductImage } from '@/components/ui/ProductImage';
 import { formatNumberVi, formatVnd } from '@/lib/format';
 import { COMBO_BUDGET_PRESETS_VND } from '@/shared/constants';
@@ -238,17 +238,15 @@ export function ComboAdvisorView({ state, actions }: ComboAdvisorViewProps) {
         >
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="flex flex-col gap-2.5">
-              <Input
-                type="text"
-                inputMode="numeric"
+              <PriceInput
                 label={VI_MESSAGES.tools.combo.budgetLabel}
                 value={state.budgetInput}
                 error={state.budgetError ?? undefined}
                 data-testid={TEST_IDS.combo.budgetInput}
-                onChange={(e) => actions.onChangeBudgetInput(e.target.value)}
+                onValueChange={actions.onChangeBudgetInput}
               />
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-ink-muted">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+                <span className="col-span-2 text-xs font-medium text-ink-muted sm:col-span-1">
                   {VI_MESSAGES.tools.combo.budgetPresetsLabel}:
                 </span>
                 {COMBO_BUDGET_PRESETS_VND.map((amount) => {
@@ -259,6 +257,7 @@ export function ComboAdvisorView({ state, actions }: ComboAdvisorViewProps) {
                       size="sm"
                       cyber={false}
                       sfx="toggle"
+                      className="w-full sm:w-auto"
                       variant={active ? 'primary' : 'outline'}
                       data-testid={TEST_IDS.combo.budgetPreset(amount)}
                       onClick={() => actions.onSelectBudgetPreset(amount)}
@@ -274,7 +273,7 @@ export function ComboAdvisorView({ state, actions }: ComboAdvisorViewProps) {
               <span className="text-sm font-medium text-ink">
                 {VI_MESSAGES.tools.combo.purposeLabel}
               </span>
-              <div className="flex flex-wrap gap-2.5">
+              <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:gap-2.5">
                 {PURPOSES.map((key) => {
                   const active = state.purpose === key;
                   return (
@@ -283,6 +282,7 @@ export function ComboAdvisorView({ state, actions }: ComboAdvisorViewProps) {
                       size="sm"
                       cyber={false}
                       sfx="toggle"
+                      className="w-full sm:w-auto"
                       variant={active ? 'primary' : 'outline'}
                       data-testid={TEST_IDS.combo.purpose(key)}
                       onClick={() => actions.onSelectPurpose(key)}
@@ -352,7 +352,7 @@ export function ComboAdvisorView({ state, actions }: ComboAdvisorViewProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button type="submit" variant="primary" data-testid={TEST_IDS.combo.submit}>
+            <Button type="submit" variant="primary" className="w-full sm:w-auto" data-testid={TEST_IDS.combo.submit}>
               {VI_MESSAGES.tools.combo.submitLabel}
             </Button>
           </div>

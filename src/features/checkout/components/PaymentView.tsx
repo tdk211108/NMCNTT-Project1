@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { AnimatedCopyButton } from '@/components/ui/AnimatedCopyButton';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
-import { Card } from '@/components/ui/Card';
+import { Badge, Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { Input } from '@/components/ui/Input';
@@ -52,8 +52,10 @@ export function PaymentView({ state, actions }: PaymentViewProps) {
           <OrderStatusModal
             placedOrder={state.placedOrderModal.placedOrder}
             isAdvancing={state.placedOrderModal.isAdvancing}
+            isCancelling={state.placedOrderModal.isCancelling}
             onCopyOrderId={actions.placedOrderActions.onCopyOrderId}
             onAdvanceStage={actions.placedOrderActions.onAdvanceStage}
+            onCancelOrder={actions.placedOrderActions.onCancelOrder}
             onContinueShopping={actions.placedOrderActions.onContinueShopping}
             onViewMyOrders={actions.placedOrderActions.onViewMyOrders}
             onClose={actions.placedOrderActions.onClose}
@@ -179,6 +181,40 @@ export function PaymentView({ state, actions }: PaymentViewProps) {
         </Card>
       )}
 
+      <Card className="flex flex-col gap-2 text-sm">
+        <div className="flex justify-between">
+          <span className="text-ink-muted">{VI_MESSAGES.cart.subtotal}</span>
+          <span
+            data-testid={TEST_IDS.checkout.paymentSubtotal}
+            className="font-mono font-medium tabular-nums text-ink"
+          >
+            {formatVnd(prepared.quote.subtotalVnd)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-ink-muted">{VI_MESSAGES.cart.shippingFee}</span>
+          <span
+            data-testid={TEST_IDS.checkout.paymentShipping}
+            className="font-mono font-medium tabular-nums text-ink"
+          >
+            {prepared.quote.freeShipping ? (
+              <Badge variant="success">{VI_MESSAGES.common.freeShippingLabel}</Badge>
+            ) : (
+              formatVnd(prepared.quote.shippingFeeVnd)
+            )}
+          </span>
+        </div>
+        <div className="flex justify-between border-t-2 border-border pt-2 text-base font-bold">
+          <span className="text-ink">{VI_MESSAGES.cart.total}</span>
+          <span
+            data-testid={TEST_IDS.checkout.paymentTotal}
+            className="font-mono tabular-nums text-accent-ink"
+          >
+            {formatVnd(prepared.quote.totalVnd)}
+          </span>
+        </div>
+      </Card>
+
       <Button
         variant="primary"
         size="lg"
@@ -192,8 +228,10 @@ export function PaymentView({ state, actions }: PaymentViewProps) {
       <OrderStatusModal
         placedOrder={state.placedOrderModal.placedOrder}
         isAdvancing={state.placedOrderModal.isAdvancing}
+        isCancelling={state.placedOrderModal.isCancelling}
         onCopyOrderId={actions.placedOrderActions.onCopyOrderId}
         onAdvanceStage={actions.placedOrderActions.onAdvanceStage}
+        onCancelOrder={actions.placedOrderActions.onCancelOrder}
         onContinueShopping={actions.placedOrderActions.onContinueShopping}
         onViewMyOrders={actions.placedOrderActions.onViewMyOrders}
         onClose={actions.placedOrderActions.onClose}

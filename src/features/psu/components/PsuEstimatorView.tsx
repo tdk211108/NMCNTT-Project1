@@ -81,6 +81,7 @@ export function PsuEstimatorView({ state, actions }: PsuEstimatorViewProps) {
                 variant="primary"
                 disabled={!state.canCalculate}
                 isLoading={state.isCalculating}
+                className="w-full sm:w-auto"
                 data-testid={TEST_IDS.psu.calculate}
               >
                 {VI_MESSAGES.tools.psu.calculateButton}

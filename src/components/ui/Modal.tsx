@@ -1,7 +1,8 @@
 'use client';
 
 import { X } from 'lucide-react';
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useId, useRef, type ReactNode } from 'react';
+import { useNativeDialog } from '@/lib/client-hooks';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 
 export interface ModalProps {
@@ -14,7 +15,7 @@ export interface ModalProps {
   ariaDescribedBy?: string;
   titlePrefix?: ReactNode;
   subtitle?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 /**
@@ -36,16 +37,7 @@ export function Modal({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (open && !dialog.open) {
-      dialog.showModal();
-    } else if (!open && dialog.open) {
-      dialog.close();
-    }
-  }, [open]);
+  useNativeDialog(dialogRef, open);
 
   if (!open) {
     return null;
@@ -69,27 +61,13 @@ export function Modal({
           onClose?.();
         }
       }}
-      onClick={(event) => {
-        if (!dismissible) return;
-        const dialog = dialogRef.current;
-        if (!dialog || event.target !== dialog || event.detail === 0) return;
-        const rect = dialog.getBoundingClientRect();
-        const outside =
-          event.clientX < rect.left ||
-          event.clientX > rect.right ||
-          event.clientY < rect.top ||
-          event.clientY > rect.bottom;
-        if (outside) {
-          onClose?.();
-        }
-      }}
-      className={`mtx-shadow-accent m-auto w-[calc(100%-2rem)] rounded-modal border-2 border-border-strong bg-surface p-5 text-ink ${dialogClassName}`}
+      className={`mtx-shadow-accent m-auto max-h-[92dvh] w-[calc(100%-1rem)] overflow-y-auto overscroll-contain rounded-modal border-2 border-border-strong bg-surface p-4 text-ink sm:w-[calc(100%-2rem)] sm:p-5 ${dialogClassName}`}
     >
       <div className="mb-4 flex items-start justify-between gap-3 border-b-2 border-border pb-3">
-        <div className="flex items-start gap-2.5">
+        <div className="flex min-w-0 items-start gap-2.5">
           {titlePrefix}
-          <div className="flex flex-col gap-1">
-            <h2 id={titleId} className="font-display text-lg font-bold tracking-wide text-ink">
+          <div className="flex min-w-0 flex-col gap-1">
+            <h2 id={titleId} className="font-display text-base font-bold tracking-wide text-ink sm:text-lg">
               {title}
             </h2>
             {subtitle}
@@ -100,7 +78,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label={VI_MESSAGES.common.close}
-            className="inline-flex min-h-9 min-w-9 shrink-0 cursor-pointer items-center justify-center rounded-control border-2 border-border-strong bg-surface-subtle px-2 text-sm text-ink-muted hover:border-signal hover:text-ink focus-visible:outline-2 focus-visible:outline-signal"
+            className="inline-flex min-h-10 min-w-10 shrink-0 cursor-pointer items-center justify-center rounded-control border-2 border-border-strong bg-surface-subtle px-2 text-sm text-ink-muted hover:border-signal hover:text-ink focus-visible:outline-2 focus-visible:outline-signal"
           >
             <X className="h-4 w-4" aria-hidden="true" />
             <span className="sr-only">{VI_MESSAGES.common.close}</span>

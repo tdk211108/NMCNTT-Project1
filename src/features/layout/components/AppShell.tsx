@@ -9,6 +9,7 @@ import { Footer } from './Footer';
 import { Header } from './Header';
 import { InteractiveBackground } from './InteractiveBackground';
 import { getMainContainerClass } from '../layout-width';
+import { MobileBottomNav } from './MobileBottomNav';
 import { PreloaderProvider } from './SitePreloader';
 import { UiSoundEffects } from './UiSoundEffects';
 import { ZaloButton } from './ZaloButton';
@@ -25,6 +26,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Header />
         <main className={`${mainClass} relative z-10`}>{children}</main>
         <Footer />
+        <MobileBottomNav />
         <ZaloButton />
         <ToastContainer />
         <AuthModal />

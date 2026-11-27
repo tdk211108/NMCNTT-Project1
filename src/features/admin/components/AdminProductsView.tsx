@@ -7,6 +7,7 @@ import { CatalogPagination } from '@/components/ui/CatalogPagination';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { Input } from '@/components/ui/Input';
+import { PriceInput } from '@/components/ui/PriceInput';
 import { ProductImage } from '@/components/ui/ProductImage';
 import { Select } from '@/components/ui/Select';
 import { ResponsiveTableWrapper } from '@/components/ui/Table';
@@ -78,12 +79,11 @@ export function AdminProductsView({ state, actions }: AdminProductsViewProps) {
                 value={state.form.name}
                 onChange={(e) => actions.onUpdateFormField('name', e.target.value)}
               />
-              <Input
-                type="number"
+              <PriceInput
                 label="Giá bán (VND)"
                 required
                 value={state.form.priceVnd}
-                onChange={(e) => actions.onUpdateFormField('priceVnd', e.target.value)}
+                onValueChange={(value) => actions.onUpdateFormField('priceVnd', value)}
               />
             </div>
 

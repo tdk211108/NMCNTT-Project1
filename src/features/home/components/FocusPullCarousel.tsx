@@ -551,10 +551,10 @@ export function FocusPullCarousel({
       onKeyDown={handleKeyDown}
       style={
         {
-          '--fp-w': 'clamp(224px, 56vw, 376px)',
+          '--fp-w': 'clamp(248px, 74vw, 376px)',
         } as CSSProperties
       }
-      className={`fp-root rounded-card border-2 border-border-strong bg-surface-subtle/90 py-5 focus-visible:outline-2 focus-visible:outline-signal ${className}`}
+      className={`fp-root rounded-card border-2 border-border-strong bg-surface-subtle/90 py-4 sm:py-5 focus-visible:outline-2 focus-visible:outline-signal ${className}`}
     >
       <div
         ref={trackRef}
@@ -604,7 +604,7 @@ export function FocusPullCarousel({
                     : 'border-border-strong hover:border-signal/80'
                 }`}
               >
-                <div className="flex h-52 w-full items-center justify-center overflow-hidden rounded-control bg-white p-2 sm:h-60">
+                <div className="flex h-44 w-full items-center justify-center overflow-hidden rounded-control bg-white p-2 sm:h-60">
                   <ProductImage
                     src={product.imageUrl}
                     alt={isPrimaryCopy ? product.name : ''}
@@ -659,7 +659,7 @@ export function FocusPullCarousel({
                   : VI_MESSAGES.home.sliderPauseAutoplayAria
               }
               data-testid={TEST_IDS.home.sliderPlayToggle(category)}
-              className="mtx-shadow-sm inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-control border-2 border-border-strong bg-surface text-ink hover:border-signal hover:text-accent-ink focus-visible:outline-2 focus-visible:outline-signal"
+              className="mtx-shadow-sm inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-control border-2 border-border-strong bg-surface text-ink hover:border-signal hover:text-accent-ink focus-visible:outline-2 focus-visible:outline-signal sm:h-10 sm:w-10"
             >
               {isUserPaused ? (
                 <Play className="h-4 w-4" aria-hidden="true" />
@@ -674,7 +674,7 @@ export function FocusPullCarousel({
             onClick={() => stepBy(-1)}
             aria-label={VI_MESSAGES.home.sliderPrevAria}
             data-testid={TEST_IDS.home.sliderPrev(category)}
-            className="mtx-shadow-sm inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-control border-2 border-border-strong bg-surface text-ink hover:border-signal hover:text-accent-ink focus-visible:outline-2 focus-visible:outline-signal"
+            className="mtx-shadow-sm inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-control border-2 border-border-strong bg-surface text-ink hover:border-signal hover:text-accent-ink focus-visible:outline-2 focus-visible:outline-signal sm:h-10 sm:w-10"
           >
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -684,7 +684,7 @@ export function FocusPullCarousel({
             onClick={() => stepBy(1)}
             aria-label={VI_MESSAGES.home.sliderNextAria}
             data-testid={TEST_IDS.home.sliderNext(category)}
-            className="mtx-shadow-sm inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-control border-2 border-border-strong bg-surface text-ink hover:border-signal hover:text-accent-ink focus-visible:outline-2 focus-visible:outline-signal"
+            className="mtx-shadow-sm inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-control border-2 border-border-strong bg-surface text-ink hover:border-signal hover:text-accent-ink focus-visible:outline-2 focus-visible:outline-signal sm:h-10 sm:w-10"
           >
             <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </button>

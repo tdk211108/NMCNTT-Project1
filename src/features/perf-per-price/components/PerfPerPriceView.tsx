@@ -197,11 +197,12 @@ function AwardWinnerCard({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2.5 pt-1">
+      <div className="grid grid-cols-2 gap-2 pt-1 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5">
         <Button
           variant="primary"
           size="sm"
           sfx="success"
+          className="col-span-2 min-h-11 w-full sm:w-auto"
           data-testid={TEST_IDS.ppp.awardAddCart(winner.id)}
           onClick={() => onAddToCart(winner)}
         >
@@ -209,14 +210,14 @@ function AwardWinnerCard({
           <span>{VI_MESSAGES.catalog.addToCart}</span>
         </Button>
 
-        <Link href={`/products/${winner.id}`}>
-          <Button variant="outline" size="sm">
+        <Link href={`/products/${winner.id}`} className="w-full sm:w-auto">
+          <Button variant="outline" size="sm" className="min-h-10 w-full sm:w-auto">
             <span>{msgs.viewDetailAction}</span>
           </Button>
         </Link>
 
-        <Link href={`/compare?ids=${winner.id}`}>
-          <Button variant="outline" size="sm" cyber={false}>
+        <Link href={`/compare?ids=${winner.id}`} className="w-full sm:w-auto">
+          <Button variant="outline" size="sm" cyber={false} className="min-h-10 w-full sm:w-auto">
             <Scale className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>{msgs.compareAction}</span>
           </Button>
@@ -253,7 +254,7 @@ export function PerfPerPriceView({ state, actions }: PerfPerPriceViewProps) {
       <div
         role="tablist"
         aria-label={VI_MESSAGES.tools.perfPerPrice.categoryLabel}
-        className="flex flex-wrap gap-2.5 border-b border-border pb-3"
+        className="grid grid-cols-2 gap-2.5 border-b border-border pb-3 sm:flex sm:flex-wrap"
       >
         <Button
           role="tab"

@@ -32,18 +32,18 @@ const CARD_VARIANT_STYLES: Record<
 > = {
   compact: {
     card: 'gap-2.5 p-3',
-    bodyGap: 'gap-2',
-    media: 'aspect-[4/3] max-h-48 p-1.5',
+    bodyGap: 'gap-2.5 sm:gap-2',
+    media: 'h-24 w-24 shrink-0 p-1 sm:h-auto sm:w-full sm:aspect-[4/3] sm:max-h-48 sm:p-1.5',
     title: 'text-sm leading-snug font-semibold',
     price: 'text-base',
-    specs: 'gap-x-2.5 gap-y-0.5 pt-1.5 text-[11px]',
+    specs: 'gap-x-2.5 gap-y-0.5 pt-2 text-[11px]',
   },
   catalog: {
-    card: 'gap-3.5 p-4',
+    card: 'gap-3 p-3 sm:gap-3.5 sm:p-4',
     bodyGap: 'gap-2.5',
-    media: 'aspect-[4/3] p-2.5',
-    title: 'text-base leading-snug font-bold',
-    price: 'text-lg',
+    media: 'h-24 w-24 shrink-0 p-1.5 sm:h-auto sm:w-full sm:aspect-[4/3] sm:p-2.5',
+    title: 'text-sm leading-snug font-bold sm:text-base',
+    price: 'text-base sm:text-lg',
     specs: 'gap-x-3 gap-y-1 pt-2 text-xs',
   },
 };
@@ -63,37 +63,41 @@ export function ProductCard({
       className={`flex flex-col justify-between ${styles.card}`}
     >
       <div className={`flex flex-col ${styles.bodyGap}`}>
-        <Link
-          href={`/products/${product.id}`}
-          className={`group/card-img block w-full overflow-hidden rounded-control border-2 border-border-strong bg-white ${styles.media}`}
-        >
-          <ProductImage
-            src={product.imageUrl}
-            alt={product.name}
-            className="product-card-zoom-img h-full w-full object-contain"
-          />
-        </Link>
+        <div className="flex flex-row items-start gap-3 sm:flex-col sm:items-stretch sm:gap-2">
+          <Link
+            href={`/products/${product.id}`}
+            className={`group/card-img block overflow-hidden rounded-control border-2 border-border-strong bg-white ${styles.media}`}
+          >
+            <ProductImage
+              src={product.imageUrl}
+              alt={product.name}
+              className="product-card-zoom-img h-full w-full object-contain"
+            />
+          </Link>
 
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant={vendorBadgeVariant(product.vendor)}>
-            {product.vendor.toUpperCase()}
-          </Badge>
-          {product.aibBrand ? <Badge variant="aib">{product.aibBrand}</Badge> : null}
-          {product.isLimitedEdition ? (
-            <Badge variant="warning">{VI_MESSAGES.catalog.limitedEditionBadge}</Badge>
-          ) : null}
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge variant={vendorBadgeVariant(product.vendor)}>
+                {product.vendor.toUpperCase()}
+              </Badge>
+              {product.aibBrand ? <Badge variant="aib">{product.aibBrand}</Badge> : null}
+              {product.isLimitedEdition ? (
+                <Badge variant="warning">{VI_MESSAGES.catalog.limitedEditionBadge}</Badge>
+              ) : null}
+            </div>
+
+            <Link
+              href={`/products/${product.id}`}
+              className={`${styles.title} text-ink hover:text-accent-ink`}
+            >
+              {product.name}
+            </Link>
+
+            <p className={`font-mono font-bold tabular-nums text-ink ${styles.price}`}>
+              {formatVnd(product.priceVnd)}
+            </p>
+          </div>
         </div>
-
-        <Link
-          href={`/products/${product.id}`}
-          className={`${styles.title} text-ink hover:text-accent-ink`}
-        >
-          {product.name}
-        </Link>
-
-        <p className={`font-mono font-bold tabular-nums text-ink ${styles.price}`}>
-          {formatVnd(product.priceVnd)}
-        </p>
 
         <dl className={`grid grid-cols-2 border-t-2 border-border ${styles.specs}`}>
           {product.summary.map((item) => (
@@ -105,29 +109,27 @@ export function ProductCard({
         </dl>
       </div>
 
-      <div className="flex flex-col gap-3 pt-2">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="primary"
-            size="sm"
-            className="min-h-11 flex-1"
-            data-testid={TEST_IDS.listing.productCardBuyNow(product.id)}
-            onClick={() => onBuyNow(product)}
-          >
-            {VI_MESSAGES.catalog.buyNow}
-          </Button>
-          <AnimatedCartButton
-            ariaLabel={VI_MESSAGES.catalog.addToCartAria(product.name)}
-            title={VI_MESSAGES.catalog.addToCart}
-            size="card"
-            testId={TEST_IDS.listing.productCardAddToCart(product.id)}
-            onAdd={() => onAddToCart(product)}
-          />
-        </div>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 pt-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-3">
+        <Button
+          variant="primary"
+          size="sm"
+          className="min-h-11 w-full"
+          data-testid={TEST_IDS.listing.productCardBuyNow(product.id)}
+          onClick={() => onBuyNow(product)}
+        >
+          {VI_MESSAGES.catalog.buyNow}
+        </Button>
+        <AnimatedCartButton
+          ariaLabel={VI_MESSAGES.catalog.addToCartAria(product.name)}
+          title={VI_MESSAGES.catalog.addToCart}
+          size="card"
+          testId={TEST_IDS.listing.productCardAddToCart(product.id)}
+          onAdd={() => onAddToCart(product)}
+        />
         <Button
           variant="outline"
           size="sm"
-          className="w-full"
+          className="min-h-11 px-2.5 sm:col-span-2 sm:w-full sm:px-3.5"
           data-testid={TEST_IDS.listing.productCardCompare(product.id)}
           onClick={() => onCompare(product)}
         >

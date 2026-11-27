@@ -10,6 +10,7 @@ import { VI_MESSAGES } from '@/shared/messages/vi';
 import type { OrderBoard, OrderWithToken } from '@/shared/types';
 import { clearOrderToken, loadOrderToken, saveOrderToken } from './order-tokens';
 import { useAdvanceOrderStage } from './useAdvanceOrderStage';
+import { useCancelOrder } from './useCancelOrder';
 
 export function useOrderBoardController(orderId: string) {
   const queryClient = useQueryClient();
@@ -65,6 +66,13 @@ export function useOrderBoardController(orderId: string) {
     },
   });
 
+  const { isCancelling, cancelOrder } = useCancelOrder({
+    onUnauthorized: (id) => {
+      clearOrderToken(id);
+      setTokenOverride(null);
+    },
+  });
+
   const unauthorizedOrMissingToken =
     isClient &&
     !authState.isLoading &&
@@ -86,10 +94,12 @@ export function useOrderBoardController(orderId: string) {
       lookupError: reauthLookupMutation.error?.message ?? null,
       fetchError: !unauthorizedOrMissingToken ? (boardQuery.error?.message ?? null) : null,
       isAdvancing,
+      isCancelling,
     },
     actions: {
       onCopyOrderId: copyOrderId,
       onAdvanceStage: () => advanceStage(boardQuery.data, token, queryKey),
+      onCancelOrder: () => cancelOrder(boardQuery.data, token, queryKey),
       onChangeLookupPhone: (value: string) => {
         setLookupPhone(value);
         reauthLookupMutation.reset();

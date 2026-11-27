@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Badge } from '@/components/ui/Card';
+import { Badge, orderStatusBadgeVariant } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
 import { ResponsiveTableWrapper } from '@/components/ui/Table';
@@ -53,7 +53,7 @@ export function AdminOrdersView({ state }: AdminOrdersViewProps) {
                     {formatVnd(order.totalVnd)}
                   </td>
                   <td className="px-3 py-2.5">
-                    <Badge variant={order.stage === 4 ? 'success' : 'default'}>
+                    <Badge variant={orderStatusBadgeVariant(order, 'default')}>
                       {order.stageLabel}
                     </Badge>
                   </td>

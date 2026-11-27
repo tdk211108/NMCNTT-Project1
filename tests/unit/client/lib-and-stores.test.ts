@@ -98,6 +98,14 @@ describe('client lib/format, lib/safe-storage and lib/api-client', () => {
         status: 408,
         message: VI_MESSAGES.common.requestTimeoutError,
       } satisfies Partial<ApiClientError>);
+
+      const controller = new AbortController();
+      fetchSpy.mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'));
+      await expect(
+        apiFetch('/api/psu/options', { signal: controller.signal }),
+      ).rejects.toMatchObject({
+        name: 'AbortError',
+      });
     } finally {
       fetchSpy.mockRestore();
     }
@@ -341,6 +349,9 @@ describe('client cart store', () => {
           orderId: 'PC-TEST000001',
           stage: 3,
           isCompleted: false,
+          isCancelled: false,
+          cancelledAt: null,
+          canCancel: false,
           stages: [
             { stage: 0, label: 'Đã đặt hàng', reachedAt: '2026-11-25T10:00:00.000Z' },
             { stage: 1, label: 'Đang chuẩn bị hàng', reachedAt: '2026-11-25T10:01:00.000Z' },

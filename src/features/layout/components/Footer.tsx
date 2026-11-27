@@ -6,6 +6,7 @@ import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
 import { BrandMark } from './BrandMark';
 import { getChromeContainerClass } from '../layout-width';
+import { POLICY_LINKS } from '../nav-items';
 
 export function Footer() {
   const containerClass = getChromeContainerClass();
@@ -13,8 +14,8 @@ export function Footer() {
     process.env.NEXT_PUBLIC_GITHUB_REPO_URL || 'https://github.com/tdk211108/NMCNTT-Project1';
 
   return (
-    <footer className="relative z-10 mt-auto border-t-2 border-border-strong bg-surface pt-6 pb-20">
-      <div className={`${containerClass} flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between`}>
+    <footer className="relative z-10 mt-auto border-t-2 border-border-strong bg-surface pt-6 pb-28 md:pb-20">
+      <div className={`${containerClass} flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between`}>
         <div className="flex flex-wrap items-center gap-3">
           <a
             href={githubUrl}
@@ -37,36 +38,18 @@ export function Footer() {
 
         <nav
           aria-label={VI_MESSAGES.nav.policiesLabel}
-          className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-muted"
+          className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm text-ink-muted sm:flex sm:flex-wrap sm:items-center"
         >
-          <Link
-            href="/policies/warranty"
-            data-testid={TEST_IDS.layout.footerLinkWarranty}
-            className="hover:text-ink"
-          >
-            {VI_MESSAGES.policies.warrantyTitle}
-          </Link>
-          <Link
-            href="/policies/payment-shipping"
-            data-testid={TEST_IDS.layout.footerLinkPaymentShipping}
-            className="hover:text-ink"
-          >
-            {VI_MESSAGES.policies.paymentShippingTitle}
-          </Link>
-          <Link
-            href="/policies/contact"
-            data-testid={TEST_IDS.layout.footerLinkContact}
-            className="hover:text-ink"
-          >
-            {VI_MESSAGES.policies.contactTitle}
-          </Link>
-          <Link
-            href="/policies/privacy"
-            data-testid={TEST_IDS.layout.footerLinkPrivacy}
-            className="hover:text-ink"
-          >
-            {VI_MESSAGES.policies.privacyTitle}
-          </Link>
+          {POLICY_LINKS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              data-testid={item.footerTestId}
+              className="hover:text-ink"
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
       </div>
     </footer>

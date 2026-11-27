@@ -1,6 +1,6 @@
 'use client';
 
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, SlidersHorizontal, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Button } from '@/components/ui/Button';
@@ -8,10 +8,9 @@ import { Card } from '@/components/ui/Card';
 import { CatalogPagination } from '@/components/ui/CatalogPagination';
 import { ComboboxSelect } from '@/components/ui/ComboboxSelect';
 import { EmptyState, Spinner } from '@/components/ui/Feedback';
-import { Input } from '@/components/ui/Input';
-import { formatVnd } from '@/lib/format';
-import { paginateItems, PRODUCT_SORT_OPTIONS } from '@/lib/pagination';
-import { CPU_PER_BRAND_PAGE_SIZE, GPU_PAGE_SIZE } from '@/shared/constants';
+import { formatVnd, parsePriceInputDigits } from '@/lib/format';
+import { PRODUCT_SORT_OPTIONS } from '@/lib/pagination';
+import { useIsBelowLgViewport } from '@/lib/use-media-query';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
 import type { ChipVendor } from '@/shared/types';
@@ -19,30 +18,30 @@ import {
   groupProductsByVendor,
   type useCatalogController,
 } from '../useCatalogController';
+import { CatalogFilterPanel, MobileFilterDrawer } from './MobileFilterDrawer';
 import { ProductCard } from './ProductCard';
 
-type CatalogControllerResult = ReturnType<typeof useCatalogController>;
-type CatalogControllerState = CatalogControllerResult['state'];
-
-export interface CatalogViewProps {
-  state: Omit<CatalogControllerState, 'serverPaginated' | 'vendorTotals' | 'isFetching'> &
-    Partial<Pick<CatalogControllerState, 'serverPaginated' | 'vendorTotals' | 'isFetching'>>;
-  actions: CatalogControllerResult['actions'];
-}
+export type CatalogViewProps = ReturnType<typeof useCatalogController>;
 
 export function CatalogView({ state, actions }: CatalogViewProps) {
-  const [activeThumb, setActiveThumb] = useState<'min' | 'max'>('max');
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const isCompactCatalog = useIsBelowLgViewport();
   const resultsRef = useRef<HTMLElement>(null);
   const vendorSectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const title =
     state.category === 'cpu' ? VI_MESSAGES.catalog.cpuPageTitle : VI_MESSAGES.catalog.gpuPageTitle;
 
-  const { priceSlider } = state;
-  const pageSize =
-    state.pageSize ?? (state.category === 'cpu' ? CPU_PER_BRAND_PAGE_SIZE : GPU_PAGE_SIZE);
-  const pageByVendor = state.pageByVendor ?? {};
-  const flatPage = state.flatPage ?? 1;
+  const { pageSize, pageByVendor, flatPage } = state;
+
+  const activeFilterCount =
+    state.selectedVendors.length +
+    state.selectedSockets.length +
+    state.selectedVramGb.length +
+    state.selectedAibBrands.length +
+    (state.priceMinInput.trim() ? 1 : 0) +
+    (state.priceMaxInput.trim() ? 1 : 0) +
+    (state.activeSeriesId ? 1 : 0);
 
   function scrollResultsIntoView(target?: HTMLElement | null) {
     const el = target ?? resultsRef.current;
@@ -50,7 +49,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5 sm:gap-6">
       <Breadcrumb
         items={[
           { label: VI_MESSAGES.nav.home, href: '/' },
@@ -60,28 +59,30 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold text-ink">{title}</h1>
+          <h1 className="font-display text-xl font-bold text-ink sm:text-2xl">{title}</h1>
           <p className="font-mono text-xs tabular-nums text-ink-muted">
             {VI_MESSAGES.catalog.productCountLabel(state.total)}
           </p>
         </div>
 
-        <div className="w-full sm:w-64">
-          <ComboboxSelect
-            label={VI_MESSAGES.catalog.sortLabel}
-            value={state.sort}
-            options={PRODUCT_SORT_OPTIONS}
-            testId={TEST_IDS.listing.sortSelect}
-            onChange={(nextSort) => actions.onChangeSort(nextSort)}
-          />
-        </div>
+        {!isCompactCatalog ? (
+          <div className="w-full sm:w-64">
+            <ComboboxSelect
+              label={VI_MESSAGES.catalog.sortLabel}
+              value={state.sort}
+              options={PRODUCT_SORT_OPTIONS}
+              testId={TEST_IDS.listing.sortSelect}
+              onChange={(nextSort) => actions.onChangeSort(nextSort)}
+            />
+          </div>
+        ) : null}
       </div>
 
       {state.category === 'gpu' ? (
         <div
           role="tablist"
           aria-label={VI_MESSAGES.catalog.gpuPageTitle}
-          className="flex flex-wrap gap-2.5 border-b border-border pb-3"
+          className="mtx-no-scrollbar flex items-center gap-2 overflow-x-auto border-b border-border pb-3"
         >
           <Button
             role="tab"
@@ -89,6 +90,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
             size="sm"
             cyber={false}
             sfx="toggle"
+            className="shrink-0"
             variant={!state.limitedOnly ? 'primary' : 'outline'}
             data-testid={TEST_IDS.listing.gpuTabAll}
             onClick={() => actions.onChangeLimitedOnly(false)}
@@ -101,6 +103,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
             size="sm"
             cyber={false}
             sfx="toggle"
+            className="shrink-0"
             variant={state.limitedOnly ? 'primary' : 'outline'}
             data-testid={TEST_IDS.listing.gpuTabLimited}
             onClick={() => actions.onChangeLimitedOnly(true)}
@@ -111,6 +114,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
             <Button
               size="sm"
               cyber={false}
+              className="shrink-0"
               variant="secondary"
               onClick={actions.onClearFilters}
             >
@@ -121,203 +125,128 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]">
-        <aside
-          aria-label={VI_MESSAGES.catalog.filterSidebarAria}
-          className="mtx-sticky-aside min-w-0 overscroll-contain lg:sticky lg:top-[4.75rem] lg:max-h-[calc(100dvh-5.5rem)] lg:self-start lg:overflow-y-auto lg:pr-1 lg:pb-2"
-        >
-          <Card className="flex flex-col gap-4">
-            <div>
-              <p className="mb-2 text-sm font-semibold text-ink">
-                {VI_MESSAGES.catalog.filterVendorLabel}
-              </p>
-              <div className="flex flex-wrap gap-2.5">
-                {state.facets.vendors.map((vendor) => {
-                  const active = state.selectedVendors.includes(vendor);
-                  return (
-                    <Button
-                      key={vendor}
-                      size="sm"
-                      cyber={false}
-                      sfx="toggle"
-                      variant={active ? 'primary' : 'outline'}
-                      data-testid={TEST_IDS.listing.filterVendor(vendor)}
-                      onClick={() => actions.onToggleVendor(vendor as ChipVendor)}
-                    >
-                      {vendor.toUpperCase()}
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-1">
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  label={VI_MESSAGES.catalog.filterPriceMinLabel}
-                  value={state.priceMinInput}
-                  data-testid={TEST_IDS.listing.filterPriceMin}
-                  onChange={(e) => actions.onChangePriceMin(e.target.value)}
-                />
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  label={VI_MESSAGES.catalog.filterPriceMaxLabel}
-                  value={state.priceMaxInput}
-                  data-testid={TEST_IDS.listing.filterPriceMax}
-                  onChange={(e) => actions.onChangePriceMax(e.target.value)}
-                />
-              </div>
-
-              <div className="flex flex-col gap-2 border-2 border-border bg-surface-subtle p-2.5">
-                <div className="flex items-center justify-between gap-2 text-xs">
-                  <span className="font-semibold text-ink">
-                    {VI_MESSAGES.catalog.filterPriceSliderLabel}
-                  </span>
-                </div>
-
-                <div className="relative flex h-6 w-full items-center">
-                  <div
-                    aria-hidden="true"
-                    className="h-1.5 w-full border border-border-strong bg-surface"
-                  />
-                  <div
-                    aria-hidden="true"
-                    style={{
-                      left: `${priceSlider.minPct}%`,
-                      width: `${Math.max(0, priceSlider.maxPct - priceSlider.minPct)}%`,
-                    }}
-                    className="pointer-events-none absolute h-1.5 bg-primary"
-                  />
-
-                  <input
-                    type="range"
-                    min={priceSlider.min}
-                    max={priceSlider.max}
-                    step={priceSlider.step}
-                    value={priceSlider.minValue}
-                    aria-label={VI_MESSAGES.catalog.filterPriceSliderMinAria}
-                    aria-valuetext={formatVnd(priceSlider.minValue)}
-                    data-testid={TEST_IDS.listing.filterPriceSliderMin}
-                    onPointerDown={() => setActiveThumb('min')}
-                    onFocus={() => setActiveThumb('min')}
-                    onChange={(e) => actions.onSlidePriceMin(Number(e.target.value))}
-                    className={`mtx-range-input ${activeThumb === 'min' ? 'z-20' : 'z-10'}`}
-                  />
-                  <input
-                    type="range"
-                    min={priceSlider.min}
-                    max={priceSlider.max}
-                    step={priceSlider.step}
-                    value={priceSlider.maxValue}
-                    aria-label={VI_MESSAGES.catalog.filterPriceSliderMaxAria}
-                    aria-valuetext={formatVnd(priceSlider.maxValue)}
-                    data-testid={TEST_IDS.listing.filterPriceSliderMax}
-                    onPointerDown={() => setActiveThumb('max')}
-                    onFocus={() => setActiveThumb('max')}
-                    onChange={(e) => actions.onSlidePriceMax(Number(e.target.value))}
-                    className={`mtx-range-input ${activeThumb === 'max' ? 'z-20' : 'z-10'}`}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between gap-2 font-mono text-[11px] tabular-nums text-ink-muted">
-                  <span>{formatVnd(priceSlider.minValue)}</span>
-                  <span>{formatVnd(priceSlider.maxValue)}</span>
-                </div>
-              </div>
-            </div>
-
-            {state.category === 'cpu' && state.facets.sockets?.length ? (
-              <div>
-                <p className="mb-2 text-sm font-semibold text-ink">
-                  {VI_MESSAGES.catalog.filterSocketLabel}
-                </p>
-                <div className="flex flex-wrap gap-2.5">
-                  {state.facets.sockets.map((socket) => {
-                    const active = state.selectedSockets.includes(socket);
-                    return (
-                      <Button
-                        key={socket}
-                        size="sm"
-                        cyber={false}
-                        sfx="toggle"
-                        variant={active ? 'primary' : 'outline'}
-                        data-testid={TEST_IDS.listing.filterSocket(socket)}
-                        onClick={() => actions.onToggleSocket(socket)}
-                      >
-                        {socket}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-
-            {state.category === 'gpu' && state.facets.vramGb?.length ? (
-              <div>
-                <p className="mb-2 text-sm font-semibold text-ink">
-                  {VI_MESSAGES.catalog.filterVramLabel}
-                </p>
-                <div className="flex flex-wrap gap-2.5">
-                  {state.facets.vramGb.map((gb) => {
-                    const active = state.selectedVramGb.includes(gb);
-                    return (
-                      <Button
-                        key={gb}
-                        size="sm"
-                        cyber={false}
-                        sfx="toggle"
-                        variant={active ? 'primary' : 'outline'}
-                        data-testid={TEST_IDS.listing.filterVram(gb)}
-                        onClick={() => actions.onToggleVram(gb)}
-                      >
-                        {gb} GB
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-
-            {state.category === 'gpu' && state.facets.aibBrands?.length ? (
-              <div>
-                <p className="mb-2 text-sm font-semibold text-ink">
-                  {VI_MESSAGES.catalog.filterAibLabel}
-                </p>
-                <div className="flex flex-wrap gap-2.5">
-                  {state.facets.aibBrands.map((brand) => {
-                    const active = state.selectedAibBrands.includes(brand);
-                    return (
-                      <Button
-                        key={brand}
-                        size="sm"
-                        cyber={false}
-                        sfx="toggle"
-                        variant={active ? 'primary' : 'outline'}
-                        data-testid={TEST_IDS.listing.filterAib(brand)}
-                        onClick={() => actions.onToggleAibBrand(brand)}
-                      >
-                        {brand}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-
+      {isCompactCatalog ? (
+        <div className="flex flex-col gap-2.5">
+          <div className="grid grid-cols-[auto_minmax(0,1fr)] items-end gap-2.5">
             <Button
-              variant="ghost"
-              size="sm"
-              data-testid={TEST_IDS.listing.filterClear}
-              onClick={actions.onClearFilters}
+              variant={activeFilterCount > 0 ? 'primary' : 'outline'}
+              size="md"
+              cyber={false}
+              sfx="toggle"
+              className="min-h-11 shrink-0"
+              data-testid={TEST_IDS.listing.mobileFilterTrigger}
+              onClick={() => setFilterDrawerOpen(true)}
             >
-              <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span>{VI_MESSAGES.catalog.clearFilters}</span>
+              <SlidersHorizontal className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>
+                {activeFilterCount > 0
+                  ? VI_MESSAGES.catalog.mobileFilterCount(activeFilterCount)
+                  : VI_MESSAGES.catalog.mobileFilterOpen}
+              </span>
             </Button>
-          </Card>
-        </aside>
+
+            <div className="min-w-0">
+              <ComboboxSelect
+                label={VI_MESSAGES.catalog.sortLabel}
+                value={state.sort}
+                options={PRODUCT_SORT_OPTIONS}
+                testId={TEST_IDS.listing.sortSelect}
+                onChange={(nextSort) => actions.onChangeSort(nextSort)}
+              />
+            </div>
+          </div>
+
+          {activeFilterCount > 0 ? (
+            <div className="mtx-no-scrollbar flex items-center gap-2 overflow-x-auto pb-1">
+              {state.selectedVendors.map((vendor) => (
+                <button
+                  key={`chip-vendor-${vendor}`}
+                  type="button"
+                  onClick={() => actions.onToggleVendor(vendor as ChipVendor)}
+                  className="inline-flex min-h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-control border border-signal bg-surface-subtle px-2.5 font-mono text-xs font-semibold text-ink"
+                >
+                  <span>{vendor.toUpperCase()}</span>
+                  <X className="h-3 w-3 text-accent-ink" aria-hidden="true" />
+                </button>
+              ))}
+              {state.selectedSockets.map((socket) => (
+                <button
+                  key={`chip-socket-${socket}`}
+                  type="button"
+                  onClick={() => actions.onToggleSocket(socket)}
+                  className="inline-flex min-h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-control border border-signal bg-surface-subtle px-2.5 font-mono text-xs font-semibold text-ink"
+                >
+                  <span>{socket}</span>
+                  <X className="h-3 w-3 text-accent-ink" aria-hidden="true" />
+                </button>
+              ))}
+              {state.selectedVramGb.map((gb) => (
+                <button
+                  key={`chip-vram-${gb}`}
+                  type="button"
+                  onClick={() => actions.onToggleVram(gb)}
+                  className="inline-flex min-h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-control border border-signal bg-surface-subtle px-2.5 font-mono text-xs font-semibold text-ink"
+                >
+                  <span>{gb} GB</span>
+                  <X className="h-3 w-3 text-accent-ink" aria-hidden="true" />
+                </button>
+              ))}
+              {state.selectedAibBrands.map((brand) => (
+                <button
+                  key={`chip-aib-${brand}`}
+                  type="button"
+                  onClick={() => actions.onToggleAibBrand(brand)}
+                  className="inline-flex min-h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-control border border-signal bg-surface-subtle px-2.5 font-mono text-xs font-semibold text-ink"
+                >
+                  <span>{brand}</span>
+                  <X className="h-3 w-3 text-accent-ink" aria-hidden="true" />
+                </button>
+              ))}
+              {(parsePriceInputDigits(state.priceMinInput) !== null ||
+                parsePriceInputDigits(state.priceMaxInput) !== null) ? (
+                <span className="inline-flex min-h-9 shrink-0 items-center rounded-control border border-border-strong bg-surface-subtle px-2.5 font-mono text-xs text-ink">
+                  {(() => {
+                    const minVal = parsePriceInputDigits(state.priceMinInput);
+                    return minVal !== null ? formatVnd(minVal) : '0 đ';
+                  })()}{' '}
+                  /{' '}
+                  {(() => {
+                    const maxVal = parsePriceInputDigits(state.priceMaxInput);
+                    return maxVal !== null ? formatVnd(maxVal) : 'Max';
+                  })()}
+                </span>
+              ) : null}
+              <button
+                type="button"
+                onClick={actions.onClearFilters}
+                className="inline-flex min-h-9 shrink-0 cursor-pointer items-center gap-1 rounded-control border border-border-strong bg-surface px-2.5 text-xs font-semibold text-accent-ink"
+              >
+                <RotateCcw className="h-3 w-3" aria-hidden="true" />
+                <span>{VI_MESSAGES.catalog.clearFilters}</span>
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]">
+        {!isCompactCatalog ? (
+          <aside
+            aria-label={VI_MESSAGES.catalog.filterSidebarAria}
+            className="mtx-sticky-aside min-w-0 overscroll-contain lg:sticky lg:top-[4.75rem] lg:max-h-[calc(100dvh-5.5rem)] lg:self-start lg:overflow-y-auto lg:pr-1 lg:pb-2"
+          >
+            <Card>
+              <CatalogFilterPanel state={state} actions={actions} />
+            </Card>
+          </aside>
+        ) : (
+          <MobileFilterDrawer
+            open={filterDrawerOpen}
+            onClose={() => setFilterDrawerOpen(false)}
+            state={state}
+            actions={actions}
+          />
+        )}
 
         <section
           ref={resultsRef}
@@ -339,16 +268,8 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
           ) : state.category === 'cpu' && state.groupedByVendor ? (
             <div className="flex flex-col gap-8">
               {state.groupedByVendor.map((group) => {
-                const isServer = Boolean(state.serverPaginated);
-                const groupTotal = isServer
-                  ? (state.vendorTotals?.[group.vendor] ?? group.items.length)
-                  : group.items.length;
-                const pagedGroup = isServer
-                  ? {
-                      page: pageByVendor[group.vendor] ?? 1,
-                      items: group.items,
-                    }
-                  : paginateItems(group.items, pageByVendor[group.vendor] ?? 1, pageSize);
+                const groupTotal = state.vendorTotals[group.vendor] ?? group.items.length;
+                const currentPage = pageByVendor[group.vendor] ?? 1;
                 return (
                   <section
                     key={group.vendor}
@@ -361,7 +282,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
                       {group.vendor.toUpperCase()} ({groupTotal})
                     </h2>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-                      {pagedGroup.items.map((product) => (
+                      {group.items.map((product) => (
                         <ProductCard
                           key={product.id}
                           product={product}
@@ -374,7 +295,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
                     </div>
                     <CatalogPagination
                       scope={group.vendor}
-                      currentPage={pagedGroup.page}
+                      currentPage={currentPage}
                       totalItems={groupTotal}
                       pageSize={pageSize}
                       onPageChange={(nextPage) => {
@@ -388,12 +309,7 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
             </div>
           ) : state.category === 'gpu' && state.groupedByVendor ? (
             (() => {
-              const isServer = Boolean(state.serverPaginated);
-              const pagedGpu = isServer
-                ? { page: flatPage, items: state.items }
-                : paginateItems(state.items, flatPage, pageSize);
-              const totalGpuItems = isServer ? state.total : state.items.length;
-              const groupedPage = groupProductsByVendor(pagedGpu.items);
+              const groupedPage = groupProductsByVendor(state.items, state.category);
               return (
                 <div className="flex flex-col gap-8">
                   {groupedPage.map((group) => (
@@ -417,8 +333,8 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
                   ))}
                   <CatalogPagination
                     scope="gpu"
-                    currentPage={pagedGpu.page}
-                    totalItems={totalGpuItems}
+                    currentPage={flatPage}
+                    totalItems={state.total}
                     pageSize={pageSize}
                     onPageChange={(nextPage) => {
                       actions.onChangeFlatPage?.(nextPage);
@@ -429,39 +345,30 @@ export function CatalogView({ state, actions }: CatalogViewProps) {
               );
             })()
           ) : (
-            (() => {
-              const isServer = Boolean(state.serverPaginated);
-              const pagedFlat = isServer
-                ? { page: flatPage, items: state.items }
-                : paginateItems(state.items, flatPage, pageSize);
-              const totalFlatItems = isServer ? state.total : state.items.length;
-              return (
-                <div className="flex flex-col gap-6">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-                    {pagedFlat.items.map((product) => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        variant="catalog"
-                        onBuyNow={actions.onBuyNow}
-                        onAddToCart={actions.onAddToCart}
-                        onCompare={actions.onCompare}
-                      />
-                    ))}
-                  </div>
-                  <CatalogPagination
-                    scope={state.category}
-                    currentPage={pagedFlat.page}
-                    totalItems={totalFlatItems}
-                    pageSize={pageSize}
-                    onPageChange={(nextPage) => {
-                      actions.onChangeFlatPage?.(nextPage);
-                      scrollResultsIntoView();
-                    }}
+            <div className="flex flex-col gap-6">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                {state.items.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    variant="catalog"
+                    onBuyNow={actions.onBuyNow}
+                    onAddToCart={actions.onAddToCart}
+                    onCompare={actions.onCompare}
                   />
-                </div>
-              );
-            })()
+                ))}
+              </div>
+              <CatalogPagination
+                scope={state.category}
+                currentPage={flatPage}
+                totalItems={state.total}
+                pageSize={pageSize}
+                onPageChange={(nextPage) => {
+                  actions.onChangeFlatPage?.(nextPage);
+                  scrollResultsIntoView();
+                }}
+              />
+            </div>
           )}
         </section>
       </div>

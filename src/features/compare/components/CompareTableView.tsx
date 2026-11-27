@@ -1,3 +1,5 @@
+'use client';
+
 import { Plus, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { AnimatedCartButton } from '@/components/ui/AnimatedCartButton';
@@ -9,6 +11,7 @@ import { ProductImage, ZoomableImageFrame } from '@/components/ui/ProductImage';
 import { SearchableSelect, type SearchableSelectGroup } from '@/components/ui/SearchableSelect';
 import { ResponsiveTableWrapper } from '@/components/ui/Table';
 import { formatVnd } from '@/lib/format';
+import { useIsMobileViewport } from '@/lib/use-media-query';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import { TEST_IDS } from '@/shared/testids';
 import type { useComparePageController } from '../useComparePageController';
@@ -16,6 +19,7 @@ import type { useComparePageController } from '../useComparePageController';
 export type CompareTableViewProps = ReturnType<typeof useComparePageController>;
 
 export function CompareTableView({ state, actions }: CompareTableViewProps) {
+  const isMobile = useIsMobileViewport();
   const visibleIndexes: Array<0 | 1 | 2> = state.showThirdColumn ? [0, 1, 2] : [0, 1];
   const anySelected = state.slots.some(Boolean);
 
@@ -217,92 +221,192 @@ export function CompareTableView({ state, actions }: CompareTableViewProps) {
         />
       ) : state.data ? (
         <>
-          <ResponsiveTableWrapper label={VI_MESSAGES.tools.compare.title}>
-            <table
-              data-testid={TEST_IDS.compare.table}
-              className="w-full min-w-[540px] border-collapse text-left text-sm"
-            >
-              <thead>
-                <tr className="border-b-2 border-border-strong bg-surface-subtle">
-                  <th className="w-48 px-3 py-3 font-semibold text-ink-muted">
-                    {VI_MESSAGES.tools.compare.criterionColumn}
-                  </th>
-                  {state.data.products.map((product) => (
-                    <th
-                      key={product.id}
-                      className="min-w-48 px-3 py-3 align-top font-semibold text-ink"
-                    >
-                      <div className="flex flex-col items-start gap-2.5">
-                        <Link href={`/products/${product.id}`} className="block w-full max-w-60">
-                          <ZoomableImageFrame
-                            zoomScale={1.75}
-                            className="flex aspect-square w-full items-center justify-center rounded-card border-2 border-border-strong bg-white"
-                          >
-                            <ProductImage
-                              src={product.imageUrl}
-                              alt={product.name}
-                              loading="eager"
-                              testId={TEST_IDS.compare.headerImage(product.id)}
-                              className="h-full w-full object-contain p-2"
-                            />
-                          </ZoomableImageFrame>
-                        </Link>
-                        <Link href={`/products/${product.id}`} className="hover:text-accent-ink">
-                          {product.name}
-                        </Link>
-                        <p className="font-mono text-sm font-bold tabular-nums text-accent-ink">
-                          {formatVnd(product.priceVnd)}
-                        </p>
-                        <div className="flex w-full max-w-60 items-center gap-3">
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            className="min-h-11 flex-1"
-                            data-testid={TEST_IDS.compare.buyNow(product.id)}
-                            onClick={() => actions.onBuyNowProduct(product)}
-                          >
-                            {VI_MESSAGES.catalog.buyNow}
-                          </Button>
-                          <AnimatedCartButton
-                            ariaLabel={VI_MESSAGES.catalog.addToCartAria(product.name)}
-                            title={VI_MESSAGES.catalog.addToCart}
-                            size="card"
-                            testId={TEST_IDS.compare.addToCart(product.id)}
-                            onAdd={() => actions.onAddToCartProduct(product)}
-                          />
-                        </div>
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {state.data.rows.map((row) => (
-                  <tr key={row.key} className="border-b border-border last:border-b-0">
-                    <th className="bg-surface-subtle/60 px-3 py-2.5 font-medium text-ink-muted">
-                      {row.label}
-                    </th>
-                    {row.cells.map((cell, idx) => {
-                      const product = state.data!.products[idx];
-                      return (
-                        <td
-                          key={`${row.key}-${product.id}`}
-                          data-testid={TEST_IDS.compare.cell(row.key, product.id)}
-                          className={`px-3 py-2.5 font-mono tabular-nums ${
-                            cell.highlighted
-                              ? 'bg-highlight font-semibold text-highlight-fg'
-                              : 'text-ink'
-                          }`}
-                        >
-                          {cell.display}
-                        </td>
-                      );
-                    })}
-                  </tr>
+          {isMobile ? (
+            <div data-testid={TEST_IDS.compare.table} className="flex flex-col gap-4">
+              {/* Sticky compact product summary strip on mobile */}
+              <div
+                className={`sticky top-14 z-20 grid gap-2 rounded-card border-2 border-border-strong bg-surface/98 p-2.5 shadow-md backdrop-blur-sm ${
+                  state.data.products.length === 3 ? 'grid-cols-3' : 'grid-cols-2'
+                }`}
+              >
+                {state.data.products.map((product) => (
+                  <div
+                    key={product.id}
+                    className="flex min-w-0 flex-col justify-between gap-2 rounded-control border border-border bg-surface-subtle p-2"
+                  >
+                    <div className="flex flex-col items-center gap-1.5 text-center">
+                      <ZoomableImageFrame
+                        zoomScale={1.5}
+                        lightboxSrc={product.imageUrl}
+                        lightboxAlt={product.name}
+                        lightboxTestId={TEST_IDS.compare.headerImageTrigger(product.id)}
+                        className="flex h-14 w-14 items-center justify-center rounded-control border border-border-strong bg-white"
+                      >
+                        <ProductImage
+                          src={product.imageUrl}
+                          alt={product.name}
+                          loading="eager"
+                          testId={TEST_IDS.compare.headerImage(product.id)}
+                          className="h-full w-full object-contain p-0.5"
+                        />
+                      </ZoomableImageFrame>
+                      <Link
+                        href={`/products/${product.id}`}
+                        className="line-clamp-2 text-xs leading-tight font-semibold text-ink hover:text-accent-ink"
+                      >
+                        {product.name}
+                      </Link>
+                      <p className="font-mono text-xs font-bold tabular-nums text-accent-ink">
+                        {formatVnd(product.priceVnd)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="primary"
+                        size="xs"
+                        cyber={false}
+                        className="min-h-9 flex-1 px-1.5 text-[11px]"
+                        data-testid={TEST_IDS.compare.buyNow(product.id)}
+                        onClick={() => actions.onBuyNowProduct(product)}
+                      >
+                        {VI_MESSAGES.catalog.buyNow}
+                      </Button>
+                      <AnimatedCartButton
+                        ariaLabel={VI_MESSAGES.catalog.addToCartAria(product.name)}
+                        title={VI_MESSAGES.catalog.addToCart}
+                        size="card"
+                        testId={TEST_IDS.compare.addToCart(product.id)}
+                        onAdd={() => actions.onAddToCartProduct(product)}
+                      />
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </ResponsiveTableWrapper>
+              </div>
+
+              {/* Criterion-by-criterion stacked comparison cards */}
+              <div className="flex flex-col gap-3">
+                {state.data.rows.map((row) => (
+                  <Card key={row.key} className="flex flex-col gap-2.5 p-3">
+                    <p className="border-b border-border pb-1.5 text-xs font-bold tracking-wide text-ink-muted uppercase">
+                      {row.label}
+                    </p>
+                    <div
+                      className={`grid gap-2 ${
+                        state.data!.products.length === 3 ? 'grid-cols-3' : 'grid-cols-2'
+                      }`}
+                    >
+                      {row.cells.map((cell, idx) => {
+                        const product = state.data!.products[idx];
+                        return (
+                          <div
+                            key={`${row.key}-${product.id}`}
+                            data-testid={TEST_IDS.compare.cell(row.key, product.id)}
+                            className={`min-w-0 rounded-control border px-2 py-2 font-mono text-xs tabular-nums break-words ${
+                              cell.highlighted
+                                ? 'border-success/60 bg-highlight font-semibold text-highlight-fg'
+                                : 'border-border bg-surface-subtle text-ink'
+                            }`}
+                          >
+                            {cell.display}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <ResponsiveTableWrapper label={VI_MESSAGES.tools.compare.title}>
+              <table
+                data-testid={TEST_IDS.compare.table}
+                className="w-full min-w-[540px] border-collapse text-left text-sm"
+              >
+                <thead>
+                  <tr className="border-b-2 border-border-strong bg-surface-subtle">
+                    <th className="w-48 px-3 py-3 font-semibold text-ink-muted">
+                      {VI_MESSAGES.tools.compare.criterionColumn}
+                    </th>
+                    {state.data.products.map((product) => (
+                      <th
+                        key={product.id}
+                        className="min-w-48 px-3 py-3 align-top font-semibold text-ink"
+                      >
+                        <div className="flex flex-col items-start gap-2.5">
+                          <div className="block w-full max-w-60">
+                            <ZoomableImageFrame
+                              zoomScale={1.75}
+                              lightboxSrc={product.imageUrl}
+                              lightboxAlt={product.name}
+                              lightboxTestId={TEST_IDS.compare.headerImageTrigger(product.id)}
+                              className="flex aspect-square w-full items-center justify-center rounded-card border-2 border-border-strong bg-white"
+                            >
+                              <ProductImage
+                                src={product.imageUrl}
+                                alt={product.name}
+                                loading="eager"
+                                testId={TEST_IDS.compare.headerImage(product.id)}
+                                className="h-full w-full object-contain p-2"
+                              />
+                            </ZoomableImageFrame>
+                          </div>
+                          <Link href={`/products/${product.id}`} className="hover:text-accent-ink">
+                            {product.name}
+                          </Link>
+                          <p className="font-mono text-sm font-bold tabular-nums text-accent-ink">
+                            {formatVnd(product.priceVnd)}
+                          </p>
+                          <div className="flex w-full max-w-60 items-center gap-3">
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              className="min-h-11 flex-1"
+                              data-testid={TEST_IDS.compare.buyNow(product.id)}
+                              onClick={() => actions.onBuyNowProduct(product)}
+                            >
+                              {VI_MESSAGES.catalog.buyNow}
+                            </Button>
+                            <AnimatedCartButton
+                              ariaLabel={VI_MESSAGES.catalog.addToCartAria(product.name)}
+                              title={VI_MESSAGES.catalog.addToCart}
+                              size="card"
+                              testId={TEST_IDS.compare.addToCart(product.id)}
+                              onAdd={() => actions.onAddToCartProduct(product)}
+                            />
+                          </div>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {state.data.rows.map((row) => (
+                    <tr key={row.key} className="border-b border-border last:border-b-0">
+                      <th className="bg-surface-subtle/60 px-3 py-2.5 font-medium text-ink-muted">
+                        {row.label}
+                      </th>
+                      {row.cells.map((cell, idx) => {
+                        const product = state.data!.products[idx];
+                        return (
+                          <td
+                            key={`${row.key}-${product.id}`}
+                            data-testid={TEST_IDS.compare.cell(row.key, product.id)}
+                            className={`px-3 py-2.5 font-mono tabular-nums ${
+                              cell.highlighted
+                                ? 'bg-highlight font-semibold text-highlight-fg'
+                                : 'text-ink'
+                            }`}
+                          >
+                            {cell.display}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </ResponsiveTableWrapper>
+          )}
 
           <Card className="flex flex-col gap-2 bg-surface-subtle text-xs text-ink-muted">
             {state.data.notes.map((note, index) => (

@@ -1,10 +1,11 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { showToast } from '@/components/ui/toast-store';
 import { ApiClientError, apiFetch } from '@/lib/api-client';
 import { useCartStore } from '@/features/cart/store';
+import { invalidateOrderLists } from '@/features/orders/optimistic-board';
 import { VI_MESSAGES } from '@/shared/messages/vi';
 import type { CheckoutRequest, OrderWithToken } from '@/shared/types';
 import { clearCheckoutAttempt } from './attempt-storage';
@@ -42,6 +43,7 @@ export interface UsePlaceOrderOptions {
 /** Shared order-submission mutation for both COD review confirmation and card/QR payment confirmation. */
 export function usePlaceOrder({ onBeforeRedirect, onOrderPlaced }: UsePlaceOrderOptions) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const clearCart = useCartStore((s) => s.clearCart);
 
   return useMutation({
@@ -54,6 +56,7 @@ export function usePlaceOrder({ onBeforeRedirect, onOrderPlaced }: UsePlaceOrder
     onSuccess: (res) => {
       clearCart();
       clearCheckoutAttempt();
+      invalidateOrderLists(queryClient);
       onOrderPlaced(res);
     },
     onError: (err) => {

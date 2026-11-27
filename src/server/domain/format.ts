@@ -1,6 +1,9 @@
 import 'server-only';
 
+import { formatNumberVi } from '@/lib/format';
 import type { GpuVendor } from '@/shared/types';
+
+export { formatNumberVi as formatViNumber };
 
 export interface RepresentativeGpuCandidate {
   id: string;
@@ -12,15 +15,6 @@ export function roundTo(value: number, decimals: number): number {
   const factor = 10 ** decimals;
   // Tiny bias avoids binary float artifacts such as 1.005 * 100 -> 100.49999999999999
   return Math.round((value + 1e-12) * factor) / factor;
-}
-
-export function formatViNumber(value: number, fractionDigits?: number): string {
-  return value.toLocaleString(
-    'vi-VN',
-    fractionDigits === undefined
-      ? undefined
-      : { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits },
-  );
 }
 
 export function formatCpuCoresThreads(

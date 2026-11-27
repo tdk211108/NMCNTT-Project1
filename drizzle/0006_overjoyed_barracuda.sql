@@ -1,0 +1,2 @@
+ALTER TABLE "orders" ADD COLUMN "cancelled_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "orders" ADD CONSTRAINT "orders_cancelled_stage_chk" CHECK ("orders"."cancelled_at" IS NULL OR "orders"."status_stage" = 0);
