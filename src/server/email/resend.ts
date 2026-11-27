@@ -3,7 +3,7 @@ import 'server-only';
 import { DEFAULT_EMAIL_FROM } from '@/shared/constants';
 import { AppError } from '../http/errors';
 
-const RESEND_API_URL = 'https://api.resend.com/emails';
+const DEFAULT_RESEND_API_URL = 'https://api.resend.com/emails';
 const EMAIL_FETCH_TIMEOUT_MS = 10_000;
 
 export interface SendEmailPayload {
@@ -19,6 +19,10 @@ export function resolveEmailFrom(): string {
   return (process.env.EMAIL_FROM ?? '').trim() || DEFAULT_EMAIL_FROM;
 }
 
+export function resolveResendApiUrl(): string {
+  return (process.env.RESEND_API_URL ?? '').trim() || DEFAULT_RESEND_API_URL;
+}
+
 /**
  * Sends a transactional email via Resend HTTPS API (`coreraster.me`).
  * Falls back to console logging outside production when `RESEND_API_KEY` is unset.
@@ -29,6 +33,7 @@ export async function sendEmail(
 ): Promise<{ id: string }> {
   const apiKey = (process.env.RESEND_API_KEY ?? '').trim();
   const from = resolveEmailFrom();
+  const apiUrl = resolveResendApiUrl();
 
   if (!apiKey) {
     if (process.env.NODE_ENV === 'production') {
@@ -46,7 +51,7 @@ export async function sendEmail(
 
   let response: Response;
   try {
-    response = await fetchFn(RESEND_API_URL, {
+    response = await fetchFn(apiUrl, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,

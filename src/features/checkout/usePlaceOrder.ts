@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { useCallback, useRef } from 'react';
 import { showToast } from '@/components/ui/toast-store';
 import { ApiClientError, apiFetch } from '@/lib/api-client';
 import { useCartStore } from '@/features/cart/store';
@@ -45,15 +46,18 @@ export function usePlaceOrder({ onBeforeRedirect, onOrderPlaced }: UsePlaceOrder
   const router = useRouter();
   const queryClient = useQueryClient();
   const clearCart = useCartStore((s) => s.clearCart);
+  const inFlightRef = useRef(false);
+  const submittedKeyRef = useRef<string | null>(null);
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (request: CheckoutRequest) =>
       apiFetch<OrderWithToken>('/api/orders', {
         method: 'POST',
         headers: { 'Idempotency-Key': request.idempotencyKey },
         json: request,
       }),
-    onSuccess: (res) => {
+    onSuccess: (res, request) => {
+      submittedKeyRef.current = request.idempotencyKey;
       clearCart();
       clearCheckoutAttempt();
       invalidateOrderLists(queryClient);
@@ -69,5 +73,22 @@ export function usePlaceOrder({ onBeforeRedirect, onOrderPlaced }: UsePlaceOrder
         'error',
       );
     },
+    onSettled: () => {
+      inFlightRef.current = false;
+    },
   });
+
+  const { mutate: rawMutate } = mutation;
+  const mutate = useCallback(
+    (request: CheckoutRequest) => {
+      if (inFlightRef.current || submittedKeyRef.current === request.idempotencyKey) {
+        return;
+      }
+      inFlightRef.current = true;
+      rawMutate(request);
+    },
+    [rawMutate],
+  );
+
+  return { ...mutation, mutate };
 }

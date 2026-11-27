@@ -14,7 +14,7 @@ export function Footer() {
     process.env.NEXT_PUBLIC_GITHUB_REPO_URL || 'https://github.com/tdk211108/NMCNTT-Project1';
 
   return (
-    <footer className="relative z-10 mt-auto border-t-2 border-border-strong bg-surface pt-6 pb-28 md:pb-20">
+    <footer className="relative z-10 mt-auto border-t-2 border-border-strong bg-surface pt-6 pb-32 md:pb-20">
       <div className={`${containerClass} flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between`}>
         <div className="flex flex-wrap items-center gap-3">
           <a

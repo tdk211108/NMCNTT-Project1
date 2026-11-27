@@ -48,11 +48,19 @@ const sampleOrder: OrderBoard = {
 describe('email/resend & templates', () => {
   const originalApiKey = process.env.RESEND_API_KEY;
   const originalEmailFrom = process.env.EMAIL_FROM;
+  const originalResendApiUrl = process.env.RESEND_API_URL;
   const originalNodeEnv = process.env.NODE_ENV;
 
   afterEach(() => {
-    process.env.RESEND_API_KEY = originalApiKey;
-    process.env.EMAIL_FROM = originalEmailFrom;
+    if (originalApiKey === undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY = originalApiKey;
+
+    if (originalEmailFrom === undefined) delete process.env.EMAIL_FROM;
+    else process.env.EMAIL_FROM = originalEmailFrom;
+
+    if (originalResendApiUrl === undefined) delete process.env.RESEND_API_URL;
+    else process.env.RESEND_API_URL = originalResendApiUrl;
+
     vi.stubEnv('NODE_ENV', originalNodeEnv ?? 'test');
     vi.restoreAllMocks();
   });
@@ -112,6 +120,18 @@ describe('email/resend & templates', () => {
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('https://api.resend.com/emails');
     expect((init?.headers as Record<string, string>).Authorization).toBe('Bearer re_test_key_123');
+
+    process.env.RESEND_API_URL = 'http://127.0.0.1:3199/emails';
+    const overrideFetch = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      new Response(JSON.stringify({ id: 'email_local' }), { status: 200 }),
+    );
+    const overrideRes = await sendEmail(
+      { to: 'user@example.com', subject: 'Local', html: '<p>Hi</p>', text: 'Hi' },
+      overrideFetch,
+    );
+    expect(overrideRes).toEqual({ id: 'email_local' });
+    expect(overrideFetch.mock.calls[0]?.[0]).toBe('http://127.0.0.1:3199/emails');
+    delete process.env.RESEND_API_URL;
 
     const failFetch = vi.fn<typeof fetch>().mockResolvedValueOnce(
       new Response('bad key', { status: 403 }),
