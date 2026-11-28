@@ -337,5 +337,34 @@ describe('Hardware tool views (Compare, Combo, PerfPerPrice, Upgrade)', () => {
     expect(upgradeNoPassmarkHtml).toContain(VI_MESSAGES.tools.upgrade.missingPassmarkNote);
     expect(upgradeNoPassmarkHtml).not.toContain('border-warning/70 bg-warning/10');
     expect(upgradeNoPassmarkHtml).toContain('border-warning/70 bg-surface p-3');
+
+    const comboFallbackHtml = renderToStaticMarkup(
+      createElement(ComboAdvisorView, {
+        state: {
+          budgetInput: '20000000', budgetError: null, purpose: 'gaming_aaa', cpuVendor: null, gpuVendor: null,
+          appliedBudgetVnd: 20_000_000, isLoading: false, errorMessage: null, data: null,
+        },
+        actions: { onChangeBudgetInput: vi.fn(), onSelectBudgetPreset: vi.fn(), onSelectPurpose: vi.fn(), onSelectCpuVendor: vi.fn(), onSelectGpuVendor: vi.fn(), onSubmit: vi.fn(), onApplyMinBudget: vi.fn(), onAddBothToCart: vi.fn() },
+      }),
+    );
+    expect(comboFallbackHtml).toContain(VI_MESSAGES.tools.disclaimers.passmark);
+    expect(comboFallbackHtml).toContain(VI_MESSAGES.tools.disclaimers.combo);
+    expect(comboFallbackHtml).toContain(VI_MESSAGES.tools.combo.budgetScopeNote);
+
+    const upgradeFallbackHtml = renderToStaticMarkup(
+      createElement(UpgradeAdvisorView, {
+        state: {
+          ...makeUpgradeState('cpu', '', {
+            category: 'cpu', current: makeUpgradeCurrentBase('cpu', '', 'store', ''),
+            hasSameSocketInCatalog: false, isTopTier: false, minUpgradePriceVnd: null,
+            sameSocketCpus: [], platformSwapCpus: [], gpus: [], notes: [],
+          }),
+          data: null,
+        },
+        actions,
+      }),
+    );
+    expect(upgradeFallbackHtml).toContain(VI_MESSAGES.tools.disclaimers.passmark);
+    expect(upgradeFallbackHtml).toContain(VI_MESSAGES.tools.disclaimers.upgrade);
   });
 });

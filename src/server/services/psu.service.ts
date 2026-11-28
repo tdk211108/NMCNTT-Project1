@@ -129,7 +129,7 @@ export async function estimatePsu(
   const calc = estimatePsuWattage(cpu.psuPowerW, gpu.tbpW);
   const notes: string[] = [
     VI_MESSAGES.tools.psu.noProductRecommendationNote,
-    VI_MESSAGES.tools.disclaimers.estimation,
+    VI_MESSAGES.tools.disclaimers.psu,
   ];
   if (calc.exceedsMaxTier) {
     notes.unshift(VI_MESSAGES.tools.psu.exceedsMaxTierNote);

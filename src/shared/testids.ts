@@ -134,7 +134,6 @@ export const TEST_IDS = {
     browseCpu: 'home-browse-cpu',
     browseGpu: 'home-browse-gpu',
     heroScrollCta: 'home-hero-scroll-cta',
-    tickerToggle: 'home-ticker-toggle',
     featuredCpuSection: 'home-featured-cpu-section',
     featuredGpuSection: 'home-featured-gpu-section',
     featuredCpuAll: 'home-featured-cpu-all',

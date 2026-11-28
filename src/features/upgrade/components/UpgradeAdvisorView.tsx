@@ -21,7 +21,7 @@ export function UpgradeAdvisorView({ state, actions }: UpgradeAdvisorViewProps) 
 
   const activeNotes = state.data?.notes ?? [
     VI_MESSAGES.tools.disclaimers.passmark,
-    VI_MESSAGES.tools.disclaimers.estimation,
+    VI_MESSAGES.tools.disclaimers.upgrade,
   ];
 
   return (

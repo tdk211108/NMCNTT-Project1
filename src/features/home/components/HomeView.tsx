@@ -4,8 +4,6 @@ import {
   ArrowRight,
   Gauge,
   Layers,
-  Pause,
-  Play,
   Scale,
   TrendingUp,
 } from 'lucide-react';
@@ -36,14 +34,11 @@ export function HomeView({ state, actions }: HomeViewProps) {
 
   const prefersReduced = usePrefersReducedMotion();
   const isPreloaderReady = usePreloaderReady();
-  const [tickerPauseOverride, setTickerPauseOverride] = useState<boolean | null>(null);
   const [carouselOriginMs, setCarouselOriginMs] = useState<number | null>(null);
 
   const handleCarouselClockStart = useCallback((originMs: number) => {
     setCarouselOriginMs((prev) => prev ?? originMs);
   }, []);
-
-  const isTickerPaused = tickerPauseOverride ?? prefersReduced;
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -274,23 +269,9 @@ export function HomeView({ state, actions }: HomeViewProps) {
           </div>
         </section>
 
-        <div className="mtx-marquee flex w-full items-center border-y-2 border-border-strong bg-surface">
-          <button
-            type="button"
-            onClick={() => setTickerPauseOverride(!isTickerPaused)}
-            data-testid={TEST_IDS.home.tickerToggle}
-            aria-label={isTickerPaused ? VI_MESSAGES.home.tickerPlay : VI_MESSAGES.home.tickerPause}
-            className="inline-flex min-h-10 shrink-0 cursor-pointer items-center gap-1.5 border-r-2 border-border-strong bg-primary px-3 font-mono text-xs font-bold text-primary-fg hover:bg-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-signal"
-          >
-            {isTickerPaused ? (
-              <Play className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            ) : (
-              <Pause className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            )}
-            <span className="hidden sm:inline">{isTickerPaused ? 'PLAY' : 'HOLD'}</span>
-          </button>
-          <div className="flex-1 overflow-hidden py-2 font-mono text-xs font-semibold tracking-widest text-ink">
-            <div className="mtx-marquee-track" data-paused={isTickerPaused ? 'true' : 'false'}>
+        <div className="mtx-marquee flex min-h-10 w-full items-center border-y-2 border-border-strong bg-surface">
+          <div className="w-full overflow-hidden py-2 font-mono text-xs font-semibold tracking-widest text-ink">
+            <div className="mtx-marquee-track" data-paused={prefersReduced ? 'true' : 'false'}>
               <span className="shrink-0 pr-12">{VI_MESSAGES.home.tickerLine}</span>
               <span aria-hidden="true" className="shrink-0 pr-12">
                 {VI_MESSAGES.home.tickerLine}

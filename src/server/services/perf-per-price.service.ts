@@ -148,7 +148,7 @@ export async function getPerfPerPriceRanking(
     items,
     notes: [
       VI_MESSAGES.tools.disclaimers.passmark,
-      VI_MESSAGES.tools.disclaimers.estimation,
+      VI_MESSAGES.tools.disclaimers.awards,
     ],
   };
 }

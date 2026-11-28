@@ -127,7 +127,7 @@ export async function compareProducts(
     rows: buildCompareRows(validated.category, validated.products),
     notes: [
       VI_MESSAGES.tools.disclaimers.passmark,
-      VI_MESSAGES.tools.disclaimers.estimation,
+      VI_MESSAGES.tools.disclaimers.compare,
     ],
   };
 }

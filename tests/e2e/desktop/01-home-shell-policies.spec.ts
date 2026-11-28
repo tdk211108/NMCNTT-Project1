@@ -65,9 +65,8 @@ test.describe('Home, Shell, Health, Policies & 404 @smoke', { tag: '@smoke' }, (
     await expect(page.getByTestId(TEST_IDS.home.toolUpgrade)).toBeVisible();
 
     const tickerTrack = page.locator('.mtx-marquee-track');
-    const initialPaused = await tickerTrack.getAttribute('data-paused');
-    await page.getByTestId(TEST_IDS.home.tickerToggle).click();
-    await expect(tickerTrack).toHaveAttribute('data-paused', initialPaused === 'true' ? 'false' : 'true');
+    await expect(tickerTrack).toBeVisible();
+    await expect(page.locator('[data-testid="home-ticker-toggle"]')).toHaveCount(0);
 
     await page.getByTestId(TEST_IDS.home.sliderNext('cpu')).click();
     await page.getByTestId(TEST_IDS.home.sliderPrev('cpu')).click();

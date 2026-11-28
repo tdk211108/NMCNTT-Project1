@@ -206,7 +206,7 @@ function ComboCard({
 export function ComboAdvisorView({ state, actions }: ComboAdvisorViewProps) {
   const activeNotes = state.data?.notes ?? [
     VI_MESSAGES.tools.disclaimers.passmark,
-    VI_MESSAGES.tools.disclaimers.estimation,
+    VI_MESSAGES.tools.disclaimers.combo,
     VI_MESSAGES.tools.combo.budgetScopeNote,
   ];
 

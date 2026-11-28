@@ -257,7 +257,9 @@ describe('Catalog, Search, ProductCard, ProductDetail, and Home views', () => {
     expect(homeHtml).not.toContain('data-testid="home-crt-toggle"');
     expect(homeHtml).not.toContain('>REC<');
     expect(homeHtml).not.toContain('>PAUSE<');
-    expect(homeHtml).toContain('data-testid="home-ticker-toggle"');
+    expect(homeHtml).not.toContain('data-testid="home-ticker-toggle"');
+    expect(homeHtml).not.toContain('>HOLD<');
+    expect(homeHtml).toContain('mtx-marquee-track');
     expect(homeHtml).toContain('data-testid="home-slider-card-cpu-cpu-amd-ryzen-7-9800x3d"');
     expect(homeHtml).not.toContain('data-testid="product-card-buy-now-cpu-amd-ryzen-7-9800x3d"');
     expect(homeHtml).toContain('items-end');

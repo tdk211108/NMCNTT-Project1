@@ -223,7 +223,7 @@ export async function getUpgradeRecommendations(
 ): Promise<UpgradeResponse> {
   const notes: string[] = [
     VI_MESSAGES.tools.disclaimers.passmark,
-    VI_MESSAGES.tools.disclaimers.estimation,
+    VI_MESSAGES.tools.disclaimers.upgrade,
   ];
 
   if (query.category === 'cpu') {

@@ -86,7 +86,7 @@ export async function getComboRecommendations(
     cheapestReferenceCombo: result.cheapestReferenceCombo,
     notes: [
       VI_MESSAGES.tools.disclaimers.passmark,
-      VI_MESSAGES.tools.disclaimers.estimation,
+      VI_MESSAGES.tools.disclaimers.combo,
       VI_MESSAGES.tools.combo.budgetScopeNote,
     ],
   };

@@ -25,6 +25,7 @@ import {
   updateAdminGpuSeries,
 } from '@/server/services/admin-gpu-series.service';
 import { updateAdminLegacyCpu } from '@/server/services/admin-legacy-cpus.service';
+import { VI_MESSAGES } from '@/shared/messages/vi';
 import { setupTestDbLifecycle } from '../../helpers/test-db';
 
 let db: DbClient;
@@ -420,5 +421,47 @@ describe('services/catalog, search, compare, perf-per-price, psu (Postgres 16)',
     await expect(
       getUpgradeRecommendations({ category: 'gpu', current: 'gs-missing' }, db),
     ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+  });
+
+  it('returns tool-specific disclaimer notes for compare, awards, psu, combo, and upgrade', async () => {
+    const compareRes = await compareProducts(
+      'cpu-amd-ryzen-7-9800x3d,cpu-intel-core-ultra-9-285k',
+      db,
+    );
+    expect(compareRes.notes).toEqual([
+      VI_MESSAGES.tools.disclaimers.passmark,
+      VI_MESSAGES.tools.disclaimers.compare,
+    ]);
+
+    const awardsRes = await getPerfPerPriceRanking({ category: 'cpu' }, db);
+    expect(awardsRes.notes).toEqual([
+      VI_MESSAGES.tools.disclaimers.passmark,
+      VI_MESSAGES.tools.disclaimers.awards,
+    ]);
+
+    const psuRes = await estimatePsu('legacy:C01', 'gs-rtx-5090', db);
+    expect(psuRes.notes).toEqual([
+      VI_MESSAGES.tools.psu.noProductRecommendationNote,
+      VI_MESSAGES.tools.disclaimers.psu,
+    ]);
+
+    const comboRes = await getComboRecommendations(
+      { budgetVnd: 20_000_000, purpose: 'gaming_aaa' },
+      db,
+    );
+    expect(comboRes.notes).toEqual([
+      VI_MESSAGES.tools.disclaimers.passmark,
+      VI_MESSAGES.tools.disclaimers.combo,
+      VI_MESSAGES.tools.combo.budgetScopeNote,
+    ]);
+
+    const upgradeRes = await getUpgradeRecommendations(
+      { category: 'cpu', current: 'store:cpu-intel-core-i5-12400f' },
+      db,
+    );
+    expect(upgradeRes.notes).toEqual([
+      VI_MESSAGES.tools.disclaimers.passmark,
+      VI_MESSAGES.tools.disclaimers.upgrade,
+    ]);
   });
 });

@@ -110,8 +110,6 @@ export const VI_MESSAGES = {
     heroCrtChannelLabel: 'CH.01 // MATRIX RTX 5090',
     tickerLine:
       'CORERASTER // CRIMSON MATRIX HARDWARE DIVISION // ROG MATRIX 30TH CALIBRATION // CHÍNH HÃNG FULL BOX // BẢO HÀNH 36 THÁNG',
-    tickerPause: 'Dừng dải thông số chạy',
-    tickerPlay: 'Chạy dải thông số',
     heroScrollCta: 'Khám phá sản phẩm nổi bật',
     sliderPrevAria: 'Trượt sang trái',
     sliderNextAria: 'Trượt sang phải',
@@ -196,9 +194,17 @@ export const VI_MESSAGES = {
   tools: {
     disclaimers: {
       passmark:
-        'Điểm benchmark được chuẩn hóa động trên thang 100 từ dữ liệu gốc PassMark và phản ánh hiệu năng tính toán tổng quát đa nhân thay vì FPS thực tế trong từng tựa game.',
-      estimation:
-        'Các kết quả so sánh, xếp hạng hiệu năng trên giá và ước tính nguồn chỉ mang tính tham khảo định lượng, không thay thế kiểm tra tương thích bo mạch chủ, RAM hay kích thước vỏ máy.',
+        'Điểm benchmark được lấy từ dữ liệu PassMark (CPU Mark cho CPU, G3D Mark cho GPU) và quy đổi động trên thang 100 theo tỷ lệ (100 x điểm PassMark của mẫu / điểm PassMark cao nhất trong danh mục đang bán, làm tròn 1 chữ số thập phân). Chỉ số này phản ánh năng lực tính toán đa nhân tổng quát, chỉ mang tính chất tham khảo và không đại diện cho FPS thực tế trong từng tựa game hay phần mềm.',
+      compare:
+        'Cách đối chiếu: Bảng tự động tô nổi bật giá bán thấp nhất và các thông số định lượng chính (Điểm benchmark, Nhân/Luồng ở CPU; VRAM, Nhân xử lý, Bus bộ nhớ ở GPU), đồng thời bỏ tô nếu các mẫu bằng nhau. Kết quả chỉ mang tính chất tham khảo theo thông số niêm yết, không thay thế kiểm tra tương thích bo mạch chủ, RAM, tản nhiệt hay kích thước vỏ máy.',
+      awards:
+        'Cách tính danh hiệu: Hiệu năng trên giá (P/P) bằng Điểm chuẩn hóa chia cho Giá bán tính theo triệu VND (làm tròn 2 chữ số thập phân); Hiệu suất điện năng (P/W) bằng Điểm PassMark gốc chia cho Công suất định mức (PSU Max của CPU hoặc TBP của GPU, làm tròn 1 chữ số thập phân). Danh hiệu chỉ xét trên các mẫu bán lẻ đang kinh doanh, gộp vào một thẻ nếu một sản phẩm dẫn đầu nhiều tiêu chí, chỉ mang tính chất tham khảo và không thay thế kiểm tra tương thích khi lắp máy.',
+      psu:
+        'Cách tính và phạm vi ước tính: Công suất ước tính bằng (Công suất đỉnh CPU + Công suất GPU + 100 W hệ thống nền) x 1,25 hệ số dự phòng, sau đó làm tròn lên bậc nguồn chuẩn gần nhất từ 450 W đến 1200 W. Kết quả chỉ mang tính chất tham khảo cho cấu hình đơn GPU phổ thông, chưa tính ép xung, nhiều ổ cứng, chuẩn đầu cấp nguồn hay kích thước khoang nguồn của vỏ máy.',
+      combo:
+        'Cách tính gợi ý Combo: Hệ thống chọn bản GPU đại diện có giá tốt nhất mỗi dòng, chấm điểm tổng hợp theo trọng số nhu cầu (Gaming AAA 65% GPU và 35% CPU, Esport 50% và 50%, Làm việc và AI 55% GPU và 45% CPU, cộng thêm điểm ưu tiên cho VRAM lớn hoặc NVIDIA CUDA khi phù hợp) rồi nhân hệ số cân bằng tỷ lệ chi để chọn tối đa 3 cặp khác biệt, có thể vượt trần tối đa 5% ngân sách nếu điểm tổng hợp tăng từ 8% trở lên. Nguồn ước tính kèm theo áp dụng công thức (CPU + GPU + 100 W) x 1,25; mọi đề xuất chỉ mang tính chất tham khảo.',
+      upgrade:
+        'Cách tính và phạm vi kiểm tra: Mức tăng hiệu năng được tính theo ((PassMark mới - PassMark cũ) / PassMark cũ) x 100% (làm tròn phần trăm nguyên), chỉ đề xuất các mẫu mạnh hơn tối thiểu 10% (trừ linh kiện đời cũ chưa có điểm gốc) và hiển thị tối đa 3 phương án mỗi nhóm. Cảnh báo tương thích dựa trên chuẩn socket, thế hệ RAM (DDR4 hoặc DDR5), chênh lệch điện năng và kích thước GPU tham khảo; toàn bộ gợi ý chỉ mang tính chất tham khảo, không thay thế kiểm tra model bo mạch chủ, BIOS, VRM, tản nhiệt hay khoảng trống vỏ máy.',
     },
     compare: {
       title: 'So sánh thông số kỹ thuật',
